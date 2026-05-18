@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { signupSchema } from "./auth.schema";
-import { signupService } from "./auth.service";
+import { loginSchema, signupSchema } from "./auth.schema";
+import { loginService, signupService } from "./auth.service";
 
 export async function signupController(
   request: FastifyRequest,
@@ -19,6 +19,23 @@ export async function signupController(
     //return error response
     return response.status(400).send({
       message: error instanceof Error ? error.message : "Signup Failed",
+    });
+  }
+}
+
+export async function loginController(
+  request: FastifyRequest,
+  response: FastifyReply,
+) {
+  try {
+    const body = loginSchema.parse(request.body);
+    const user = await loginService(body);
+    return response
+      .status(200)
+      .send({ message: "Login successful", data: user });
+  } catch (error) {
+    return response.status(400).send({
+      message: error instanceof Error ? error.message : "Login Failed",
     });
   }
 }

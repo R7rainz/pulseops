@@ -24,5 +24,14 @@ export const signupSchema = z.object({
     }),
 });
 
+export const loginSchema = z.object({
+  email: z.email({ message: "Invalid email address format" }),
+
+  password: z.string().min(1, {
+    message: "Password is required",
+  }),
+});
+
 //this says - "TypeScript, look at my Zod schema and create a TypeScript type from it."
 export type SignupInput = z.infer<typeof signupSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
