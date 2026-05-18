@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pulseops-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rainz
+      POSTGRES_PASSWORD: brainz
+      POSTGRES_DB: pulseops
+    ports:
+      - "5432:5432"
+    volumes:
+      - pulseops_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  pulseops_postgres_data:
