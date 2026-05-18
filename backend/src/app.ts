@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
+import { authRoutes } from "./modules/auth/auth.routes";
 
 export async function buildApp() {
   const app = Fastify({
@@ -16,6 +17,10 @@ export async function buildApp() {
       status: "ok",
       service: "pulseops-api",
     };
+  });
+
+  await app.register(authRoutes, {
+    prefix: "/api/v1/auth",
   });
 
   return app;
