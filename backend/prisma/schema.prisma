@@ -37,7 +37,8 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members WorkspaceMember[]
+  members  WorkspaceMember[]
+  monitors Monitor[]
 }
 
 model WorkspaceMember {
@@ -51,4 +52,30 @@ model WorkspaceMember {
   workspace Workspace @relation(fields: [workspaceId], references: [id])
 
   @@unique([userId, workspaceId])
+}
+
+enum MonitorStatus {
+  UP
+  DOWN
+  DEGRADED
+  PAUSED
+}
+
+model Monitor {
+  id              Int           @id @default(autoincrement())
+  workspaceId     Int
+  name            String
+  url             String
+  method          String        @default("GET")
+  intervalSeconds Int
+  timeoutMs       Int           @default(5000)
+  expectedStatus  Int           @default(200)
+  status          MonitorStatus @default(UP)
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+
+  @@index([workspaceId])
 }
