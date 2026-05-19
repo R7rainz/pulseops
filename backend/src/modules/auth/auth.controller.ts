@@ -47,16 +47,7 @@ export async function meController(
   response: FastifyReply,
 ) {
   try {
-    const authHeader = request.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return response
-        .status(400)
-        .send({ message: "Authorization token missing" });
-    }
-    const token = authHeader.split(" ")[1];
-    const payload = verifyAccessToken(token);
-    const user = await getMeService(payload.userId);
+    const user = await getMeService(request.user.userId);
 
     return response
       .status(200)
