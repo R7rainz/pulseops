@@ -1,7 +1,7 @@
-import { createDeflate } from "zlib";
 import { prisma } from "../../lib/db";
 import { checkPassword, hashPassword } from "../../lib/password";
 import { LoginInput, SignupInput } from "./auth.schema";
+import { signAccessToken } from "../../lib/jwt";
 
 export async function signupService(input: SignupInput) {
   // input is an object:
@@ -49,10 +49,29 @@ export async function loginService(input: LoginInput) {
   const valid = await checkPassword(input.password, user.passwordHash);
   if (!valid) throw new Error("Invalid email or password");
 
+  const accessToken = signAccessToken({
+    userId: user.id,
+  });
+
   return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    createdAt: user.createdAt,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt,
+    },
+    accessToken,
   };
+}
+
+export async function getMeService(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, createdAt: true },
+  });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
 }
