@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { authRoutes } from "./modules/auth/auth.routes";
+import { workspaceRoutes } from "./modules/workspaces/workspace.routes";
 
 export async function buildApp() {
   const app = Fastify({
@@ -21,6 +22,10 @@ export async function buildApp() {
 
   await app.register(authRoutes, {
     prefix: "/api/v1/auth",
+  });
+
+  await app.register(workspaceRoutes, {
+    prefix: "/api/v1/workspaces",
   });
 
   return app;
