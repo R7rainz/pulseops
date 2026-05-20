@@ -75,7 +75,23 @@ model Monitor {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  workspace Workspace      @relation(fields: [workspaceId], references: [id])
+  checks    MonitorCheck[]
 
   @@index([workspaceId])
+}
+
+model MonitorCheck {
+  id             Int           @id @default(autoincrement())
+  monitorId      Int
+  status         MonitorStatus
+  statusCode     Int?
+  responseTimeMs Int?
+  errorMessage   String?
+  checkedAt      DateTime      @default(now())
+
+  monitor Monitor @relation(fields: [monitorId], references: [id])
+
+  @@index([monitorId])
+  @@index([checkedAt])
 }

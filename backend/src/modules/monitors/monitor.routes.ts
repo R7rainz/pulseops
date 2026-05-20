@@ -3,6 +3,7 @@ import { requireAuth } from "../../middleware/auth.middleware";
 import {
   createMonitorController,
   getWorkspaceMonitorsController,
+  runMonitorCheckController,
 } from "./monitor.controller";
 
 export async function monitorRoutes(app: FastifyInstance) {
@@ -16,5 +17,11 @@ export async function monitorRoutes(app: FastifyInstance) {
     "/workspaces/:workspaceId/monitors",
     { preHandler: requireAuth },
     getWorkspaceMonitorsController,
+  );
+
+  app.post(
+    "/monitors/:monitorId/check",
+    { preHandler: requireAuth },
+    runMonitorCheckController,
   );
 }

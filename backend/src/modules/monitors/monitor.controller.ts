@@ -4,10 +4,16 @@ import { createMonitorSchema } from "./monitor.schema";
 import {
   createMonitorService,
   getWorkspaceMonitorsService,
+  runMonitorCheckService,
 } from "./monitor.service";
+import { monitorEventLoopDelay } from "perf_hooks";
 
 type CreateMonitorParams = {
   workspaceId: string;
+};
+
+type RunMonitorCheckParams = {
+  monitorId: string;
 };
 
 export async function createMonitorController(
@@ -56,5 +62,24 @@ export async function getWorkspaceMonitorsController(
   return response.status(200).send({
     message: "Monitors fetched successfully",
     data: monitors,
+  });
+}
+
+export async function runMonitorCheckController(
+  request: FastifyRequest<{ Params: RunMonitorCheckParams }>,
+  response: FastifyReply,
+) {
+  const monitorId = Number(request.params.monitorId);
+  if (Number.isNaN(monitorId)) {
+    return response.status(400).send({
+      message: "Invalid monitor id",
+    });
+  }
+
+  const check = await runMonitorCheckService(request.user.userId, monitorId);
+
+  return response.status(200).send({
+    message: "Monitor check completed successfully",
+    data: check,
   });
 }
