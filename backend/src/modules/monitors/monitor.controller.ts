@@ -3,6 +3,7 @@ import { FastifyRequest } from "fastify/types/request";
 import { createMonitorSchema } from "./monitor.schema";
 import {
   createMonitorService,
+  getMonitorChecksService,
   getWorkspaceMonitorsService,
   runMonitorCheckService,
 } from "./monitor.service";
@@ -81,5 +82,22 @@ export async function runMonitorCheckController(
   return response.status(200).send({
     message: "Monitor check completed successfully",
     data: check,
+  });
+}
+
+export async function getMonitorChecksController(
+  request: FastifyRequest<{ Params: RunMonitorCheckParams }>,
+  response: FastifyReply,
+) {
+  const monitorId = Number(request.params.monitorId);
+  if (Number.isNaN(monitorId)) {
+    return response.status(400).send({
+      message: "Invalid monitor id",
+    });
+  }
+  const checks = await getMonitorChecksService(request.user.userId, monitorId);
+  return response.status(200).send({
+    message: "Monitor check fetched successfully",
+    data: checks,
   });
 }

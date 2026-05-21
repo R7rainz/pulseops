@@ -137,3 +137,38 @@ export async function runMonitorCheckService(
     return check;
   }
 }
+
+export async function getMonitorChecksService(
+  userId: number,
+  monitorId: number,
+) {
+  const monitor = await prisma.monitor.findUnique({
+    where: {
+      id: monitorId,
+    },
+  });
+
+  if (!monitor) throw new Error("Monitor not found");
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      userId_workspaceId: {
+        userId,
+        workspaceId: monitor.workspaceId,
+      },
+    },
+  });
+
+  if (!membership) throw new Error("You do not have access to this monitor");
+
+  const checks = await prisma.monitorCheck.findMany({
+    where: {
+      monitorId,
+    },
+    orderBy: {
+      checkedAt: "desc",
+    },
+  });
+
+  return checks;
+}
