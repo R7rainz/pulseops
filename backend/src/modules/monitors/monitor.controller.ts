@@ -4,10 +4,12 @@ import { createMonitorSchema } from "./monitor.schema";
 import {
   createMonitorService,
   getMonitorChecksService,
+  getMonitorStatsService,
   getWorkspaceMonitorsService,
   runMonitorCheckService,
 } from "./monitor.service";
 import { monitorEventLoopDelay } from "perf_hooks";
+import { number } from "zod/v3";
 
 type CreateMonitorParams = {
   workspaceId: string;
@@ -99,5 +101,23 @@ export async function getMonitorChecksController(
   return response.status(200).send({
     message: "Monitor check fetched successfully",
     data: checks,
+  });
+}
+
+export async function getMonitorStatsController(
+  request: FastifyRequest<{ Params: RunMonitorCheckParams }>,
+  response: FastifyReply,
+) {
+  const monitorId = Number(request.params.monitorId);
+  if (Number.isNaN(monitorId)) {
+    return response.status(400).send({
+      message: "Invalid monitor id",
+    });
+  }
+
+  const stats = await getMonitorStatsService(request.user.userId, monitorId);
+  return response.status(200).send({
+    message: "Monitor stats fetched successfully",
+    data: stats,
   });
 }

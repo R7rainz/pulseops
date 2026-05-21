@@ -1,6 +1,7 @@
 import { CreateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
 import axios from "axios";
+import { NullTypes } from "../../generated/prisma/internal/prismaNamespace";
 
 export async function createMonitorService(
   userId: number,
@@ -171,4 +172,63 @@ export async function getMonitorChecksService(
   });
 
   return checks;
+}
+
+export async function getMonitorStatsService(
+  userId: number,
+  monitorId: number,
+) {
+  const monitor = await prisma.monitor.findUnique({
+    where: {
+      id: monitorId,
+    },
+  });
+  if (!monitor) throw new Error("Monitor not found");
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      userId_workspaceId: {
+        userId,
+        workspaceId: monitor.workspaceId,
+      },
+    },
+  });
+
+  if (!membership) throw new Error("You do not have access to this monitor");
+
+  const checks = await prisma.monitorCheck.findMany({
+    where: { monitorId },
+    orderBy: { checkedAt: "desc" },
+  });
+
+  const totalChecks = checks.length;
+
+  const upChecks = checks.filter((check) => check.status === "UP").length;
+  const downChecks = checks.filter((check) => check.status === "DOWN").length;
+
+  const uptimePercentage =
+    totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
+
+  const checksWithResponseTime = checks.filter(
+    (check) => check.responseTimeMs !== null,
+  );
+
+  const averageResponseTimeMs =
+    checksWithResponseTime.length === 0
+      ? 0
+      : checksWithResponseTime.reduce(
+          (sum, check) => sum + check.responseTimeMs!,
+          0,
+        ) / checksWithResponseTime.length;
+
+  const latestStatus = checks[0]?.status ?? monitor.status;
+
+  return {
+    totalChecks,
+    upChecks,
+    downChecks,
+    uptimePercentage,
+    averageResponseTimeMs,
+    latestStatus,
+  };
 }
