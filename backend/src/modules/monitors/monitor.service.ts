@@ -1,7 +1,6 @@
 import { CreateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
 import axios from "axios";
-import { NullTypes } from "../../generated/prisma/internal/prismaNamespace";
 
 export async function createMonitorService(
   userId: number,

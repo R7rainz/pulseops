@@ -8,8 +8,6 @@ import {
   getWorkspaceMonitorsService,
   runMonitorCheckService,
 } from "./monitor.service";
-import { monitorEventLoopDelay } from "perf_hooks";
-import { number } from "zod/v3";
 
 type CreateMonitorParams = {
   workspaceId: string;
