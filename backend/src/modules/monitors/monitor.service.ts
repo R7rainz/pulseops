@@ -231,3 +231,70 @@ export async function getMonitorStatsService(
     latestStatus,
   };
 }
+
+export async function pauseMonitorService(userId: number, monitorId: number) {
+  const monitor = await prisma.monitor.findUnique({
+    where: {
+      id: monitorId,
+    },
+  });
+  if (!monitor) throw new Error("Monitor not found");
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      userId_workspaceId: {
+        userId,
+        workspaceId: monitor.workspaceId,
+      },
+    },
+  });
+  if (!membership)
+    throw new Error("You do not have access to this to this workspace");
+
+  const updatedMonitor = await prisma.monitor.update({
+    where: { id: monitorId },
+    data: {
+      isActive: false,
+      status: "PAUSED",
+    },
+  });
+
+  return updatedMonitor;
+}
+
+export async function resumeMonitorService(userId: number, monitorId: number) {
+  const monitor = await prisma.monitor.findUnique({
+    where: {
+      id: monitorId,
+    },
+  });
+
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      userId_workspaceId: {
+        userId,
+        workspaceId: monitor.workspaceId,
+      },
+    },
+  });
+
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
+
+  const updatedMonitor = await prisma.monitor.update({
+    where: {
+      id: monitorId,
+    },
+    data: {
+      isActive: true,
+      status: "UP",
+    },
+  });
+
+  return updatedMonitor;
+}

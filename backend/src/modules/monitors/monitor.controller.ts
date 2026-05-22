@@ -6,7 +6,9 @@ import {
   getMonitorChecksService,
   getMonitorStatsService,
   getWorkspaceMonitorsService,
+  pauseMonitorService,
   runMonitorCheckService,
+  resumeMonitorService,
 } from "./monitor.service";
 
 type CreateMonitorParams = {
@@ -117,5 +119,47 @@ export async function getMonitorStatsController(
   return response.status(200).send({
     message: "Monitor stats fetched successfully",
     data: stats,
+  });
+}
+
+export async function pauseMonitorController(
+  request: FastifyRequest<{ Params: RunMonitorCheckParams }>,
+  response: FastifyReply,
+) {
+  const monitorId = Number(request.params.monitorId);
+  if (Number.isNaN(monitorId)) {
+    return response.status(400).send({
+      message: "Invalid monitor id",
+    });
+  }
+
+  const pauseMonitor = await pauseMonitorService(
+    request.user.userId,
+    monitorId,
+  );
+  return response.status(200).send({
+    message: "Monitor is paused",
+    data: pauseMonitor,
+  });
+}
+
+export async function resumeMonitorController(
+  request: FastifyRequest<{ Params: RunMonitorCheckParams }>,
+  response: FastifyReply,
+) {
+  const monitorId = Number(request.params.monitorId);
+  if (Number.isNaN(monitorId)) {
+    return response.status(400).send({
+      message: "Invalid monitor id",
+    });
+  }
+
+  const resumeMonitor = await resumeMonitorService(
+    request.user.userId,
+    monitorId,
+  );
+  return response.status(200).send({
+    message: "Monitor is resumed successfully",
+    data: resumeMonitor,
   });
 }

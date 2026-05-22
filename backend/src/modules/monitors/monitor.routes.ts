@@ -5,6 +5,8 @@ import {
   getMonitorChecksController,
   getMonitorStatsController,
   getWorkspaceMonitorsController,
+  pauseMonitorController,
+  resumeMonitorController,
   runMonitorCheckController,
 } from "./monitor.controller";
 
@@ -37,5 +39,17 @@ export async function monitorRoutes(app: FastifyInstance) {
     "/monitors/:monitorId/stats",
     { preHandler: requireAuth },
     getMonitorStatsController,
+  );
+
+  app.post(
+    "/monitors/:monitorId/pause",
+    { preHandler: requireAuth },
+    pauseMonitorController,
+  );
+
+  app.post(
+    "/monitors/:monitorId/resume",
+    { preHandler: requireAuth },
+    resumeMonitorController,
   );
 }
