@@ -2,12 +2,14 @@ import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../middleware/auth.middleware";
 import {
   createMonitorController,
+  deleteMonitorController,
   getMonitorChecksController,
   getMonitorStatsController,
   getWorkspaceMonitorsController,
   pauseMonitorController,
   resumeMonitorController,
   runMonitorCheckController,
+  updateMonitorController,
 } from "./monitor.controller";
 
 export async function monitorRoutes(app: FastifyInstance) {
@@ -51,5 +53,17 @@ export async function monitorRoutes(app: FastifyInstance) {
     "/monitors/:monitorId/resume",
     { preHandler: requireAuth },
     resumeMonitorController,
+  );
+
+  app.patch(
+    "/monitors/:monitorId",
+    { preHandler: requireAuth },
+    updateMonitorController,
+  );
+
+  app.delete(
+    "/monitors/:monitorId",
+    { preHandler: requireAuth },
+    deleteMonitorController,
   );
 }

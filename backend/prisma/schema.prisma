@@ -90,7 +90,7 @@ model MonitorCheck {
   errorMessage   String?
   checkedAt      DateTime      @default(now())
 
-  monitor Monitor @relation(fields: [monitorId], references: [id])
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
 
   @@index([monitorId])
   @@index([checkedAt])

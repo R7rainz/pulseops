@@ -1,6 +1,6 @@
 import { FastifyReply } from "fastify";
 import { FastifyRequest } from "fastify/types/request";
-import { createMonitorSchema } from "./monitor.schema";
+import { createMonitorSchema, updateMonitorSchema } from "./monitor.schema";
 import {
   createMonitorService,
   getMonitorChecksService,
@@ -9,6 +9,8 @@ import {
   pauseMonitorService,
   runMonitorCheckService,
   resumeMonitorService,
+  updateMonitorService,
+  deleteMonitorService,
 } from "./monitor.service";
 
 type CreateMonitorParams = {
@@ -161,5 +163,52 @@ export async function resumeMonitorController(
   return response.status(200).send({
     message: "Monitor is resumed successfully",
     data: resumeMonitor,
+  });
+}
+
+export async function updateMonitorController(
+  request: FastifyRequest<{ Params: RunMonitorCheckParams }>,
+  response: FastifyReply,
+) {
+  const monitorId = Number(request.params.monitorId);
+
+  if (Number.isNaN(monitorId)) {
+    return response.status(400).send({
+      message: "Invalid monitor id",
+    });
+  }
+
+  const body = updateMonitorSchema.parse(request.body);
+
+  const updatedMonitor = await updateMonitorService(
+    request.user.userId,
+    monitorId,
+    body,
+  );
+
+  return response.status(200).send({
+    message: "Monitor updated successfully",
+    data: updatedMonitor,
+  });
+}
+
+export async function deleteMonitorController(
+  request: FastifyRequest<{ Params: RunMonitorCheckParams }>,
+  response: FastifyReply,
+) {
+  const monitorId = Number(request.params.monitorId);
+  if (Number.isNaN(monitorId)) {
+    return response.status(400).send({
+      message: "Invalid monitor id",
+    });
+  }
+
+  const deletedMonitor = await deleteMonitorService(
+    request.user.userId,
+    monitorId,
+  );
+  return response.status(200).send({
+    message: "Monitor deleted successfully",
+    data: deletedMonitor,
   });
 }

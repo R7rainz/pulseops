@@ -30,4 +30,7 @@ export const createMonitorSchema = z.object({
     .default(200),
 });
 
+export const updateMonitorSchema = createMonitorSchema.partial(); //this means use the same validation rule as createMonitorSchema but make every field optional
+
 export type CreateMonitorInput = z.infer<typeof createMonitorSchema>;
+export type UpdateMonitorInput = z.infer<typeof updateMonitorSchema>;

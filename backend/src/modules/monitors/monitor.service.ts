@@ -1,4 +1,4 @@
-import { CreateMonitorInput } from "./monitor.schema";
+import { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
 import axios from "axios";
 
@@ -297,4 +297,69 @@ export async function resumeMonitorService(userId: number, monitorId: number) {
   });
 
   return updatedMonitor;
+}
+
+export async function updateMonitorService(
+  userId: number,
+  monitorId: number,
+  input: UpdateMonitorInput,
+) {
+  const monitor = await prisma.monitor.findUnique({
+    where: {
+      id: monitorId,
+    },
+  });
+  if (!monitor) throw new Error("Monitor not found");
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      userId_workspaceId: {
+        userId,
+        workspaceId: monitor.workspaceId,
+      },
+    },
+  });
+  if (!membership) throw new Error("You do not have access to this workspace");
+
+  const upadatedMonitor = await prisma.monitor.update({
+    where: {
+      id: monitorId,
+    },
+    data: input,
+  });
+
+  return upadatedMonitor;
+}
+
+export async function deleteMonitorService(userId: number, monitorId: number) {
+  const monitor = await prisma.monitor.findUnique({
+    where: {
+      id: monitorId,
+    },
+  });
+
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      userId_workspaceId: {
+        userId,
+        workspaceId: monitor.workspaceId,
+      },
+    },
+  });
+
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
+
+  const deletedMonitor = await prisma.monitor.delete({
+    where: {
+      id: monitorId,
+    },
+  });
+
+  return deletedMonitor;
 }
