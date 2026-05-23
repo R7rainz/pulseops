@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { workspaceRoutes } from "./modules/workspaces/workspace.routes";
 import { monitorRoutes } from "./modules/monitors/monitor.routes";
+import { incidentRoutes } from "./modules/incidents/incident.routes";
 
 export async function buildApp() {
   const app = Fastify({
@@ -30,6 +31,10 @@ export async function buildApp() {
   });
 
   await app.register(monitorRoutes, {
+    prefix: "/api/v1",
+  });
+
+  await app.register(incidentRoutes, {
     prefix: "/api/v1",
   });
 

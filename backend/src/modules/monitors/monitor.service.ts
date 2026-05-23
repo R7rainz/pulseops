@@ -1,4 +1,4 @@
-import { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
+import type { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
 import axios from "axios";
 
@@ -15,7 +15,10 @@ export async function createMonitorService(
       },
     },
   });
-  if (!membership) throw new Error("You do not have access to this workspace");
+
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
 
   const monitor = await prisma.monitor.create({
     data: {
@@ -28,6 +31,7 @@ export async function createMonitorService(
       expectedStatus: input.expectedStatus,
     },
   });
+
   return monitor;
 }
 
@@ -43,7 +47,10 @@ export async function getWorkspaceMonitorsService(
       },
     },
   });
-  if (!membership) throw new Error("You do not have access to this workspace");
+
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
 
   const monitors = await prisma.monitor.findMany({
     where: {
@@ -57,6 +64,35 @@ export async function getWorkspaceMonitorsService(
   return monitors;
 }
 
+async function handleIncidentTransition(
+  monitorId: number,
+  oldStatus: string,
+  newStatus: string,
+) {
+  if (oldStatus !== "DOWN" && newStatus === "DOWN") {
+    await prisma.incident.create({
+      data: {
+        monitorId,
+        title: `Monitor ${monitorId} is down`,
+        status: "OPEN",
+      },
+    });
+  }
+
+  if (oldStatus === "DOWN" && newStatus === "UP") {
+    await prisma.incident.updateMany({
+      where: {
+        monitorId,
+        status: "OPEN",
+      },
+      data: {
+        status: "RESOLVED",
+        resolvedAt: new Date(),
+      },
+    });
+  }
+}
+
 export async function runMonitorCheckService(
   userId: number,
   monitorId: number,
@@ -67,7 +103,9 @@ export async function runMonitorCheckService(
     },
   });
 
-  if (!monitor) throw new Error("Monitor not found");
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
 
   const membership = await prisma.workspaceMember.findUnique({
     where: {
@@ -77,22 +115,27 @@ export async function runMonitorCheckService(
       },
     },
   });
-  if (!membership) throw new Error("You do not have access to this workspace");
+
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
 
   const startTime = Date.now();
-  //axios request will go here
+
   try {
-    //decide status
     const response = await axios.request({
       method: monitor.method,
       url: monitor.url,
       timeout: monitor.timeoutMs,
-      //By default Axios throws on 4xx and 5xx. For monitoring, we don’t want that. We want to receive the status code and decide ourselves whether it is UP or DOWN.
       validateStatus: () => true,
     });
+
     const responseTimeMs = Date.now() - startTime;
-    // create MonitorCheck
+
     const status = response.status === monitor.expectedStatus ? "UP" : "DOWN";
+
+    await handleIncidentTransition(monitor.id, monitor.status, status);
+
     const check = await prisma.monitorCheck.create({
       data: {
         monitorId: monitor.id,
@@ -101,7 +144,7 @@ export async function runMonitorCheckService(
         responseTimeMs,
       },
     });
-    // update Monitor
+
     await prisma.monitor.update({
       where: {
         id: monitor.id,
@@ -110,12 +153,13 @@ export async function runMonitorCheckService(
         status,
       },
     });
-    // return check
+
     return check;
   } catch (error) {
     const responseTimeMs = Date.now() - startTime;
 
-    //create failed MonitorCheck
+    await handleIncidentTransition(monitor.id, monitor.status, "DOWN");
+
     const check = await prisma.monitorCheck.create({
       data: {
         monitorId: monitor.id,
@@ -124,7 +168,7 @@ export async function runMonitorCheckService(
         errorMessage: error instanceof Error ? error.message : "Request failed",
       },
     });
-    // update monitor to DOWN
+
     await prisma.monitor.update({
       where: {
         id: monitor.id,
@@ -133,7 +177,7 @@ export async function runMonitorCheckService(
         status: "DOWN",
       },
     });
-    // return check
+
     return check;
   }
 }
@@ -148,7 +192,9 @@ export async function getMonitorChecksService(
     },
   });
 
-  if (!monitor) throw new Error("Monitor not found");
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
 
   const membership = await prisma.workspaceMember.findUnique({
     where: {
@@ -159,7 +205,9 @@ export async function getMonitorChecksService(
     },
   });
 
-  if (!membership) throw new Error("You do not have access to this monitor");
+  if (!membership) {
+    throw new Error("You do not have access to this monitor");
+  }
 
   const checks = await prisma.monitorCheck.findMany({
     where: {
@@ -182,7 +230,10 @@ export async function getMonitorStatsService(
       id: monitorId,
     },
   });
-  if (!monitor) throw new Error("Monitor not found");
+
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
 
   const membership = await prisma.workspaceMember.findUnique({
     where: {
@@ -193,11 +244,17 @@ export async function getMonitorStatsService(
     },
   });
 
-  if (!membership) throw new Error("You do not have access to this monitor");
+  if (!membership) {
+    throw new Error("You do not have access to this monitor");
+  }
 
   const checks = await prisma.monitorCheck.findMany({
-    where: { monitorId },
-    orderBy: { checkedAt: "desc" },
+    where: {
+      monitorId,
+    },
+    orderBy: {
+      checkedAt: "desc",
+    },
   });
 
   const totalChecks = checks.length;
@@ -238,7 +295,10 @@ export async function pauseMonitorService(userId: number, monitorId: number) {
       id: monitorId,
     },
   });
-  if (!monitor) throw new Error("Monitor not found");
+
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
 
   const membership = await prisma.workspaceMember.findUnique({
     where: {
@@ -248,11 +308,15 @@ export async function pauseMonitorService(userId: number, monitorId: number) {
       },
     },
   });
-  if (!membership)
-    throw new Error("You do not have access to this to this workspace");
+
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
 
   const updatedMonitor = await prisma.monitor.update({
-    where: { id: monitorId },
+    where: {
+      id: monitorId,
+    },
     data: {
       isActive: false,
       status: "PAUSED",
@@ -309,7 +373,10 @@ export async function updateMonitorService(
       id: monitorId,
     },
   });
-  if (!monitor) throw new Error("Monitor not found");
+
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
 
   const membership = await prisma.workspaceMember.findUnique({
     where: {
@@ -319,16 +386,19 @@ export async function updateMonitorService(
       },
     },
   });
-  if (!membership) throw new Error("You do not have access to this workspace");
 
-  const upadatedMonitor = await prisma.monitor.update({
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
+
+  const updatedMonitor = await prisma.monitor.update({
     where: {
       id: monitorId,
     },
     data: input,
   });
 
-  return upadatedMonitor;
+  return updatedMonitor;
 }
 
 export async function deleteMonitorService(userId: number, monitorId: number) {
