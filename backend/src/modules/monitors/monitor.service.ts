@@ -1,6 +1,7 @@
 import type { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
 import axios from "axios";
+import { monitorCheckQueue } from "../../queues/monitor.queue";
 
 export async function createMonitorService(
   userId: number,
@@ -432,4 +433,37 @@ export async function deleteMonitorService(userId: number, monitorId: number) {
   });
 
   return deletedMonitor;
+}
+
+export async function enqueueMonitorCheckService(
+  userId: number,
+  monitorId: number,
+) {
+  const monitor = await prisma.monitor.findUnique({
+    where: {
+      id: monitorId,
+    },
+  });
+  if (!monitor) throw new Error("Invalid monitor id");
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      userId_workspaceId: {
+        userId,
+        workspaceId: monitor.workspaceId,
+      },
+    },
+  });
+  if (!membership) throw new Error("You do not have access to this workspace");
+
+  const job = await monitorCheckQueue.add("run-check", {
+    userId,
+    monitorId,
+  });
+
+  return {
+    jobId: job.id,
+    monitorId,
+    status: "queued",
+  };
 }

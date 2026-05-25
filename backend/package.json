@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "prisma:dev": "prisma migrate dev",
-    "prisma:studio": "prisma studio"
+    "prisma:studio": "prisma studio",
+    "worker:dev": "tsx watch src/workers/monitor.worker.ts"
   },
   "keywords": [],
   "author": "",
@@ -20,8 +21,10 @@
     "@prisma/client": "^7.8.0",
     "axios": "^1.16.1",
     "bcryptjs": "^3.0.3",
+    "bullmq": "^5.77.2",
     "dotenv": "^17.4.2",
     "fastify": "^5.8.5",
+    "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.21.0",
     "zod": "^4.4.3"
