@@ -94,10 +94,7 @@ async function handleIncidentTransition(
   }
 }
 
-export async function runMonitorCheckService(
-  userId: number,
-  monitorId: number,
-) {
+export async function runMonitorCheckService(monitorId: number) {
   const monitor = await prisma.monitor.findUnique({
     where: {
       id: monitorId,
@@ -106,19 +103,6 @@ export async function runMonitorCheckService(
 
   if (!monitor) {
     throw new Error("Monitor not found");
-  }
-
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: monitor.workspaceId,
-      },
-    },
-  });
-
-  if (!membership) {
-    throw new Error("You do not have access to this workspace");
   }
 
   const startTime = Date.now();
@@ -152,6 +136,7 @@ export async function runMonitorCheckService(
       },
       data: {
         status,
+        lastCheckedAt: new Date(),
       },
     });
 
@@ -176,6 +161,7 @@ export async function runMonitorCheckService(
       },
       data: {
         status: "DOWN",
+        lastCheckedAt: new Date(),
       },
     });
 
@@ -444,7 +430,10 @@ export async function enqueueMonitorCheckService(
       id: monitorId,
     },
   });
-  if (!monitor) throw new Error("Invalid monitor id");
+
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
 
   const membership = await prisma.workspaceMember.findUnique({
     where: {
@@ -454,10 +443,12 @@ export async function enqueueMonitorCheckService(
       },
     },
   });
-  if (!membership) throw new Error("You do not have access to this workspace");
+
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
 
   const job = await monitorCheckQueue.add("run-check", {
-    userId,
     monitorId,
   });
 

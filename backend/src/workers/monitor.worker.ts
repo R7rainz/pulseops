@@ -12,14 +12,13 @@ const connection = new IORedis({
 const worker = new Worker(
   "monitor-checks",
   async (job) => {
-    const { userId, monitorId } = job.data as {
-      userId: number;
+    const { monitorId } = job.data as {
       monitorId: number;
     };
 
-    console.log(`Running monitor check job ${job.id}`, { userId, monitorId });
+    console.log(`Running monitor check job ${job.id}`, { monitorId });
 
-    const result = await runMonitorCheckService(userId, monitorId);
+    const result = await runMonitorCheckService(monitorId);
     return result;
   },
   {
