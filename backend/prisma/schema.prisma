@@ -37,8 +37,9 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members  WorkspaceMember[]
-  monitors Monitor[]
+  members          WorkspaceMember[]
+  monitors         Monitor[]
+  webhookEndpoints WebhookEndpoint[]
 }
 
 model WorkspaceMember {
@@ -72,6 +73,7 @@ model Monitor {
   expectedStatus  Int           @default(200)
   status          MonitorStatus @default(UP)
   isActive        Boolean       @default(true)
+  lastCheckedAt   DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -115,4 +117,17 @@ model Incident {
 
   @@index([monitorId])
   @@index([status])
+}
+
+model WebhookEndpoint {
+  id          Int      @id @default(autoincrement())
+  workspaceId Int
+  url         String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
 }
