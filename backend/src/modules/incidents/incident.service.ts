@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/db";
+import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 
 export async function getWorkspaceIncidentsService(
   userId: number,
@@ -189,6 +190,15 @@ export async function resolveIncidentService(
         },
       },
     },
+  });
+
+  await sendWebhookNotifications(incident.monitor.workspaceId, {
+    event: "incident.resolved",
+    incidentId: updatedIncident.id,
+    monitorId: updatedIncident.monitor.id,
+    workspaceId: updatedIncident.monitor.workspaceId,
+    message: `Incident manually resolved for monitor: ${updatedIncident.monitor.name}`,
+    timestamp: new Date().toISOString(),
   });
 
   return updatedIncident;
