@@ -20,7 +20,7 @@ async function enqueueActiveMonitors() {
 
     const isDue =
       !lastCheckedAt || now - lastCheckedAt >= monitor.intervalSeconds * 1000;
-    if (isDue) continue;
+    if (!isDue) continue;
 
     await monitorCheckQueue.add("run-check", {
       monitorId: monitor.id,
