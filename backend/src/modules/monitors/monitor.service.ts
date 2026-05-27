@@ -2,6 +2,7 @@ import type { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
 import axios from "axios";
 import { monitorCheckQueue } from "../../queues/monitor.queue";
+import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 
 export async function createMonitorService(
   userId: number,
@@ -70,27 +71,67 @@ async function handleIncidentTransition(
   oldStatus: string,
   newStatus: string,
 ) {
+  // 1. Fetch monitor details needed for the webhook payload
+  const monitor = await prisma.monitor.findUnique({
+    where: { id: monitorId },
+    select: { workspaceId: true, name: true },
+  });
+
+  if (!monitor) return; // Safeguard in case monitor was deleted
+
+  // 2. Handle Monitor DOWN (Create Incident)
   if (oldStatus !== "DOWN" && newStatus === "DOWN") {
-    await prisma.incident.create({
+    const newIncident = await prisma.incident.create({
       data: {
         monitorId,
-        title: `Monitor ${monitorId} is down`,
+        title: `Monitor ${monitor.name} is down`,
         status: "OPEN",
       },
+    });
+
+    // Trigger Webhook for New Incident
+    await sendWebhookNotifications(monitor.workspaceId, {
+      event: "incident.opened",
+      incidentId: newIncident.id,
+      monitorId: monitorId,
+      workspaceId: monitor.workspaceId,
+      message: `Monitor is DOWN: ${monitor.name}`,
+      timestamp: new Date().toISOString(),
     });
   }
 
+  // 3. Handle Monitor UP (Resolve Incident)
   if (oldStatus === "DOWN" && newStatus === "UP") {
-    await prisma.incident.updateMany({
+    // Find the currently open incident for this monitor
+    const openIncident = await prisma.incident.findFirst({
       where: {
         monitorId,
-        status: "OPEN",
-      },
-      data: {
-        status: "RESOLVED",
-        resolvedAt: new Date(),
+        status: {
+          in: ["OPEN", "ACKNOWLEDGED"],
+        },
       },
     });
+
+    if (openIncident) {
+      // Update the specific incident so we get the returned data
+      const resolvedIncident = await prisma.incident.update({
+        where: { id: openIncident.id },
+        data: {
+          status: "RESOLVED",
+          resolvedAt: new Date(),
+        },
+      });
+
+      // Trigger Webhook for Auto-Resolved Incident
+      await sendWebhookNotifications(monitor.workspaceId, {
+        event: "incident.resolved",
+        incidentId: resolvedIncident.id,
+        monitorId: monitorId,
+        workspaceId: monitor.workspaceId,
+        message: `Monitor is back UP: ${monitor.name}`,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 }
 
