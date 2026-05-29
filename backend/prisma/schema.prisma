@@ -127,7 +127,21 @@ model WebhookEndpoint {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace           Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  webhookDeliveryLogs WebhookDeliveryLog[]
 
   @@index([workspaceId])
+}
+
+model WebhookDeliveryLog {
+  id             Int      @id @default(autoincrement())
+  webhookId      Int
+  url            String
+  requestPayload Json
+  responseStatus Int?
+  responseBody   String?
+  isSuccess      Boolean
+  createdAt      DateTime @default(now())
+
+  webhook WebhookEndpoint @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 }
