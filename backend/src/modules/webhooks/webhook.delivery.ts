@@ -1,5 +1,6 @@
 import axios from "axios";
 import { prisma } from "../../lib/db";
+import { webhookLogsQueue } from "./webhook.queue";
 
 export interface WebhookPayload {
   event: "incident.opened" | "incident.resolved";
@@ -38,10 +39,67 @@ export const sendWebhookNotifications = async (
 
   const results = await Promise.allSettled(requests);
 
-  results.forEach((result, index) => {
+  const logEntries = results.map((result, index) => {
+    const webhook = webhooks[index];
+    let responseStatus: number | null = null;
+    let responseBody: string | null = null;
+
+    if (result.status === "fulfilled") {
+      responseStatus = result.value.status;
+      responseBody =
+        typeof result.value.data === "string"
+          ? result.value.data
+          : JSON.stringify(result.value.data);
+    } else {
+      const error = result.reason;
+      responseStatus = error.response?.status || null;
+
+      if (error.response?.data) {
+        responseBody =
+          typeof error.response.data === "string"
+            ? error.response.data
+            : JSON.stringify(error.response.data);
+      } else {
+        responseBody = error.message;
+      }
+    }
+    return {
+      webhookId: webhook.id,
+      url: webhook.url,
+      requestPayload: payload as any,
+      responseStatus,
+      responseBody,
+      isSuccess: result.status === "fulfilled",
+    };
+  });
+
+  await prisma.webhookDeliveryLog.createMany({
+    data: logEntries,
+  });
+
+  // Replace your existing results.forEach with this:
+  results.forEach(async (result, index) => {
     if (result.status === "rejected") {
-      console.error(
-        `[Webhook Failed] URL: ${webhooks[index].url} | Error: ${result.reason.message}`,
+      const webhook = webhooks[index];
+      console.log(
+        `[Webhook Failed] URL: ${webhook.url} | Queuing for retry...`,
+      );
+
+      // Toss it into the retry queue with Exponential Backoff
+      await webhookLogsQueue.add(
+        "retry-delivery",
+        {
+          webhookId: webhook.id,
+          url: webhook.url,
+          payload: payload,
+        },
+        {
+          attempts: 5, // Try 5 times total
+          backoff: {
+            type: "exponential",
+            delay: 60_000, // Wait 1 minute, then 2 mins, then 4 mins...
+          },
+        },
       );
     }
   });
