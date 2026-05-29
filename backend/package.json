@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "prisma:dev": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "worker:dev": "tsx watch src/workers/monitor.worker.ts",
+    "worker:monitor:dev": "tsx watch src/workers/monitor.worker.ts",
+    "worker:webhook:dev": "tsx watch src/workers/webhook.worker.ts",
     "scheduler:dev": "tsx watch src/schedulers/monitor.scheduler.ts"
   },
   "keywords": [],
