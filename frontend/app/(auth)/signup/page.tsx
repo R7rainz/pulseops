@@ -1,29 +1,29 @@
 "use client";
 
 import { useActionState } from "react";
-import { loginUser } from "../auth.actions";
+import { signupUser } from "../auth.actions";
 import Link from "next/link";
-import { Activity, AlertTriangle } from "lucide-react";
+import { AlertTriangle, ShieldCheck } from "lucide-react";
 
-export default function LoginPage() {
-  const [state, formAction, isPending] = useActionState(loginUser, {});
+export default function SignupPage() {
+  const [state, formAction, isPending] = useActionState(signupUser, {});
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-mono flex items-center justify-center p-6 selection:bg-emerald-500/30 selection:text-emerald-400">
       {/* Background Pulse matching the Core Theme */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500 opacity-[0.05] blur-[150px] pointer-events-none animate-pulse" />
 
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md relative z-10 my-8">
         {/* Header */}
         <div className="mb-10 text-center">
           <div className="inline-flex p-3 bg-zinc-900 border-2 border-zinc-800 mb-6">
-            <Activity className="w-6 h-6 text-emerald-400" />
+            <ShieldCheck className="w-6 h-6 text-emerald-400" />
           </div>
           <h1 className="text-3xl font-extrabold uppercase tracking-widest text-zinc-100">
-            Auth<span className="text-emerald-400">Gateway</span>
+            System<span className="text-emerald-400">Registry</span>
           </h1>
           <p className="text-zinc-500 text-sm mt-2 uppercase tracking-wide">
-            Establish Secure Session
+            Provision New Identity
           </p>
         </div>
 
@@ -36,6 +36,23 @@ export default function LoginPage() {
                 <p className="pt-0.5">{state.error}</p>
               </div>
             )}
+
+            <div className="space-y-2">
+              <label
+                htmlFor="name"
+                className="block text-xs font-bold text-zinc-400 uppercase tracking-widest"
+              >
+                Operator Designation
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                required
+                placeholder="e.g., RAINZ"
+                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
+              />
+            </div>
 
             <div className="space-y-2">
               <label
@@ -76,7 +93,7 @@ export default function LoginPage() {
               disabled={isPending}
               className="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-4 border-2 border-transparent transition-all disabled:opacity-50 rounded-none"
             >
-              {isPending ? "Authenticating..." : "Initialize Session"}
+              {isPending ? "Provisioning..." : "Execute Registry"}
             </button>
           </form>
         </div>
@@ -84,12 +101,12 @@ export default function LoginPage() {
         {/* Footer Link */}
         <div className="mt-8 text-center">
           <p className="text-zinc-500 text-sm">
-            No active profile?{" "}
+            Identity already provisioned?{" "}
             <Link
-              href="/signup"
+              href="/login"
               className="text-cyan-400 hover:text-cyan-300 hover:underline font-bold uppercase tracking-wide"
             >
-              Provision one
+              Establish Session
             </Link>
           </p>
         </div>
