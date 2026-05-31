@@ -1,7 +1,6 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { loginSchema, signupSchema } from "./auth.schema";
 import { loginService, signupService } from "./auth.service";
-import { verifyAccessToken } from "../../lib/jwt";
 import { getMeService } from "./auth.service";
 
 export async function signupController(

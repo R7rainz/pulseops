@@ -60,15 +60,33 @@ export async function getWorkspaceMonitorsController(
     });
   }
 
-  const monitors = await getWorkspaceMonitorsService(
-    request.user.userId,
-    numWorkspaceID,
-  );
+  try {
+    const monitors = await getWorkspaceMonitorsService(
+      request.user.userId,
+      numWorkspaceID,
+    );
 
-  return response.status(200).send({
-    message: "Monitors fetched successfully",
-    data: monitors,
-  });
+    return response.status(200).send({
+      message: "Monitors fetched successfully",
+      data: monitors,
+    });
+  } catch (error) {
+    // 1. Check if this is our specific security error from the Service layer
+    if (
+      error instanceof Error &&
+      error.message === "You do not have access to this workspace"
+    ) {
+      return response.status(403).send({
+        message: "Forbidden: You do not have access to this workspace",
+      });
+    }
+
+    // 2. If it's a completely unexpected database crash, return a 500
+    console.error("[getWorkspaceMonitorsController] CRITICAL:", error);
+    return response.status(500).send({
+      message: "Internal Server Error",
+    });
+  }
 }
 
 export async function runMonitorCheckController(
