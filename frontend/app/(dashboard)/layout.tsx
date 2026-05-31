@@ -1,55 +1,41 @@
-import Link from "next/link";
-import { logoutUser } from "./actions";
-import { Activity, Webhook, LogOut } from "lucide-react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import Sidebar from "./Sidebar";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("pulseops_token")?.value;
+
+  if (!token) redirect("/login");
+
+  let workspaces = [];
+
+  try {
+    const res = await fetch("http://127.0.0.1:4000/api/v1/workspaces", {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      const json = await res.json();
+      workspaces = json.data || [];
+    }
+  } catch (err) {
+    console.error("Layout failed to fetch workspaces:", err);
+  }
+
   return (
-    <div className="flex min-h-screen bg-zinc-950 text-zinc-50 font-mono">
-      {/* Sidebar Navigation */}
-      <aside className="w-64 border-r border-zinc-800 bg-zinc-900/40 flex flex-col">
-        <div className="p-6 border-b border-zinc-800">
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-100">
-            PulseOps
-          </h2>
-        </div>
+    <div className="flex min-h-screen bg-zinc-950 text-zinc-50 font-mono selection:bg-emerald-500/30 selection:text-emerald-400">
+      <Sidebar workspaces={workspaces} />
 
-        <nav className="flex-1 p-4 space-y-2">
-          <Link
-            href="/monitors"
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-zinc-800/80 transition-colors text-zinc-300 hover:text-zinc-50"
-          >
-            <Activity size={18} className="text-emerald-400" />
-            Monitors
-          </Link>
-          <Link
-            href="/webhooks"
-            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-zinc-800/80 transition-colors text-zinc-300 hover:text-zinc-50"
-          >
-            <Webhook size={18} className="text-indigo-400" />
-            Webhooks
-          </Link>
-        </nav>
-
-        {/* Real Logout Action */}
-        <div className="p-4 border-t border-zinc-800">
-          <form action={logoutUser}>
-            <button
-              type="submit"
-              className="flex w-full items-center gap-3 px-3 py-2 rounded-md hover:bg-red-500/10 hover:text-red-400 transition-colors text-zinc-500 cursor-pointer"
-            >
-              <LogOut size={18} />
-              Disconnect
-            </button>
-          </form>
-        </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto">{children}</main>
+      {/* Main Content Frame with Geometric Grid Overlay */}
+      <div className="flex-1 min-w-0 bg-zinc-950 relative z-0">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none -z-10" />
+        {children}
+      </div>
     </div>
   );
 }
