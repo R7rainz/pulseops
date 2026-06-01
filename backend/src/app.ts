@@ -5,6 +5,7 @@ import { workspaceRoutes } from "./modules/workspaces/workspace.routes";
 import { monitorRoutes } from "./modules/monitors/monitor.routes";
 import { incidentRoutes } from "./modules/incidents/incident.routes";
 import { webhookRoutes } from "./modules/webhooks/webhook.routes";
+import { startPingEngine } from "./modules/monitors/monitor.engine";
 
 export async function buildApp() {
   const app = Fastify({
@@ -43,5 +44,6 @@ export async function buildApp() {
     prefix: "/api/v1",
   });
 
+  startPingEngine();
   return app;
 }

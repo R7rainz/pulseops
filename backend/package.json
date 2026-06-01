@@ -28,12 +28,14 @@
     "fastify": "^5.8.5",
     "ioredis": "^5.10.1",
     "jsonwebtoken": "^9.0.3",
+    "node-cron": "^4.2.1",
     "pg": "^8.21.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.9.0",
+    "@types/node-cron": "^3.0.11",
     "@types/pg": "^8.20.0",
     "prisma": "^7.8.0",
     "tsx": "^4.22.2",
