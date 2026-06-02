@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createMonitor, deleteMonitor } from "./actions";
+import { createMonitor, deleteMonitor, pauseMonitor, resumeMonitor, triggerCheck } from "./actions";
 import Link from "next/link";
 import {
   Trash2,
@@ -10,6 +10,9 @@ import {
   PlusSquare,
   AlertTriangle,
   TerminalSquare,
+  Play,
+  Pause,
+  ExternalLink,
 } from "lucide-react";
 
 interface Monitor {
@@ -34,6 +37,7 @@ export default async function MonitorsPage({
   if (!token) redirect("/login");
 
   let monitors = [];
+  let monitorsStatus: number | null = null;
 
   try {
     const monitorsRes = await fetch(
@@ -44,9 +48,7 @@ export default async function MonitorsPage({
       },
     );
 
-    if (monitorsRes.status === 401 || monitorsRes.status === 403) {
-      redirect("/login");
-    }
+    monitorsStatus = monitorsRes.status;
 
     if (monitorsRes.ok) {
       const monitorsData = await monitorsRes.json();
@@ -55,6 +57,10 @@ export default async function MonitorsPage({
     }
   } catch (error) {
     console.error("Network error fetching monitors:", error);
+  }
+
+  if (monitorsStatus === 401 || monitorsStatus === 403) {
+    redirect("/login");
   }
 
   return (
@@ -154,16 +160,13 @@ export default async function MonitorsPage({
               monitors.map((monitor: Monitor) => (
                 <div
                   key={monitor.id}
-                  className="relative flex flex-col justify-between h-40 p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-emerald-500/50 transition-colors group"
+                  className="flex flex-col justify-between h-40 p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-emerald-500/50 transition-colors group"
                 >
-                  {/* Invisible Link Overlay */}
+                  {/* Top Bar: Status Box & Title (clickable) */}
                   <Link
                     href={`/workspaces/${workspaceId}/monitors/${monitor.id}`}
-                    className="absolute inset-0 z-10"
-                  />
-
-                  {/* Top Bar: Status Box & Title */}
-                  <div className="relative z-0 pointer-events-none flex items-start gap-4">
+                    className="flex items-start gap-4"
+                  >
                     <div
                       className={`w-3 h-3 mt-1.5 border flex-shrink-0 ${
                         monitor.status === "UP"
@@ -181,11 +184,11 @@ export default async function MonitorsPage({
                         {monitor.url}
                       </p>
                     </div>
-                  </div>
+                  </Link>
 
                   {/* Bottom Bar: Timestamps & Actions */}
-                  <div className="relative z-0 flex items-end justify-between mt-4 pt-4 border-t-2 border-zinc-900">
-                    <div className="pointer-events-none text-[10px] text-zinc-500 uppercase tracking-widest font-bold flex flex-col gap-1">
+                  <div className="flex items-end justify-between mt-4 pt-4 border-t-2 border-zinc-900">
+                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold flex flex-col gap-1">
                       <span className="text-zinc-600">Last Ping</span>
                       <span
                         className={
@@ -203,7 +206,45 @@ export default async function MonitorsPage({
                     </div>
 
                     {/* Isolated Actions Bar */}
-                    <div className="relative z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {monitor.status !== "PAUSED" ? (
+                        <form action={pauseMonitor}>
+                          <input type="hidden" name="workspaceId" value={workspaceId} />
+                          <input type="hidden" name="monitorId" value={monitor.id} />
+                          <button
+                            type="submit"
+                            className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-yellow-400 hover:border-yellow-500 transition-colors"
+                            title="Pause Target"
+                          >
+                            <Pause className="w-4 h-4" />
+                          </button>
+                        </form>
+                      ) : (
+                        <form action={resumeMonitor}>
+                          <input type="hidden" name="workspaceId" value={workspaceId} />
+                          <input type="hidden" name="monitorId" value={monitor.id} />
+                          <button
+                            type="submit"
+                            className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors"
+                            title="Resume Target"
+                          >
+                            <Play className="w-4 h-4" />
+                          </button>
+                        </form>
+                      )}
+
+                      <form action={triggerCheck}>
+                        <input type="hidden" name="workspaceId" value={workspaceId} />
+                        <input type="hidden" name="monitorId" value={monitor.id} />
+                        <button
+                          type="submit"
+                          className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"
+                          title="Trigger Check"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </button>
+                      </form>
+
                       <form action={deleteMonitor}>
                         <input
                           type="hidden"
