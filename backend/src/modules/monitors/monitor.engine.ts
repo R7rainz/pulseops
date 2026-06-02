@@ -53,7 +53,7 @@ export function startPingEngine() {
               monitorId: monitor.id,
               status: currentStatus,
               statusCode: statusCode,
-              responseTime: latencyMs,
+              responseTimeMs: latencyMs,
             },
           });
 

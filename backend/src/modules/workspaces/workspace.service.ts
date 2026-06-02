@@ -1,4 +1,4 @@
-import { CreateWorkspaceInput } from "./workspace.schema";
+import { CreateWorkspaceInput, UpdateWorkspaceInput } from "./workspace.schema";
 import { prisma } from "../../lib/db";
 
 function createSlug(name: string) {
@@ -38,9 +38,7 @@ export async function createWorkspaceService(
 
 export async function getUserWorkspacesService(userId: number) {
   const memberships = await prisma.workspaceMember.findMany({
-    where: {
-      userId,
-    },
+    where: { userId },
     select: {
       role: true,
       workspace: {
@@ -59,4 +57,69 @@ export async function getUserWorkspacesService(userId: number) {
     ...membership.workspace,
     role: membership.role,
   }));
+}
+
+export async function getWorkspaceService(
+  userId: number,
+  workspaceId: number,
+) {
+  const membership = await prisma.workspaceMember.findFirst({
+    where: { userId, workspaceId },
+    select: {
+      role: true,
+      workspace: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
+  });
+
+  if (!membership) throw new Error("Workspace not found");
+
+  return { ...membership.workspace, role: membership.role };
+}
+
+export async function updateWorkspaceService(
+  userId: number,
+  workspaceId: number,
+  input: UpdateWorkspaceInput,
+) {
+  const membership = await prisma.workspaceMember.findFirst({
+    where: { userId, workspaceId, role: "OWNER" },
+  });
+
+  if (!membership) throw new Error("Only workspace owners can update settings");
+
+  const data: Record<string, string> = {};
+  if (input.name) {
+    data.name = input.name;
+    data.slug = createSlug(input.name);
+  }
+
+  const workspace = await prisma.workspace.update({
+    where: { id: workspaceId },
+    data,
+  });
+
+  return workspace;
+}
+
+export async function deleteWorkspaceService(
+  userId: number,
+  workspaceId: number,
+) {
+  const membership = await prisma.workspaceMember.findFirst({
+    where: { userId, workspaceId, role: "OWNER" },
+  });
+
+  if (!membership) throw new Error("Only workspace owners can delete workspaces");
+
+  await prisma.workspace.delete({
+    where: { id: workspaceId },
+  });
 }
