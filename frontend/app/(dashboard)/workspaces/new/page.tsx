@@ -6,7 +6,7 @@ import { TerminalSquare, PlusSquare, AlertTriangle } from "lucide-react";
 
 export default function NewWorkspacePage() {
   // 🚨 THE FIX: Wire up the action state properly!
-  const [state, formAction, isPending] = useActionState(createWorkspace, {});
+  const [state, formAction, isPending] = useActionState(createWorkspace, undefined);
 
   return (
     <main className="p-10 font-mono text-zinc-50 min-h-screen bg-transparent flex flex-col items-center justify-center">
