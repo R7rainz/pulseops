@@ -16,54 +16,54 @@ export async function monitorRoutes(app: FastifyInstance) {
   app.post(
     "/workspaces/:workspaceId/monitors",
     { preHandler: requireAuth },
-    createMonitorController,
+    createMonitorController as any,
   );
 
   app.get(
     "/workspaces/:workspaceId/monitors",
     { preHandler: requireAuth },
-    getWorkspaceMonitorsController,
+    getWorkspaceMonitorsController as any,
   );
 
   app.post(
     "/monitors/:monitorId/check",
     { preHandler: requireAuth },
-    runMonitorCheckController,
+    runMonitorCheckController as any,
   );
 
   app.get(
     "/monitors/:monitorId/checks",
     { preHandler: requireAuth },
-    getMonitorChecksController,
+    getMonitorChecksController as any,
   );
 
   app.get(
     "/monitors/:monitorId/stats",
     { preHandler: requireAuth },
-    getMonitorStatsController,
+    getMonitorStatsController as any,
   );
 
   app.post(
     "/monitors/:monitorId/pause",
     { preHandler: requireAuth },
-    pauseMonitorController,
+    pauseMonitorController as any,
   );
 
   app.post(
     "/monitors/:monitorId/resume",
     { preHandler: requireAuth },
-    resumeMonitorController,
+    resumeMonitorController as any,
   );
 
   app.patch(
     "/monitors/:monitorId",
     { preHandler: requireAuth },
-    updateMonitorController,
+    updateMonitorController as any,
   );
 
   app.delete(
     "/monitors/:monitorId",
     { preHandler: requireAuth },
-    deleteMonitorController,
+    deleteMonitorController as any,
   );
 }
