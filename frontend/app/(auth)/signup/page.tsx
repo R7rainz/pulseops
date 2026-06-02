@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { signupUser } from "../auth.actions";
 import Link from "next/link";
 import { AlertTriangle, ShieldCheck } from "lucide-react";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function SignupPage() {
   const [state, formAction, isPending] = useActionState(signupUser, {});
@@ -71,22 +72,13 @@ export default function SignupPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="block text-xs font-bold text-zinc-400 uppercase tracking-widest"
-              >
-                Access Token
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                placeholder="••••••••"
-                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
-              />
-            </div>
+            <PasswordInput
+              id="password"
+              name="password"
+              label="Access Token"
+              required
+              placeholder="••••••••"
+            />
 
             <button
               type="submit"
