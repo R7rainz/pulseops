@@ -40,6 +40,7 @@ model Workspace {
   members          WorkspaceMember[]
   monitors         Monitor[]
   webhookEndpoints WebhookEndpoint[]
+  apiKeys          ApiKey[]
 }
 
 model WorkspaceMember {
@@ -50,7 +51,7 @@ model WorkspaceMember {
   createdAt   DateTime      @default(now())
 
   user      User      @relation(fields: [userId], references: [id])
-  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, workspaceId])
 }
@@ -77,7 +78,7 @@ model Monitor {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  workspace Workspace      @relation(fields: [workspaceId], references: [id])
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   checks    MonitorCheck[]
   incidents Incident[]
 
@@ -117,6 +118,20 @@ model Incident {
 
   @@index([monitorId])
   @@index([status])
+}
+
+model ApiKey {
+  id          Int      @id @default(autoincrement())
+  workspaceId Int
+  name        String
+  key         String   @unique
+  lastUsedAt  DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
 }
 
 model WebhookEndpoint {
