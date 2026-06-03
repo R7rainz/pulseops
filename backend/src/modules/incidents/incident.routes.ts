@@ -11,24 +11,24 @@ export async function incidentRoutes(app: FastifyInstance) {
   app.get(
     "/workspaces/:workspaceId/incidents",
     { preHandler: requireAuth },
-    getWorkspaceIncidentsController,
+    getWorkspaceIncidentsController as any,
   );
 
   app.get(
     "/incidents/:incidentId",
     { preHandler: requireAuth },
-    getIncidentByIdController,
+    getIncidentByIdController as any,
   );
 
   app.post(
     "/incidents/:incidentId/acknowledge",
     { preHandler: requireAuth },
-    acknowledgeIncidentController,
+    acknowledgeIncidentController as any,
   );
 
   app.post(
     "/incidents/:incidentId/resolve",
     { preHandler: requireAuth },
-    resolveIncidentController,
+    resolveIncidentController as any,
   );
 }

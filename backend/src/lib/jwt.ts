@@ -4,11 +4,9 @@ export type AccessTokenPayload = {
   userId: number;
 };
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is missing");
-}
+const rawSecret = process.env.JWT_SECRET;
+if (!rawSecret) throw new Error("JWT_SECRET is missing");
+const JWT_SECRET: string = rawSecret;
 
 export function signAccessToken(payload: AccessTokenPayload): string {
   return jwt.sign(payload, JWT_SECRET, {
@@ -17,7 +15,7 @@ export function signAccessToken(payload: AccessTokenPayload): string {
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
-  return jwt.verify(token, JWT_SECRET) as AccessTokenPayload;
+  return jwt.verify(token, JWT_SECRET) as unknown as AccessTokenPayload;
 }
 
 export function verifyAccessTokenIgnoringExpiry(
@@ -25,5 +23,5 @@ export function verifyAccessTokenIgnoringExpiry(
 ): AccessTokenPayload {
   return jwt.verify(token, JWT_SECRET, {
     ignoreExpiration: true,
-  }) as AccessTokenPayload;
+  }) as unknown as AccessTokenPayload;
 }

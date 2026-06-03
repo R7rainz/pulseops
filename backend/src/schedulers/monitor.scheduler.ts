@@ -14,12 +14,12 @@ async function enqueueActiveMonitors() {
     },
   });
 
-  const now = new Date();
+  const nowMs = Date.now();
   for (const monitor of monitors) {
     const lastCheckedAt = monitor.lastCheckedAt?.getTime();
 
     const isDue =
-      !lastCheckedAt || now - lastCheckedAt >= monitor.intervalSeconds * 1000;
+      !lastCheckedAt || nowMs - lastCheckedAt >= monitor.intervalSeconds * 1000;
     if (!isDue) continue;
 
     await monitorCheckQueue.add("run-check", {
