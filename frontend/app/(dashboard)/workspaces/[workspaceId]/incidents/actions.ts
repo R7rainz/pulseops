@@ -22,7 +22,7 @@ export async function acknowledgeIncident(formData: FormData) {
   const workspaceId = formData.get("workspaceId") as string;
   const incidentId = formData.get("incidentId") as string;
 
-  if (!token) return { error: "Unauthenticated" };
+  if (!token) return;
 
   try {
     const res = await fetch(
@@ -38,15 +38,14 @@ export async function acknowledgeIncident(formData: FormData) {
 
     if (!res.ok) {
       const errData = await res.json();
-      return { error: errData.message || "Failed to acknowledge incident" };
+      setToast(cookieStore, errData.message || "Failed to acknowledge incident", "error");
+      return;
     }
 
     setToast(cookieStore, "Incident acknowledged");
     revalidatePath(`/workspaces/${workspaceId}/incidents`);
-    return { success: true };
   } catch (err) {
     setToast(cookieStore, "Network error acknowledging incident", "error");
-    return { error: "Network connection failure" };
   }
 }
 
@@ -56,7 +55,7 @@ export async function resolveIncident(formData: FormData) {
   const workspaceId = formData.get("workspaceId") as string;
   const incidentId = formData.get("incidentId") as string;
 
-  if (!token) return { error: "Unauthenticated" };
+  if (!token) return;
 
   try {
     const res = await fetch(
@@ -72,14 +71,13 @@ export async function resolveIncident(formData: FormData) {
 
     if (!res.ok) {
       const errData = await res.json();
-      return { error: errData.message || "Failed to resolve incident" };
+      setToast(cookieStore, errData.message || "Failed to resolve incident", "error");
+      return;
     }
 
     setToast(cookieStore, "Incident resolved");
     revalidatePath(`/workspaces/${workspaceId}/incidents`);
-    return { success: true };
   } catch (err) {
     setToast(cookieStore, "Network error resolving incident", "error");
-    return { error: "Network connection failure" };
   }
 }
