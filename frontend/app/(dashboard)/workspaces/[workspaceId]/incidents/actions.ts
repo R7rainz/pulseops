@@ -1,20 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 const API = "http://127.0.0.1:4000";
-
-function setToast(
-  cookieStore: Awaited<ReturnType<typeof cookies>>,
-  message: string,
-  type: "success" | "error" | "info" = "success",
-) {
-  cookieStore.set("pulseops_toast", JSON.stringify({ message, type }), {
-    path: "/",
-    maxAge: 5,
-  });
-}
 
 export async function acknowledgeIncident(formData: FormData) {
   const cookieStore = await cookies();
@@ -22,7 +11,7 @@ export async function acknowledgeIncident(formData: FormData) {
   const workspaceId = formData.get("workspaceId") as string;
   const incidentId = formData.get("incidentId") as string;
 
-  if (!token) return;
+  if (!token) return redirect(`/login?redirect=/workspaces/${workspaceId}/incidents`);
 
   try {
     const res = await fetch(
@@ -36,17 +25,17 @@ export async function acknowledgeIncident(formData: FormData) {
       },
     );
 
-    if (!res.ok) {
+    if (res.ok) {
+      cookieStore.set("pulseops_toast", JSON.stringify({ message: "Incident acknowledged", type: "success" }), { path: "/", maxAge: 5 });
+    } else {
       const errData = await res.json();
-      setToast(cookieStore, errData.message || "Failed to acknowledge incident", "error");
-      return;
+      cookieStore.set("pulseops_toast", JSON.stringify({ message: errData.message || "Failed to acknowledge", type: "error" }), { path: "/", maxAge: 5 });
     }
-
-    setToast(cookieStore, "Incident acknowledged");
-    revalidatePath(`/workspaces/${workspaceId}/incidents`);
-  } catch (err) {
-    setToast(cookieStore, "Network error acknowledging incident", "error");
+  } catch {
+    cookieStore.set("pulseops_toast", JSON.stringify({ message: "Network error", type: "error" }), { path: "/", maxAge: 5 });
   }
+
+  redirect(`/workspaces/${workspaceId}/incidents`);
 }
 
 export async function resolveIncident(formData: FormData) {
@@ -55,7 +44,7 @@ export async function resolveIncident(formData: FormData) {
   const workspaceId = formData.get("workspaceId") as string;
   const incidentId = formData.get("incidentId") as string;
 
-  if (!token) return;
+  if (!token) return redirect(`/login?redirect=/workspaces/${workspaceId}/incidents`);
 
   try {
     const res = await fetch(
@@ -69,15 +58,15 @@ export async function resolveIncident(formData: FormData) {
       },
     );
 
-    if (!res.ok) {
+    if (res.ok) {
+      cookieStore.set("pulseops_toast", JSON.stringify({ message: "Incident resolved", type: "success" }), { path: "/", maxAge: 5 });
+    } else {
       const errData = await res.json();
-      setToast(cookieStore, errData.message || "Failed to resolve incident", "error");
-      return;
+      cookieStore.set("pulseops_toast", JSON.stringify({ message: errData.message || "Failed to resolve", type: "error" }), { path: "/", maxAge: 5 });
     }
-
-    setToast(cookieStore, "Incident resolved");
-    revalidatePath(`/workspaces/${workspaceId}/incidents`);
-  } catch (err) {
-    setToast(cookieStore, "Network error resolving incident", "error");
+  } catch {
+    cookieStore.set("pulseops_toast", JSON.stringify({ message: "Network error", type: "error" }), { path: "/", maxAge: 5 });
   }
+
+  redirect(`/workspaces/${workspaceId}/incidents`);
 }
