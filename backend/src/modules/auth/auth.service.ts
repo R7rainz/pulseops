@@ -1,7 +1,10 @@
 import { prisma } from "../../lib/db";
 import { checkPassword, hashPassword } from "../../lib/password";
 import { LoginInput, SignupInput } from "./auth.schema";
-import { signAccessToken } from "../../lib/jwt";
+import {
+  signAccessToken,
+  verifyAccessTokenIgnoringExpiry,
+} from "../../lib/jwt";
 
 export async function signupService(input: SignupInput) {
   // input is an object:
@@ -62,6 +65,12 @@ export async function loginService(input: LoginInput) {
     },
     accessToken,
   };
+}
+
+export async function refreshTokenService(token: string) {
+  const payload = verifyAccessTokenIgnoringExpiry(token);
+  const accessToken = signAccessToken({ userId: payload.userId });
+  return { accessToken };
 }
 
 export async function getMeService(userId: number) {

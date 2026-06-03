@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-type AccessTokenPayload = {
+export type AccessTokenPayload = {
   userId: number;
 };
 
@@ -18,4 +18,12 @@ export function signAccessToken(payload: AccessTokenPayload): string {
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
   return jwt.verify(token, JWT_SECRET) as AccessTokenPayload;
+}
+
+export function verifyAccessTokenIgnoringExpiry(
+  token: string,
+): AccessTokenPayload {
+  return jwt.verify(token, JWT_SECRET, {
+    ignoreExpiration: true,
+  }) as AccessTokenPayload;
 }
