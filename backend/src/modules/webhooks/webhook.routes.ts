@@ -10,18 +10,18 @@ export async function webhookRoutes(app: FastifyInstance) {
   app.post(
     "/workspaces/:workspaceId/webhooks",
     { preHandler: requireAuth },
-    createWebhookController,
+    createWebhookController as any,
   );
 
   app.get(
     "/workspaces/:workspaceId/webhooks",
     { preHandler: requireAuth },
-    getWorkspaceWebhooksController,
+    getWorkspaceWebhooksController as any,
   );
 
   app.delete(
     "/webhooks/:webhookId",
     { preHandler: requireAuth },
-    deleteWebhookController,
+    deleteWebhookController as any,
   );
 }

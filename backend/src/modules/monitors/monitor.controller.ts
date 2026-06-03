@@ -7,12 +7,12 @@ import {
   getMonitorStatsService,
   getWorkspaceMonitorsService,
   pauseMonitorService,
-  runMonitorCheckService,
   resumeMonitorService,
   updateMonitorService,
   deleteMonitorService,
   enqueueMonitorCheckService,
 } from "./monitor.service";
+import { prisma } from "../../lib/db";
 
 type CreateMonitorParams = {
   workspaceId: string;
@@ -234,4 +234,62 @@ export async function deleteMonitorController(
     message: "Monitor deleted successfully",
     data: deletedMonitor,
   });
+}
+
+export async function monitorHeartbeatController(
+  request: FastifyRequest<{ Params: RunMonitorCheckParams }>,
+  response: FastifyReply,
+) {
+  try {
+    const monitorId = Number(request.params.monitorId);
+    const workspaceId = request.machineAuth?.workspaceId;
+    if (!workspaceId) {
+      return response.status(403).send({
+        message: "FORBIDDEN: Machine context missing.",
+      });
+    }
+
+    const target = await prisma.monitor.findFirst({
+      where: {
+        id: monitorId,
+        workspaceId,
+      },
+    });
+
+    if (!target) {
+      return response.status(404).send({
+        message: "Target node not found or access denied",
+      });
+    }
+
+    if (target.status === "PAUSED") {
+      prisma.monitor.update({
+        where: {
+          id: monitorId,
+        },
+        data: {
+          status: "UP",
+          lastCheckedAt: new Date(),
+        },
+      });
+
+      prisma.monitorCheck.create({
+        data: {
+          monitorId: monitorId,
+          status: "UP",
+          statusCode: 200,
+          responseTimeMs: 0,
+        },
+      });
+    }
+
+    return response.status(200).send({
+      message: `HEARTBEAT ACKNOWLEDGE: Node [${target.name}] status UP`,
+    });
+  } catch (error) {
+    console.error("Heartbeat processing failure: ", error);
+    return response.status(500).send({
+      message: "Internal telemetry failure.",
+    });
+  }
 }
