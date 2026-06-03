@@ -70,10 +70,7 @@ export function IncidentActions({
 
         const res = await fetch(`${API}/api/v1/incidents/${incidentId}/${action}`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.ok) {
