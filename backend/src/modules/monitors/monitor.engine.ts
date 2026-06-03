@@ -53,6 +53,7 @@ export function startPingEngine() {
 
           let targetStatus = monitor.status;
           let updatedFailures = monitor.consecutiveFailures;
+          let newlyTriggeredIncident = false;
 
           if (currentAttemptUp) {
             updatedFailures = 0;
@@ -62,10 +63,14 @@ export function startPingEngine() {
 
             if (updatedFailures >= monitor.graceThreshold) {
               targetStatus = "DOWN";
+
+              if (monitor.status !== "DOWN" && updatedFailures === monitor.graceThreshold) {
+                newlyTriggeredIncident = true;
+              }
             }
           }
 
-          await prisma.$transaction([
+          const transactionQueries: any[] = [
             prisma.monitorCheck.create({
               data: {
                 monitorId: monitor.id,
@@ -74,7 +79,6 @@ export function startPingEngine() {
                 responseTimeMs: latencyMs,
               },
             }),
-
             prisma.monitor.update({
               where: { id: monitor.id },
               data: {
@@ -83,7 +87,37 @@ export function startPingEngine() {
                 lastCheckedAt: new Date(),
               },
             }),
-          ]);
+          ];
+
+          if (newlyTriggeredIncident) {
+            transactionQueries.push(
+              prisma.incident.create({
+                data: {
+                  monitorId: monitor.id,
+                  status: "OPEN",
+                  title: `Node Offline: HTTP ${statusCode} threshold breached`,
+                },
+              })
+            );
+          }
+
+          if (currentAttemptUp && monitor.status === "DOWN") {
+            transactionQueries.push(
+              prisma.incident.updateMany({
+                where: {
+                  monitorId: monitor.id,
+                  status: { in: ["OPEN", "ACKNOWLEDGED"] },
+                },
+                data: {
+                  status: "RESOLVED",
+                  resolvedAt: new Date(),
+                },
+              })
+            );
+          }
+
+          //executing everything in a single database context
+          await prisma.$transaction(transactionQueries);
         }),
       );
 

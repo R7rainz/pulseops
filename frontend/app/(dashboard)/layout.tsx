@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Sidebar from "./Sidebar";
+import Toast from "@/components/Toast";
 import { apiFetch } from "@/lib/apiFetch";
 
 export default async function DashboardLayout({
@@ -42,6 +43,7 @@ export default async function DashboardLayout({
 
       <div className="flex-1 min-w-0 bg-zinc-950 relative z-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none -z-10" />
+        <Toast />
         {children}
       </div>
     </div>
