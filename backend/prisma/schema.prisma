@@ -64,19 +64,21 @@ enum MonitorStatus {
 }
 
 model Monitor {
-  id              Int           @id @default(autoincrement())
-  workspaceId     Int
-  name            String
-  url             String
-  method          String        @default("GET")
-  intervalSeconds Int
-  timeoutMs       Int           @default(5000)
-  expectedStatus  Int           @default(200)
-  status          MonitorStatus @default(UP)
-  isActive        Boolean       @default(true)
-  lastCheckedAt   DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id                  Int           @id @default(autoincrement())
+  workspaceId         Int
+  name                String
+  url                 String
+  method              String        @default("GET")
+  intervalSeconds     Int           @default(60)
+  timeoutMs           Int           @default(5000)
+  expectedStatus      Int           @default(200)
+  status              MonitorStatus @default(UP)
+  consecutiveFailures Int           @default(0)
+  graceThreshold      Int           @default(3)
+  isActive            Boolean       @default(true)
+  lastCheckedAt       DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   checks    MonitorCheck[]
@@ -121,13 +123,13 @@ model Incident {
 }
 
 model ApiKey {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   workspaceId Int
   name        String
-  key         String   @unique
+  key         String    @unique
   lastUsedAt  DateTime?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 

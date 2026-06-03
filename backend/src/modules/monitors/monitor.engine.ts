@@ -2,75 +2,94 @@ import cron from "node-cron";
 import { prisma } from "../../lib/db";
 
 export function startPingEngine() {
-  console.log("⚡ [SYSTEM] PulseOps Ping Engine Initialized.");
+  console.log("[SYSTEM] PulseOps industrial Telemetry Engine online.");
 
-  //run every 1 minute. (For testing, you could use '*/30 * * * * *' for every 30 seconds)
   cron.schedule("* * * * *", async () => {
     try {
       const activeMonitors = await prisma.monitor.findMany({
-        where: { status: { not: "PAUSED" } },
+        where: {
+          isActive: true,
+          status: { not: "PAUSED" },
+        },
       });
 
       if (activeMonitors.length === 0) return;
 
       console.log(
-        `📡 [ENGINE] Executing telemetry ping for ${activeMonitors.length} nodes...`,
+        `[ENGINE] Dispatching telemetry batches for ${activeMonitors.length} targets...`,
       );
 
       await Promise.all(
         activeMonitors.map(async (monitor) => {
           const startTime = performance.now();
-          let isUp = false;
+          let currentAttemptUp = false;
           let statusCode = 0;
 
           try {
-            //strict 10-second timeout. If it hangs, it's dead.
+            // Inject user-configured timeouts dynamically
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            const timeoutId = setTimeout(
+              () => controller.abort(),
+              monitor.timeoutMs,
+            );
 
             const response = await fetch(monitor.url, {
               signal: controller.signal,
-              method: "GET",
+              method: monitor.method,
               cache: "no-store",
             });
 
             clearTimeout(timeoutId);
-
             statusCode = response.status;
-            isUp = response.ok;
+
+            currentAttemptUp = statusCode === monitor.expectedStatus;
           } catch (error) {
-            //catches DNS failures, abort timeouts, and dead connections
-            isUp = false;
+            currentAttemptUp = false;
             statusCode = 500;
           }
 
           const endTime = performance.now();
           const latencyMs = Math.round(endTime - startTime);
-          const currentStatus = isUp ? "UP" : "DOWN";
 
-          await prisma.monitorCheck.create({
-            data: {
-              monitorId: monitor.id,
-              status: currentStatus,
-              statusCode: statusCode,
-              responseTimeMs: latencyMs,
-            },
-          });
+          let targetStatus = monitor.status;
+          let updatedFailures = monitor.consecutiveFailures;
 
-          //update the main monitor state
-          await prisma.monitor.update({
-            where: { id: monitor.id },
-            data: {
-              status: currentStatus,
-              lastCheckedAt: new Date(),
-            },
-          });
+          if (currentAttemptUp) {
+            updatedFailures = 0;
+            targetStatus = "UP";
+          } else {
+            updatedFailures += 1;
+
+            if (updatedFailures >= monitor.graceThreshold) {
+              targetStatus = "DOWN";
+            }
+          }
+
+          await prisma.$transaction([
+            prisma.monitorCheck.create({
+              data: {
+                monitorId: monitor.id,
+                status: currentAttemptUp ? "UP" : "DOWN",
+                statusCode: statusCode,
+                responseTimeMs: latencyMs,
+              },
+            }),
+
+            prisma.monitor.update({
+              where: { id: monitor.id },
+              data: {
+                status: targetStatus,
+                consecutiveFailures: updatedFailures,
+                lastCheckedAt: new Date(),
+              },
+            }),
+          ]);
         }),
       );
 
-      console.log("✅ [ENGINE] Telemetry cycle complete.");
+      console.log("[ENGINE] Telemetry batch complete.");
     } catch (error) {
-      console.error("❌ [ENGINE] Fatal execution error in cycle:", error);
+      console.error("[ENGINE] Critical execution failure within cycle:", error);
     }
   });
 }

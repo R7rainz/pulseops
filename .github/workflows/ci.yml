@@ -8,6 +8,7 @@ on:
 
 env:
   JWT_SECRET: ci-secret-do-not-use
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pulseops_ci
 
 jobs:
   backend:
