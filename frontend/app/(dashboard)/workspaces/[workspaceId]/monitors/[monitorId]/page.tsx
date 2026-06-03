@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -43,20 +44,19 @@ export default async function MonitorDetailsPage({
   let checks: MonitorCheck[] = [];
 
   try {
-    const [listRes] = await Promise.all([
-      fetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: "no-store",
-        },
-      ),
-    ]);
+    const listRes = await apiFetch(
+      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors`,
+      { token, cookieStore, cache: "no-store" },
+    );
 
     if (listRes.ok) {
       const listData = await listRes.json();
       const monitors: Monitor[] = listData.data || [];
       monitor = monitors.find((m) => m.id === Number(monitorId)) || null;
+    }
+
+    if (listRes.status === 401 || listRes.status === 403) {
+      redirect("/login");
     }
   } catch (err) {
     console.error("Failed to fetch monitor info:", err);
@@ -64,12 +64,14 @@ export default async function MonitorDetailsPage({
 
   try {
     const [statsRes, checksRes] = await Promise.all([
-      fetch(`http://127.0.0.1:4000/api/v1/monitors/${monitorId}/stats`, {
-        headers: { Authorization: `Bearer ${token}` },
+      apiFetch(`http://127.0.0.1:4000/api/v1/monitors/${monitorId}/stats`, {
+        token,
+        cookieStore,
         cache: "no-store",
       }),
-      fetch(`http://127.0.0.1:4000/api/v1/monitors/${monitorId}/checks`, {
-        headers: { Authorization: `Bearer ${token}` },
+      apiFetch(`http://127.0.0.1:4000/api/v1/monitors/${monitorId}/checks`, {
+        token,
+        cookieStore,
         cache: "no-store",
       }),
     ]);

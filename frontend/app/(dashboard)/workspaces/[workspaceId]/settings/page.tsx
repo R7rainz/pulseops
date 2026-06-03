@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -45,14 +46,14 @@ export default async function WorkspaceSettingsPage({
 
   try {
     const [wsRes, keysRes] = await Promise.all([
-      fetch(`http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      }),
-      fetch(`http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/api-keys`, {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      }),
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+        { token, cookieStore, cache: "no-store" },
+      ),
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/api-keys`,
+        { token, cookieStore, cache: "no-store" },
+      ),
     ]);
 
     if (wsRes.ok) {
@@ -62,6 +63,10 @@ export default async function WorkspaceSettingsPage({
     if (keysRes.ok) {
       const keysData = await keysRes.json();
       apiKeys = keysData.data || [];
+    }
+
+    if (wsRes.status === 401 || wsRes.status === 403) {
+      redirect("/login");
     }
   } catch (err) {
     console.error("Failed to load workspace settings:", err);

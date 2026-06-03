@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { apiFetch } from "@/lib/apiFetch";
 import { createMonitor, deleteMonitor, pauseMonitor, resumeMonitor, triggerCheck } from "./actions";
 import Link from "next/link";
 import {
@@ -40,12 +41,9 @@ export default async function MonitorsPage({
   let monitorsStatus: number | null = null;
 
   try {
-    const monitorsRes = await fetch(
+    const monitorsRes = await apiFetch(
       `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        cache: "no-store",
-      },
+      { token, cookieStore, cache: "no-store" },
     );
 
     monitorsStatus = monitorsRes.status;
