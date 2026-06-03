@@ -6,11 +6,13 @@ import {
   getMonitorChecksController,
   getMonitorStatsController,
   getWorkspaceMonitorsController,
+  monitorHeartbeatController,
   pauseMonitorController,
   resumeMonitorController,
   runMonitorCheckController,
   updateMonitorController,
 } from "./monitor.controller";
+import { requireApiKey } from "../../middleware/api-key.middleware";
 
 export async function monitorRoutes(app: FastifyInstance) {
   app.post(
@@ -65,5 +67,11 @@ export async function monitorRoutes(app: FastifyInstance) {
     "/monitors/:monitorId",
     { preHandler: requireAuth },
     deleteMonitorController as any,
+  );
+
+  app.post(
+    "/monitors/:monitorId/heartbeat",
+    { preHandler: requireApiKey },
+    monitorHeartbeatController as any,
   );
 }
