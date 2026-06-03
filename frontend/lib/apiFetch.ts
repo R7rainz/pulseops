@@ -1,11 +1,6 @@
-import { cookies } from "next/headers";
+type CookieStore = Awaited<ReturnType<typeof import("next/headers").cookies>>;
 
-type CookieStore = Awaited<ReturnType<typeof cookies>>;
-
-async function refreshToken(
-  token: string,
-  cookieStore: CookieStore,
-): Promise<string | null> {
+async function refreshToken(token: string): Promise<string | null> {
   try {
     const res = await fetch("http://127.0.0.1:4000/api/v1/auth/refresh", {
       method: "POST",
@@ -15,17 +10,7 @@ async function refreshToken(
     if (!res.ok) return null;
 
     const data = await res.json();
-    const newToken = data.data?.accessToken as string | undefined;
-    if (!newToken) return null;
-
-    cookieStore.set("pulseops_token", newToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
-
-    return newToken;
+    return (data.data?.accessToken as string | undefined) ?? null;
   } catch {
     return null;
   }
@@ -35,7 +20,7 @@ export async function apiFetch(
   url: string,
   options: RequestInit & { token: string; cookieStore: CookieStore },
 ): Promise<Response> {
-  const { token, cookieStore, ...fetchOptions } = options;
+  const { token, cookieStore: _, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
     ...(fetchOptions.headers as Record<string, string>),
@@ -50,11 +35,8 @@ export async function apiFetch(
 
   if (res.status !== 401 && res.status !== 403) return res;
 
-  const newToken = await refreshToken(token, cookieStore);
-  if (!newToken) {
-    cookieStore.delete("pulseops_token");
-    return res;
-  }
+  const newToken = await refreshToken(token);
+  if (!newToken) return res;
 
   headers.Authorization = `Bearer ${newToken}`;
   return fetch(url, { ...fetchOptions, headers });
