@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Settings,
   TerminalSquare,
+  AlertTriangle,
 } from "lucide-react";
 import { logoutUser } from "@/app/(auth)/auth.actions";
 
@@ -61,6 +62,17 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                     <span className="truncate flex-1 tracking-wide">
                       {ws.name}
                     </span>
+                  </Link>
+                  <Link
+                    href={`/workspaces/${ws.id}/incidents`}
+                    className={`opacity-0 group-hover:opacity-100 p-2.5 border-l-2 transition-all flex-shrink-0 ${
+                      pathname === `/workspaces/${ws.id}/incidents`
+                        ? "bg-zinc-900 border-red-500 text-red-400 opacity-100"
+                        : "border-transparent text-zinc-600 hover:text-red-400 hover:border-red-700 hover:bg-zinc-900/50"
+                    }`}
+                    title="Incident Log"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
                   </Link>
                   <Link
                     href={`/workspaces/${ws.id}/settings`}
