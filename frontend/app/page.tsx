@@ -32,10 +32,12 @@ export default async function RootPage() {
             ? `/workspaces/${workspaces[0].id}/monitors`
             : "/workspaces/new";
       } else if (res.status === 401) {
-        cookieStore.delete("pulseops_token");
-        destination = "/login";
+        redirect("/api/auth/logout");
       }
     } catch (error) {
+      if ((error as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) {
+        throw error;
+      }
       console.error("Router fetch failed:", error);
     }
   }
