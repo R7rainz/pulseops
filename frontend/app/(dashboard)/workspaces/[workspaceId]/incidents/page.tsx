@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
-import { acknowledgeIncident, resolveIncident } from "./actions";
 import { AlertOctagon, CheckCircle2, ShieldAlert, ShieldCheck, Clock } from "lucide-react";
+import { IncidentActions } from "./incident-actions";
 
 interface Incident {
   id: number;
@@ -116,25 +116,11 @@ export default async function IncidentsPage({
                     </div>
                   </div>
 
-                  {/* CONTROL BUTTONS */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {ticket.status === "OPEN" && (
-                      <form action={acknowledgeIncident}>
-                        <input type="hidden" name="workspaceId" value={workspaceId} />
-                        <input type="hidden" name="incidentId" value={ticket.id} />
-                        <button type="submit" className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-800 hover:border-amber-500 text-zinc-400 hover:text-amber-400 text-xs font-bold uppercase tracking-widest transition-colors rounded-none">
-                          ACKNOWLEDGE
-                        </button>
-                      </form>
-                    )}
-                    <form action={resolveIncident}>
-                      <input type="hidden" name="workspaceId" value={workspaceId} />
-                      <input type="hidden" name="incidentId" value={ticket.id} />
-                      <button type="submit" className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 border-2 border-transparent text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors rounded-none">
-                        MARK RESOLVED
-                      </button>
-                    </form>
-                  </div>
+                  <IncidentActions
+                    incidentId={ticket.id}
+                    workspaceId={workspaceId}
+                    status={ticket.status}
+                  />
                 </div>
               ))}
             </div>
