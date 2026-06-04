@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import {
   createWebhookService,
   deleteWebhookService,
+  getWebhookDeliveryLogsService,
   getWorkspaceWebhooksService,
 } from "./webhook.service";
 import { createWebhookSchema } from "./webhook.schema";
@@ -81,5 +82,28 @@ export async function deleteWebhookController(
   return response.status(200).send({
     message: "Webhook deleted successfully",
     data: deletedWebhook,
+  });
+}
+
+export async function getWebhookDeliveryLogsController(
+  request: FastifyRequest<{ Params: WebhookParams }>,
+  response: FastifyReply,
+) {
+  const webhookId = Number(request.params.webhookId);
+
+  if (Number.isNaN(webhookId)) {
+    return response.status(400).send({
+      message: "Invalid webhook id",
+    });
+  }
+
+  const logs = await getWebhookDeliveryLogsService(
+    request.user.userId,
+    webhookId,
+  );
+
+  return response.status(200).send({
+    message: "Webhook delivery logs fetched successfully",
+    data: logs,
   });
 }

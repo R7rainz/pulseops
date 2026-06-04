@@ -14,6 +14,7 @@ import {
 import { createApiKey, revokeApiKey, updateWorkspaceName } from "./actions";
 import DeleteWorkspaceButton from "./delete-button";
 import CreateApiKeyForm from "./create-apikey-form";
+import WebhookManager from "./webhook-manager";
 
 interface Workspace {
   id: number;
@@ -43,15 +44,20 @@ export default async function WorkspaceSettingsPage({
 
   let workspace: Workspace | null = null;
   let apiKeys: ApiKey[] = [];
+  let webhooks: { id: number; url: string; isActive: boolean }[] = [];
 
   try {
-    const [wsRes, keysRes] = await Promise.all([
+    const [wsRes, keysRes, hooksRes] = await Promise.all([
       apiFetch(
         `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
         { token, cookieStore, cache: "no-store" },
       ),
       apiFetch(
         `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/api-keys`,
+        { token, cookieStore, cache: "no-store" },
+      ),
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/webhooks`,
         { token, cookieStore, cache: "no-store" },
       ),
     ]);
@@ -63,6 +69,10 @@ export default async function WorkspaceSettingsPage({
     if (keysRes.ok) {
       const keysData = await keysRes.json();
       apiKeys = keysData.data || [];
+    }
+    if (hooksRes.ok) {
+      const hooksData = await hooksRes.json();
+      webhooks = hooksData.data || [];
     }
 
     if (wsRes.status === 401 || wsRes.status === 403) {
@@ -212,6 +222,9 @@ export default async function WorkspaceSettingsPage({
 
           {isOwner && <CreateApiKeyForm workspaceId={workspaceId} />}
         </div>
+
+        {/* Webhooks */}
+        <WebhookManager workspaceId={workspaceId} webhooks={webhooks} />
 
         {/* Danger Zone */}
         {isOwner && (

@@ -3,6 +3,7 @@ import { requireAuth } from "../../middleware/auth.middleware";
 import {
   createWebhookController,
   deleteWebhookController,
+  getWebhookDeliveryLogsController,
   getWorkspaceWebhooksController,
 } from "./webhook.controller";
 
@@ -23,5 +24,11 @@ export async function webhookRoutes(app: FastifyInstance) {
     "/webhooks/:webhookId",
     { preHandler: requireAuth },
     deleteWebhookController as any,
+  );
+
+  app.get(
+    "/webhooks/:webhookId/delivery-logs",
+    { preHandler: requireAuth },
+    getWebhookDeliveryLogsController as any,
   );
 }

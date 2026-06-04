@@ -84,3 +84,32 @@ export async function deleteWebhookService(userId: number, webhookId: number) {
 
   return deletedWebhook;
 }
+
+export async function getWebhookDeliveryLogsService(
+  userId: number,
+  webhookId: number,
+) {
+  const webhook = await prisma.webhookEndpoint.findUnique({
+    where: { id: webhookId },
+  });
+
+  if (!webhook) throw new Error("Webhook not found");
+
+  const membership = await prisma.workspaceMember.findUnique({
+    where: {
+      userId_workspaceId: {
+        userId,
+        workspaceId: webhook.workspaceId,
+      },
+    },
+  });
+
+  if (!membership) throw new Error("You do not have access to this webhook");
+
+  const logs = await prisma.webhookDeliveryLog.findMany({
+    where: { webhookId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return logs;
+}
