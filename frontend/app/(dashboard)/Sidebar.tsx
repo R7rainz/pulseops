@@ -11,6 +11,7 @@ import {
   TerminalSquare,
   AlertTriangle,
   Radio,
+  Eye,
 } from "lucide-react";
 import { logoutUser } from "@/app/(auth)/auth.actions";
 
@@ -56,10 +57,12 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
             ) : (
               workspaces.map((ws: any) => {
                 const wsBase = `/workspaces/${ws.id}`;
+                const statusPath = `/status/${ws.slug}`;
                 const isMonitors = pathname === `${wsBase}/monitors`;
                 const isIncidents = pathname === `${wsBase}/incidents`;
                 const isSettings = pathname === `${wsBase}/settings`;
-                const isActive = isMonitors || isIncidents || isSettings;
+                const isStatus = pathname === statusPath;
+                const isActive = isMonitors || isIncidents || isSettings || isStatus;
 
                 return (
                   <div
@@ -88,8 +91,8 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                     {/* SUB-NAV — collapsed by default, expands on hover */}
                     <div className={`divide-y divide-zinc-900 transition-all duration-200 overflow-hidden ${
                       isActive
-                        ? "max-h-40 opacity-100 visible"
-                        : "max-h-0 opacity-0 invisible group-hover:max-h-40 group-hover:opacity-100 group-hover:visible"
+                        ? "max-h-52 opacity-100 visible"
+                        : "max-h-0 opacity-0 invisible group-hover:max-h-52 group-hover:opacity-100 group-hover:visible"
                     }`}>
                       <div className="border-t border-zinc-900" />
                       <NavItem
@@ -109,6 +112,12 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                         icon={<Settings className="w-3.5 h-3.5" />}
                         label="Settings"
                         isActive={isSettings}
+                      />
+                      <NavItem
+                        href={statusPath}
+                        icon={<Eye className="w-3.5 h-3.5" />}
+                        label="Status Page"
+                        isActive={isStatus}
                       />
                     </div>
                   </div>
