@@ -11,6 +11,7 @@ import {
   Settings,
   TerminalSquare,
   AlertTriangle,
+  Radio,
 } from "lucide-react";
 import { logoutUser } from "@/app/(auth)/auth.actions";
 
@@ -18,10 +19,10 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 border-r-2 border-zinc-900 bg-zinc-950 flex flex-col justify-between p-5 h-screen sticky top-0 z-50">
-      <div className="space-y-8">
-        {/* Logo Brand */}
-        <div className="flex items-center gap-3 px-1 pb-6 border-b-2 border-zinc-900/50">
+    <aside className="w-72 border-r-2 border-zinc-900 bg-zinc-950 flex flex-col justify-between h-screen sticky top-0 z-50">
+      {/* LOGO */}
+      <div className="px-5 pt-5 pb-4 border-b-2 border-zinc-900/50">
+        <div className="flex items-center gap-3">
           <div className="p-1.5 bg-emerald-500/10 border-2 border-emerald-500/30">
             <Activity className="w-5 h-5 text-emerald-400" />
           </div>
@@ -29,115 +30,123 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
             Pulse<span className="text-emerald-400">Ops</span>
           </span>
         </div>
+      </div>
 
-        {/* Workspaces Management Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1 text-[10px] uppercase tracking-widest text-zinc-500 font-bold">
-            <span>Targets / Workspaces</span>
+      {/* SCROLLABLE NAV AREA */}
+      <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-5 space-y-8">
+        {/* WORKSPACES */}
+        <section>
+          <div className="flex items-center justify-between mb-4 px-2">
+            <h2 className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em]">
+              Workspaces
+            </h2>
             <Link
               href="/workspaces/new"
-              className="hover:text-emerald-400 transition-colors p-1 border-2 border-transparent hover:border-zinc-800 bg-zinc-900/50"
-              title="Provision Workspace"
+              className="p-1 border-2 border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors"
+              title="New Workspace"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-3 h-3" />
             </Link>
           </div>
 
-          <div className="space-y-2 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
-            {workspaces.map((ws: any) => {
-              const isActive = pathname?.startsWith(`/workspaces/${ws.id}`);
-              return (
-                <div key={ws.id} className="group flex items-center gap-0">
-                  <Link
-                    href={`/workspaces/${ws.id}/monitors`}
-                    className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all flex-1 min-w-0 ${
-                      isActive
-                        ? "bg-zinc-900 border-l-2 border-emerald-400 text-zinc-100 shadow-[2px_2px_0px_0px_rgba(52,211,153,0.1)]"
-                        : "text-zinc-400 hover:text-zinc-100 border-l-2 border-transparent hover:border-zinc-700 hover:bg-zinc-900/50"
-                    }`}
-                  >
-                    <Layers
-                      className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-emerald-400" : "text-zinc-600 group-hover:text-cyan-400 transition-colors"}`}
-                    />
-                    <span className="truncate flex-1 tracking-wide">
-                      {ws.name}
-                    </span>
-                  </Link>
-                  <Link
-                    href={`/workspaces/${ws.id}/incidents`}
-                    className={`opacity-0 group-hover:opacity-100 p-2.5 border-l-2 transition-all flex-shrink-0 ${
-                      pathname === `/workspaces/${ws.id}/incidents`
-                        ? "bg-zinc-900 border-red-500 text-red-400 opacity-100"
-                        : "border-transparent text-zinc-600 hover:text-red-400 hover:border-red-700 hover:bg-zinc-900/50"
-                    }`}
-                    title="Incident Log"
-                  >
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                  </Link>
-                  <Link
-                    href={`/workspaces/${ws.id}/settings`}
-                    className={`opacity-0 group-hover:opacity-100 p-2.5 border-l-2 transition-all flex-shrink-0 ${
-                      pathname === `/workspaces/${ws.id}/settings`
-                        ? "bg-zinc-900 border-emerald-400 text-emerald-400 opacity-100"
-                        : "border-transparent text-zinc-600 hover:text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900/50"
-                    }`}
-                    title="Workspace Settings"
-                  >
-                    <Settings className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              );
-            })}
-
-            {workspaces.length === 0 && (
-              <p className="text-xs text-zinc-600 px-3 py-2 italic font-medium">
-                No active targets.
+          <div className="space-y-2">
+            {workspaces.length === 0 ? (
+              <p className="text-xs text-zinc-600 px-2 py-3 italic font-medium">
+                No workspaces yet.
               </p>
+            ) : (
+              workspaces.map((ws: any) => {
+                const wsBase = `/workspaces/${ws.id}`;
+                const isMonitors = pathname === `${wsBase}/monitors`;
+                const isIncidents = pathname === `${wsBase}/incidents`;
+                const isSettings = pathname === `${wsBase}/settings`;
+                const isActive = isMonitors || isIncidents || isSettings;
+
+                return (
+                  <div
+                    key={ws.id}
+                    className={`border-2 transition-colors ${
+                      isActive
+                        ? "border-emerald-900/50 bg-emerald-950/10"
+                        : "border-zinc-900 hover:border-zinc-800 bg-zinc-950"
+                    }`}
+                  >
+                    {/* WORKSPACE HEADER */}
+                    <Link
+                      href={`${wsBase}/monitors`}
+                      className={`flex items-center gap-3 px-3 py-3 text-sm font-bold transition-colors ${
+                        isActive
+                          ? "text-emerald-400"
+                          : "text-zinc-300 hover:text-zinc-100"
+                      }`}
+                    >
+                      <Layers className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate uppercase tracking-widest">
+                        {ws.name}
+                      </span>
+                    </Link>
+
+                    {/* SUB-NAV */}
+                    <div className="border-t border-zinc-900 divide-y divide-zinc-900">
+                      <NavItem
+                        href={`${wsBase}/monitors`}
+                        icon={<Radio className="w-3.5 h-3.5" />}
+                        label="Monitors"
+                        isActive={isMonitors}
+                      />
+                      <NavItem
+                        href={`${wsBase}/incidents`}
+                        icon={<AlertTriangle className="w-3.5 h-3.5" />}
+                        label="Incidents"
+                        isActive={isIncidents}
+                      />
+                      <NavItem
+                        href={`${wsBase}/settings`}
+                        icon={<Settings className="w-3.5 h-3.5" />}
+                        label="Settings"
+                        isActive={isSettings}
+                      />
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Quick System Links */}
-        <nav className="space-y-2">
-          <span className="block px-1 text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-3">
-            System Commands
-          </span>
-          <Link
-            href="/"
-            className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all ${
-              pathname === "/"
-                ? "bg-zinc-900 border-l-2 border-emerald-400 text-zinc-100 shadow-[2px_2px_0px_0px_rgba(52,211,153,0.1)]"
-                : "text-zinc-400 hover:text-zinc-100 border-l-2 border-transparent hover:border-zinc-700 hover:bg-zinc-900/50"
-            }`}
-          >
-            <LayoutDashboard className="w-4 h-4 text-emerald-400" />
-            <span className="tracking-wide">Metrics Hub</span>
-          </Link>
-          <Link
-            href="/webhooks"
-            className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-all ${
-              pathname === "/webhooks"
-                ? "bg-zinc-900 border-l-2 border-emerald-400 text-zinc-100 shadow-[2px_2px_0px_0px_rgba(52,211,153,0.1)]"
-                : "text-zinc-400 hover:text-zinc-100 border-l-2 border-transparent hover:border-zinc-700 hover:bg-zinc-900/50"
-            }`}
-          >
-            <TerminalSquare className="w-4 h-4 text-cyan-400" />
-            <span className="tracking-wide">Webhooks</span>
-          </Link>
-        </nav>
-      </div>
+        {/* GLOBAL NAV */}
+        <section>
+          <h2 className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] mb-4 px-2">
+            System
+          </h2>
+          <div className="space-y-1">
+            <GlobalNavItem
+              href="/"
+              icon={<LayoutDashboard className="w-4 h-4" />}
+              label="Dashboard"
+              isActive={pathname === "/"}
+            />
+            <GlobalNavItem
+              href="/webhooks"
+              icon={<TerminalSquare className="w-4 h-4" />}
+              label="Webhooks"
+              isActive={pathname === "/webhooks"}
+            />
+          </div>
+        </section>
+      </nav>
 
-      {/* TERMINAL PROFILE & LOGOUT */}
-      <div className="pt-6 border-t-2 border-zinc-900">
-        <div className="px-2 pb-5 mb-5 border-b-2 border-zinc-900/50 flex items-center gap-3">
-          <div className="w-9 h-9 bg-zinc-950 border-2 border-zinc-800 flex items-center justify-center text-cyan-400">
+      {/* PROFILE & LOGOUT */}
+      <div className="px-3 py-4 border-t-2 border-zinc-900 space-y-3">
+        <div className="flex items-center gap-3 px-2">
+          <div className="w-8 h-8 bg-zinc-950 border-2 border-zinc-800 flex items-center justify-center text-cyan-400">
             <TerminalSquare className="w-4 h-4" />
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0">
             <p className="text-xs font-bold text-zinc-200 truncate uppercase tracking-widest">
               OP: RAINZ
             </p>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest truncate mt-0.5">
+            <p className="text-[10px] text-zinc-600 uppercase tracking-widest truncate">
               Root Access
             </p>
           </div>
@@ -146,16 +155,65 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
         <form action={logoutUser}>
           <button
             type="submit"
-            className="flex items-center justify-between w-full px-3 py-3 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-950 border-2 border-transparent hover:border-red-500 hover:bg-red-500 transition-all group cursor-pointer"
+            className="flex items-center justify-between w-full px-3 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-red-400 border-2 border-zinc-900 hover:border-red-800 hover:bg-red-950/20 transition-all group cursor-pointer"
           >
-            <span className="truncate block group-hover:hidden">
-              Session Active
-            </span>
-            <span className="truncate hidden group-hover:block">Terminate</span>
-            <LogOut className="w-4 h-4 opacity-60 group-hover:opacity-100 transition-opacity" />
+            <span>Terminate Session</span>
+            <LogOut className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
           </button>
         </form>
       </div>
     </aside>
+  );
+}
+
+function NavItem({
+  href,
+  icon,
+  label,
+  isActive,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  isActive: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 px-4 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors ${
+        isActive
+          ? "bg-emerald-950/20 text-emerald-400 border-l-2 border-emerald-500"
+          : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-l-2 border-transparent"
+      }`}
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      {label}
+    </Link>
+  );
+}
+
+function GlobalNavItem({
+  href,
+  icon,
+  label,
+  isActive,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  isActive: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-3 px-3 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors border-2 ${
+        isActive
+          ? "bg-zinc-900 border-emerald-800/50 text-emerald-400 shadow-[2px_2px_0px_0px_rgba(52,211,153,0.08)]"
+          : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 hover:border-zinc-800"
+      }`}
+    >
+      <span className="flex-shrink-0">{icon}</span>
+      {label}
+    </Link>
   );
 }
