@@ -65,7 +65,7 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                 return (
                   <div
                     key={ws.id}
-                    className={`border-2 transition-colors ${
+                    className={`group border-2 transition-colors ${
                       isActive
                         ? "border-emerald-900/50 bg-emerald-950/10"
                         : "border-zinc-900 hover:border-zinc-800 bg-zinc-950"
@@ -86,8 +86,13 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                       </span>
                     </Link>
 
-                    {/* SUB-NAV */}
-                    <div className="border-t border-zinc-900 divide-y divide-zinc-900">
+                    {/* SUB-NAV — collapsed by default, expands on hover */}
+                    <div className={`divide-y divide-zinc-900 transition-all duration-200 overflow-hidden ${
+                      isActive
+                        ? "max-h-40 opacity-100 visible"
+                        : "max-h-0 opacity-0 invisible group-hover:max-h-40 group-hover:opacity-100 group-hover:visible"
+                    }`}>
+                      <div className="border-t border-zinc-900" />
                       <NavItem
                         href={`${wsBase}/monitors`}
                         icon={<Radio className="w-3.5 h-3.5" />}
