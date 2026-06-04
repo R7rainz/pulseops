@@ -6,6 +6,7 @@ interface PublicMonitor {
   id: number;
   name: string;
   status: "UP" | "DOWN" | "PAUSED";
+  uptimeHistory: number[];
 }
 
 interface StatusData {
@@ -113,20 +114,46 @@ export default async function PublicStatusPage({
               </div>
             ) : (
               monitors.map((node) => (
-                <div key={node.id} className="p-4 bg-zinc-900/50 border-2 border-zinc-800 flex items-center justify-between">
-                  <span className="text-sm font-bold text-zinc-300 uppercase tracking-widest truncate pr-4">
-                    {node.name}
-                  </span>
-
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className={`text-[10px] font-black uppercase tracking-widest ${
-                      node.status === "UP" ? "text-emerald-500" : node.status === "DOWN" ? "text-red-500" : "text-zinc-500"
-                    }`}>
-                      {node.status}
+                <div key={node.id} className="p-4 bg-zinc-900/50 border-2 border-zinc-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-bold text-zinc-300 uppercase tracking-widest truncate pr-4">
+                      {node.name}
                     </span>
-                    {node.status === "UP" && <Activity className="w-4 h-4 text-emerald-500" />}
-                    {node.status === "DOWN" && <ServerCrash className="w-4 h-4 text-red-500" />}
-                    {node.status === "PAUSED" && <PauseCircle className="w-4 h-4 text-zinc-600" />}
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className={`text-[10px] font-black uppercase tracking-widest ${
+                        node.status === "UP" ? "text-emerald-500" : node.status === "DOWN" ? "text-red-500" : "text-zinc-500"
+                      }`}>
+                        {node.status}
+                      </span>
+                      {node.status === "UP" && <Activity className="w-4 h-4 text-emerald-500" />}
+                      {node.status === "DOWN" && <ServerCrash className="w-4 h-4 text-red-500" />}
+                      {node.status === "PAUSED" && <PauseCircle className="w-4 h-4 text-zinc-600" />}
+                    </div>
+                  </div>
+
+                  {/* SPARKLINE: 90-day uptime history */}
+                  <div className="flex items-end gap-[1px] h-8">
+                    {node.uptimeHistory.map((ratio, i) => {
+                      const barHeight = Math.max(2, Math.round(ratio * 28));
+                      return (
+                        <div
+                          key={i}
+                          className="flex-1 rounded-t"
+                          style={{
+                            height: `${barHeight}px`,
+                            backgroundColor:
+                              ratio >= 0.98
+                                ? "rgb(52 211 153)"
+                                : ratio >= 0.9
+                                  ? "rgb(251 191 36)"
+                                  : "rgb(239 68 68)",
+                            opacity: ratio > 0 ? 1 : 0.15,
+                          }}
+                          title={`Day ${i + 1}: ${Math.round(ratio * 100)}% uptime`}
+                        />
+                      );
+                    })}
                   </div>
                 </div>
               ))
