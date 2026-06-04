@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { prisma } from "../../lib/db";
+import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 
 export function startPingEngine() {
   console.log("[SYSTEM] PulseOps industrial Telemetry Engine online.");
@@ -26,7 +27,6 @@ export function startPingEngine() {
           let statusCode = 0;
 
           try {
-            // Inject user-configured timeouts dynamically
             const controller = new AbortController();
             const timeoutId = setTimeout(
               () => controller.abort(),
@@ -54,10 +54,20 @@ export function startPingEngine() {
           let targetStatus = monitor.status;
           let updatedFailures = monitor.consecutiveFailures;
           let newlyTriggeredIncident = false;
+          let activeIncidentsToResolve: any[] = [];
 
           if (currentAttemptUp) {
             updatedFailures = 0;
             targetStatus = "UP";
+
+            if (monitor.status === "DOWN") {
+              activeIncidentsToResolve = await prisma.incident.findMany({
+                where: {
+                  monitorId: monitor.id,
+                  status: { in: ["OPEN", "ACKNOWLEDGED"] },
+                },
+              });
+            }
           } else {
             updatedFailures += 1;
 
@@ -101,7 +111,7 @@ export function startPingEngine() {
             );
           }
 
-          if (currentAttemptUp && monitor.status === "DOWN") {
+          if (activeIncidentsToResolve.length > 0) {
             transactionQueries.push(
               prisma.incident.updateMany({
                 where: {
@@ -116,8 +126,33 @@ export function startPingEngine() {
             );
           }
 
-          //executing everything in a single database context
-          await prisma.$transaction(transactionQueries);
+          const txResults = await prisma.$transaction(transactionQueries);
+
+          if (newlyTriggeredIncident) {
+            const createdIncident = txResults[2];
+
+            sendWebhookNotifications(monitor.workspaceId, {
+              event: "incident.opened",
+              incidentId: createdIncident.id,
+              monitorId: monitor.id,
+              workspaceId: monitor.workspaceId,
+              message: `CRITICAL OUTAGE: Monitor [${monitor.name}] failed rules checks. Target URL: ${monitor.url}`,
+              timestamp: new Date().toISOString(),
+            }).catch(err => console.error("[ENGINE] Webhook open failed:", err));
+          }
+
+          if (activeIncidentsToResolve.length > 0) {
+            activeIncidentsToResolve.forEach(incident => {
+              sendWebhookNotifications(monitor.workspaceId, {
+                event: "incident.resolved",
+                incidentId: incident.id,
+                monitorId: monitor.id,
+                workspaceId: monitor.workspaceId,
+                message: `RECOVERY ALERT: Monitor [${monitor.name}] is responding within normal thresholds. All clear.`,
+                timestamp: new Date().toISOString(),
+              }).catch(err => console.error("[ENGINE] Webhook resolve failed:", err));
+            });
+          }
         }),
       );
 
