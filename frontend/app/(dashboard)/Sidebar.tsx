@@ -7,7 +7,6 @@ import {
   Plus,
   Activity,
   LogOut,
-  LayoutDashboard,
   Settings,
   TerminalSquare,
   AlertTriangle,
@@ -125,12 +124,6 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
             System
           </h2>
           <div className="space-y-1">
-            <GlobalNavItem
-              href="/"
-              icon={<LayoutDashboard className="w-4 h-4" />}
-              label="Dashboard"
-              isActive={pathname === "/"}
-            />
             <GlobalNavItem
               href="/webhooks"
               icon={<TerminalSquare className="w-4 h-4" />}
