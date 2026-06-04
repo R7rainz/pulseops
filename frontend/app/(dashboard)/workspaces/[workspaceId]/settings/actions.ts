@@ -88,6 +88,82 @@ export async function createApiKey(formData: FormData) {
   }
 }
 
+export async function createWebhook(formData: FormData) {
+  const workspaceId = formData.get("workspaceId") as string;
+  const url = formData.get("url") as string;
+
+  if (!url || !workspaceId) return {
+    error: "Target URL is required",
+  };
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get("pulseops_token")?.value;
+  if (!token) return { error: "Unauthenticated" };
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/webhooks`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ url }),
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      setToast(cookieStore, err.message || "Failed to provision endpoint", "error");
+      return { error: err.message || "Failed to provision endpoint" };
+    }
+
+    setToast(cookieStore, "Endpoint provisioned");
+    revalidatePath(`/workspaces/${workspaceId}/settings`);
+    return { success: true };
+  } catch {
+    setToast(cookieStore, "Network error provisioning endpoint", "error");
+    return { error: "Network anomaly during endpoint provisioning" };
+  }
+}
+
+export async function deleteWebhook(formData: FormData) {
+  const workspaceId = formData.get("workspaceId") as string;
+  const webhookId = formData.get("webhookId") as string;
+
+  if (!webhookId || !workspaceId) return { error: "Missing parameters" };
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get("pulseops_token")?.value;
+  if (!token) return { error: "Unauthenticated" };
+
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/webhooks/${webhookId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      setToast(cookieStore, err.message || "Failed to purge endpoint", "error");
+      return { error: err.message || "Failed to purge endpoint" };
+    }
+
+    setToast(cookieStore, "Endpoint purged");
+    revalidatePath(`/workspaces/${workspaceId}/settings`);
+    return { success: true };
+  } catch {
+    setToast(cookieStore, "Network error purging endpoint", "error");
+    return { error: "Network anomaly during endpoint purge" };
+  }
+}
+
 export async function revokeApiKey(formData: FormData) {
   const workspaceId = formData.get("workspaceId") as string;
   const keyId = formData.get("keyId") as string;
