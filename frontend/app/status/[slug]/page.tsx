@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { Activity, ServerCrash, PauseCircle, ShieldCheck, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Activity, ServerCrash, PauseCircle, ShieldCheck, AlertTriangle } from "lucide-react";
 
 interface PublicMonitor {
   id: number;
@@ -53,6 +54,17 @@ export default async function PublicStatusPage({
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-50 font-mono selection:bg-emerald-500/30">
       <div className="max-w-4xl mx-auto px-6 py-16 space-y-12">
+
+        {/* BACK LINK */}
+        <div>
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-4 py-2 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Console
+          </Link>
+        </div>
 
         {/* PUBLIC HEADER */}
         <div className="text-center space-y-4">
