@@ -37,6 +37,20 @@ export interface MonitorStats {
   uptimePercentage: number;
   averageResponseTimeMs: number;
   latestStatus: MonitorStatus;
+  range24h: {
+    totalChecks: number;
+    upChecks: number;
+    downChecks: number;
+    uptimePercentage: number;
+    averageResponseTimeMs: number;
+  };
+  range30d: {
+    totalChecks: number;
+    upChecks: number;
+    downChecks: number;
+    uptimePercentage: number;
+    averageResponseTimeMs: number;
+  };
 }
 
 export interface ApiResponse<T> {
