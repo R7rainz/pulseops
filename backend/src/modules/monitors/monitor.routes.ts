@@ -14,6 +14,7 @@ import {
   updateMonitorController,
 } from "./monitor.controller";
 import { requireApiKey } from "../../middleware/api-key.middleware";
+import { getMonitorAnalyticsController } from "./monitor.analytics";
 
 export async function monitorRoutes(app: FastifyInstance) {
   app.post(
@@ -74,6 +75,12 @@ export async function monitorRoutes(app: FastifyInstance) {
     "/monitors/:monitorId",
     { preHandler: requireAuth },
     deleteMonitorController as any,
+  );
+
+  app.get(
+    "/workspaces/:workspaceId/monitors/:monitorId/analytics",
+    { preHandler: requireAuth },
+    getMonitorAnalyticsController as any,
   );
 
   app.post(
