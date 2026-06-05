@@ -1,13 +1,12 @@
 import tls from "tls"
-import { date } from "zod"
 
-export interface SslTelementry {
+export interface SslTelemetry {
     issuer: string
     validTo: Date
     daysRemaining: number
 }
 
-export async function inspectSslCertificate(targetUrl: string): Promise<SslTelementry | null> {
+export async function inspectSslCertificate(targetUrl: string): Promise<SslTelemetry | null> {
     try {
         const url = new URL(targetUrl)
         if (url.protocol !== "https:") return null;
@@ -33,8 +32,13 @@ export async function inspectSslCertificate(targetUrl: string): Promise<SslTelem
                         validTo.getTime() - Date.now()
                     ) / (1000 * 60 * 60 * 24))
 
+                    const issuerName = [cert.issuer?.O, cert.issuer?.CN]
+                        .flat()
+                        .filter(Boolean)
+                        .join(", ") || "Unknown Authority";
+
                     resolve({
-                        issuer: cert.issuer?.O || cert.issuer?.CN || "Unknown Authority",
+                        issuer: issuerName,
                         validTo,
                         daysRemaining
                     });
