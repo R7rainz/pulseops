@@ -60,7 +60,7 @@ export default async function MonitorDiagnosticsPage({
     try {
       const [checksRes, statsRes] = await Promise.all([
         apiFetch(
-          `http://127.0.0.1:4000/api/v1/monitors/${monitor.id}/checks`,
+          `http://127.0.0.1:4000/api/v1/monitors/${monitor.id}/checks?limit=100&offset=0`,
           { token, cookieStore, cache: "no-store" },
         ),
         apiFetch(
@@ -217,10 +217,10 @@ export default async function MonitorDiagnosticsPage({
         </div>
 
         {/* Telemetry Charts */}
-        <MonitorCharts checks={checks} stats={stats} />
+        <MonitorCharts checks={[]} stats={stats} />
 
         {/* Probe Log */}
-        <MonitorCheckLog checks={checks} />
+        <MonitorCheckLog monitorId={monitor.id} />
 
       </div>
     </main>

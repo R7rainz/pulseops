@@ -11,7 +11,14 @@ export function startPingEngine() {
       const activeMonitors = await prisma.monitor.findMany({
         where: {
           isActive: true,
-          status: { not: "PAUSED" },
+          OR: [
+            { status: { not: "PAUSED" } },
+            {
+              status: "PAUSED",
+              maintenanceStartAt: { lte: new Date() },
+              maintenanceEndAt: { gte: new Date() },
+            },
+          ],
         },
       });
 
@@ -53,6 +60,14 @@ export function startPingEngine() {
           const sslData = await inspectSslCertificate(monitor.url);
           const isSslFailing = sslData && sslData.daysRemaining <= 7;
 
+          // 3. Maintenance Window Suppression
+          const now = new Date();
+          const isUnderMaintenance =
+            monitor.maintenanceStartAt &&
+            monitor.maintenanceEndAt &&
+            now >= monitor.maintenanceStartAt &&
+            now <= monitor.maintenanceEndAt;
+
           let targetStatus = monitor.status;
           let updatedFailures = monitor.consecutiveFailures;
           let newlyTriggeredIncident = false;
@@ -60,7 +75,7 @@ export function startPingEngine() {
 
           let incidentTitle = `Node Offline: HTTP ${statusCode} threshold breached`;
 
-          // 3. State Machine Logic (factoring in SSL)
+          // 4. State Machine Logic (factoring in SSL)
           if (currentAttemptUp && !isSslFailing) {
             updatedFailures = 0;
             targetStatus = "UP";
@@ -79,13 +94,21 @@ export function startPingEngine() {
             if (updatedFailures >= monitor.graceThreshold) {
               targetStatus = isSslFailing && currentAttemptUp ? "DEGRADED" : "DOWN";
 
-              if (monitor.status !== targetStatus && updatedFailures === monitor.graceThreshold) {
+              const crossedThreshold = monitor.status !== targetStatus && updatedFailures === monitor.graceThreshold;
+
+              // 5. Suppress incident trigger if under maintenance
+              if (crossedThreshold && !isUnderMaintenance) {
                 newlyTriggeredIncident = true;
                 if (isSslFailing && currentAttemptUp) {
                   incidentTitle = `SSL/TLS Degradation: Certificate expires in ${sslData!.daysRemaining} days`;
                 }
               }
             }
+          }
+
+          // 6. Force PAUSED status in UI during maintenance
+          if (isUnderMaintenance) {
+            targetStatus = "PAUSED";
           }
 
           // 4. Build Atomic DB Transaction
