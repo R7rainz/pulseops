@@ -59,15 +59,21 @@ export default async function MonitorDiagnosticsPage({
     console.error("Diag fetch failed:", error);
   }
 
+  let analytics: Record<string, unknown> | null = null;
+
   if (monitor) {
     try {
-      const [checksRes, statsRes] = await Promise.all([
+      const [checksRes, statsRes, analyticsRes] = await Promise.all([
         apiFetch(
           `http://127.0.0.1:4000/api/v1/monitors/${monitor.id}/checks?limit=100&offset=0`,
           { token, cookieStore, cache: "no-store" },
         ),
         apiFetch(
           `http://127.0.0.1:4000/api/v1/monitors/${monitor.id}/stats`,
+          { token, cookieStore, cache: "no-store" },
+        ),
+        apiFetch(
+          `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors/${monitor.id}/analytics`,
           { token, cookieStore, cache: "no-store" },
         ),
       ]);
@@ -79,8 +85,12 @@ export default async function MonitorDiagnosticsPage({
         const json = await statsRes.json();
         stats = json.data ?? null;
       }
+      if (analyticsRes.ok) {
+        const json = await analyticsRes.json();
+        analytics = json.data ?? null;
+      }
     } catch (error) {
-      console.error("Charts/stats fetch failed:", error);
+      console.error("Charts/stats/analytics fetch failed:", error);
     }
   }
 
@@ -218,6 +228,44 @@ export default async function MonitorDiagnosticsPage({
           </div>
 
         </div>
+
+        {/* SLA & Historical Analytics */}
+        {analytics && (
+          <div className="p-6 border-2 border-zinc-900 bg-zinc-950">
+            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest border-b-2 border-zinc-900 pb-4 mb-6">
+              30-Day Service Level Agreement (SLA)
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 divide-x-0 md:divide-x-2 divide-zinc-900">
+              <div className="flex flex-col md:px-6 first:pl-0">
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Rolling Uptime</span>
+                <span className={`text-3xl font-black tracking-widest ${
+                  (analytics.uptime30Day as number) >= 99.9 ? "text-emerald-400" :
+                  (analytics.uptime30Day as number) >= 99.0 ? "text-amber-400" : "text-red-400"
+                }`}>
+                  {analytics.uptime30Day as string}%
+                </span>
+              </div>
+              <div className="flex flex-col md:px-6">
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Total Breaches</span>
+                <span className="text-2xl font-bold text-zinc-200">
+                  {analytics.totalOutages30Day as number} <span className="text-xs text-zinc-600">Events</span>
+                </span>
+              </div>
+              <div className="flex flex-col md:px-6">
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Total Downtime</span>
+                <span className="text-2xl font-bold text-zinc-200">
+                  {analytics.downtimeMinutes30Day as number} <span className="text-xs text-zinc-600">Mins</span>
+                </span>
+              </div>
+              <div className="flex flex-col md:px-6">
+                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Avg Latency (24h)</span>
+                <span className="text-2xl font-bold text-cyan-400">
+                  {analytics.avgLatency24h as number} <span className="text-xs text-cyan-900">ms</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Scheduled Maintenance */}
         <div className="p-6 border-2 border-zinc-900 bg-zinc-950 space-y-6">
