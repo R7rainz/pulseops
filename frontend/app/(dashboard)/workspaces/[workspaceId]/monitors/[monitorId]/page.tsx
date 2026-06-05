@@ -2,6 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiFetch";
+import type { MonitorCheck, MonitorStats } from "@/lib/types";
+import MonitorCharts from "@/components/MonitorCharts";
+import MonitorCheckLog from "@/components/MonitorCheckLog";
 import {
   ArrowLeft, Activity, ServerCrash, PauseCircle,
   TerminalSquare, Lock, AlertTriangle, ShieldCheck, ShieldAlert,
@@ -34,6 +37,8 @@ export default async function MonitorDiagnosticsPage({
   if (!token) redirect("/login");
 
   let monitor: MonitorDiag | null = null;
+  let checks: MonitorCheck[] = [];
+  let stats: MonitorStats | null = null;
 
   try {
     const res = await apiFetch(
@@ -49,6 +54,31 @@ export default async function MonitorDiagnosticsPage({
     }
   } catch (error) {
     console.error("Diag fetch failed:", error);
+  }
+
+  if (monitor) {
+    try {
+      const [checksRes, statsRes] = await Promise.all([
+        apiFetch(
+          `http://127.0.0.1:4000/api/v1/monitors/${monitor.id}/checks`,
+          { token, cookieStore, cache: "no-store" },
+        ),
+        apiFetch(
+          `http://127.0.0.1:4000/api/v1/monitors/${monitor.id}/stats`,
+          { token, cookieStore, cache: "no-store" },
+        ),
+      ]);
+      if (checksRes.ok) {
+        const json = await checksRes.json();
+        checks = json.data ?? [];
+      }
+      if (statsRes.ok) {
+        const json = await statsRes.json();
+        stats = json.data ?? null;
+      }
+    } catch (error) {
+      console.error("Charts/stats fetch failed:", error);
+    }
   }
 
   if (!monitor) {
@@ -185,6 +215,13 @@ export default async function MonitorDiagnosticsPage({
           </div>
 
         </div>
+
+        {/* Telemetry Charts */}
+        <MonitorCharts checks={checks} stats={stats} />
+
+        {/* Probe Log */}
+        <MonitorCheckLog checks={checks} />
+
       </div>
     </main>
   );
