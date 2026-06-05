@@ -20,12 +20,19 @@ export default async function MonitorsPage({
 
   let monitors = [];
   let monitorsStatus: number | null = null;
+  let role: string | null = null;
 
   try {
-    const monitorsRes = await apiFetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors`,
-      { token, cookieStore, cache: "no-store" },
-    );
+    const [monitorsRes, wsRes] = await Promise.all([
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors`,
+        { token, cookieStore, cache: "no-store" },
+      ),
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+        { token, cookieStore, cache: "no-store" },
+      ),
+    ]);
 
     monitorsStatus = monitorsRes.status;
 
@@ -34,6 +41,11 @@ export default async function MonitorsPage({
       const extractedMonitors = monitorsData.data || [];
       monitors = Array.isArray(extractedMonitors) ? extractedMonitors : [];
     }
+
+    if (wsRes.ok) {
+      const wsData = await wsRes.json();
+      role = wsData.data?.role ?? null;
+    }
   } catch (error) {
     console.error("Network error fetching monitors:", error);
   }
@@ -41,6 +53,8 @@ export default async function MonitorsPage({
   if (monitorsStatus === 401 || monitorsStatus === 403) {
     redirect("/login");
   }
+
+  const canEdit = role === "OWNER" || role === "ADMIN";
 
   return (
     <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
@@ -64,61 +78,69 @@ export default async function MonitorsPage({
         </div>
 
         {/* BRUTALIST CREATION FORM */}
-        <div className="bg-zinc-950 border-2 border-zinc-800 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.05)]">
-          <div className="mb-6 border-b-2 border-zinc-900 pb-4">
-            <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-widest flex items-center gap-2">
-              <PlusSquare className="w-4 h-4 text-emerald-400" />
-              Provision Target
-            </h2>
+        {canEdit && (
+          <div className="bg-zinc-950 border-2 border-zinc-800 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.05)]">
+            <div className="mb-6 border-b-2 border-zinc-900 pb-4">
+              <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-widest flex items-center gap-2">
+                <PlusSquare className="w-4 h-4 text-emerald-400" />
+                Provision Target
+              </h2>
+            </div>
+
+            <form
+              action={createMonitor}
+              className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end"
+            >
+              <input type="hidden" name="workspaceId" value={workspaceId} />
+
+              <div className="md:col-span-4 space-y-2">
+                <label htmlFor="name" className="block text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                  Designation
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  placeholder="e.g., API Gateway"
+                  required
+                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
+                />
+              </div>
+
+              <div className="md:col-span-5 space-y-2">
+                <label htmlFor="url" className="block text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                  Target URL
+                </label>
+                <input
+                  id="url"
+                  name="url"
+                  type="url"
+                  placeholder="https://api.pulseops.dev"
+                  required
+                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
+                />
+              </div>
+
+              <div className="md:col-span-3">
+                <button
+                  type="submit"
+                  className="w-full h-[52px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest border-2 border-transparent transition-all rounded-none"
+                >
+                  Deploy
+                </button>
+              </div>
+            </form>
           </div>
+        )}
 
-          <form
-            action={createMonitor}
-            className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end"
-          >
-            <input type="hidden" name="workspaceId" value={workspaceId} />
-
-            <div className="md:col-span-4 space-y-2">
-              <label htmlFor="name" className="block text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                Designation
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="e.g., API Gateway"
-                required
-                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
-              />
-            </div>
-
-            <div className="md:col-span-5 space-y-2">
-              <label htmlFor="url" className="block text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                Target URL
-              </label>
-              <input
-                id="url"
-                name="url"
-                type="url"
-                placeholder="https://api.pulseops.dev"
-                required
-                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
-              />
-            </div>
-
-            <div className="md:col-span-3">
-              <button
-                type="submit"
-                className="w-full h-[52px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest border-2 border-transparent transition-all rounded-none"
-              >
-                Deploy
-              </button>
-            </div>
-          </form>
-        </div>
+        {!canEdit && (
+          <div className="bg-zinc-950 border-2 border-dashed border-zinc-800 p-8 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">
+            Elevated privileges required to provision new targets.
+          </div>
+        )}
 
         {/* client toggle */}
-        <MonitorView monitors={monitors} workspaceId={workspaceId} />
+        <MonitorView monitors={monitors} workspaceId={workspaceId} canEdit={canEdit} />
 
       </div>
     </main>

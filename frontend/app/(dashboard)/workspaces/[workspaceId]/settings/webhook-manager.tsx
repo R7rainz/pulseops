@@ -15,9 +15,11 @@ interface WebhookData {
 export default function WebhookManager({
   workspaceId,
   webhooks,
+  canEdit = false,
 }: {
   workspaceId: string;
   webhooks: WebhookData[];
+  canEdit?: boolean;
 }) {
   const router = useRouter();
   const [isCreating, setIsCreating] = useState(false);
@@ -94,13 +96,15 @@ export default function WebhookManager({
                 >
                   <FileText className="w-4 h-4" />
                 </Link>
-                <button
-                  onClick={() => handleDelete(hook.id)}
-                  className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"
-                  title="Purge Endpoint"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {canEdit && (
+                  <button
+                    onClick={() => handleDelete(hook.id)}
+                    className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"
+                    title="Purge Endpoint"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -112,14 +116,15 @@ export default function WebhookManager({
       )}
 
       {/* Creation Toggle */}
-      {!isCreating ? (
+      {canEdit && !isCreating ? (
         <button
           onClick={() => setIsCreating(true)}
           className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-emerald-400 hover:bg-emerald-500/10 text-xs font-bold uppercase tracking-widest transition-colors"
         >
           <Plus className="w-4 h-4" /> Add Target URL
         </button>
-      ) : (
+      ) : null}
+      {canEdit && isCreating ? (
         <form onSubmit={handleCreate} className="space-y-4 border-2 border-emerald-900/30 bg-emerald-950/10 p-4">
           <div className="space-y-2">
             <label htmlFor="hook-url" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
@@ -145,7 +150,7 @@ export default function WebhookManager({
             </button>
           </div>
         </form>
-      )}
+      ) : null}
     </div>
   );
 }

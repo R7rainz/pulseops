@@ -47,10 +47,12 @@ export function IncidentActions({
   incidentId,
   workspaceId,
   status,
+  canEdit = false,
 }: {
   incidentId: number;
   workspaceId: string;
   status: "OPEN" | "ACKNOWLEDGED" | "RESOLVED";
+  canEdit?: boolean;
 }) {
   const router = useRouter();
   const [toast, setToast] = useState<{
@@ -99,24 +101,30 @@ export function IncidentActions({
 
   return (
     <>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {status === "OPEN" && (
+      {canEdit ? (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {status === "OPEN" && (
+            <button
+              type="button"
+              onClick={() => callAction("acknowledge")}
+              className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-800 hover:border-amber-500 text-zinc-400 hover:text-amber-400 text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
+            >
+              ACKNOWLEDGE
+            </button>
+          )}
           <button
             type="button"
-            onClick={() => callAction("acknowledge")}
-            className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-800 hover:border-amber-500 text-zinc-400 hover:text-amber-400 text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
+            onClick={() => callAction("resolve")}
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 border-2 border-transparent text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
           >
-            ACKNOWLEDGE
+            MARK RESOLVED
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => callAction("resolve")}
-          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 border-2 border-transparent text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
-        >
-          MARK RESOLVED
-        </button>
-      </div>
+        </div>
+      ) : (
+        <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold border-2 border-zinc-800 px-3 py-2">
+          Read-Only Access
+        </span>
+      )}
 
       {toast && (
         <ToastMsg

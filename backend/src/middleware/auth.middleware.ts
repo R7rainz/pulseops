@@ -5,6 +5,7 @@ declare module "fastify" {
   interface FastifyRequest {
     user: {
       userId: number;
+      role: string;
     };
   }
 }
@@ -25,6 +26,7 @@ export async function requireAuth(
     const payload = verifyAccessToken(token);
     request.user = {
       userId: payload.userId,
+      role: "",
     };
   } catch (error) {
     return response.status(401).send({ message: "Invalid or expired token" });

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { requireAuth } from "../../middleware/auth.middleware";
+import { requireRole } from "../../middleware/rbac.middleware";
 import {
   createWebhookController,
   deleteWebhookController,
@@ -8,27 +9,30 @@ import {
 } from "./webhook.controller";
 
 export async function webhookRoutes(app: FastifyInstance) {
+  const read = [requireAuth, requireRole(["OWNER", "ADMIN", "MEMBER", "VIEWER"])];
+  const write = [requireAuth, requireRole(["OWNER", "ADMIN"])];
+
   app.post(
     "/workspaces/:workspaceId/webhooks",
-    { preHandler: requireAuth },
+    { preHandler: write },
     createWebhookController as any,
   );
 
   app.get(
     "/workspaces/:workspaceId/webhooks",
-    { preHandler: requireAuth },
+    { preHandler: read },
     getWorkspaceWebhooksController as any,
   );
 
   app.delete(
     "/webhooks/:webhookId",
-    { preHandler: requireAuth },
+    { preHandler: write },
     deleteWebhookController as any,
   );
 
   app.get(
     "/webhooks/:webhookId/delivery-logs",
-    { preHandler: requireAuth },
+    { preHandler: read },
     getWebhookDeliveryLogsController as any,
   );
 }

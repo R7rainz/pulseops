@@ -42,22 +42,36 @@ export default async function MonitorDiagnosticsPage({
   let monitor: MonitorDiag | null = null;
   let checks: MonitorCheck[] = [];
   let stats: MonitorStats | null = null;
+  let role: string | null = null;
 
   try {
-    const res = await apiFetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors/${monitorId}`,
-      { token, cookieStore, cache: "no-store" },
-    );
+    const [monitorRes, wsRes] = await Promise.all([
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors/${monitorId}`,
+        { token, cookieStore, cache: "no-store" },
+      ),
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+        { token, cookieStore, cache: "no-store" },
+      ),
+    ]);
 
-    if (res.status === 401 || res.status === 403) redirect("/login");
+    if (monitorRes.status === 401 || monitorRes.status === 403) redirect("/login");
 
-    if (res.ok) {
-      const json = await res.json();
+    if (monitorRes.ok) {
+      const json = await monitorRes.json();
       monitor = json.data;
+    }
+
+    if (wsRes.ok) {
+      const wsData = await wsRes.json();
+      role = wsData.data?.role ?? null;
     }
   } catch (error) {
     console.error("Diag fetch failed:", error);
   }
+
+  const canEdit = role === "OWNER" || role === "ADMIN";
 
   let analytics: Record<string, unknown> | null = null;
 
@@ -273,62 +287,68 @@ export default async function MonitorDiagnosticsPage({
             <Wrench className="w-4 h-4 text-amber-500" /> Scheduled Maintenance
           </h2>
 
-          <form action={scheduleMaintenance} className="space-y-4">
-            <input type="hidden" name="workspaceId" value={workspaceId} />
-            <input type="hidden" name="monitorId" value={monitor.id} />
+          {canEdit ? (
+            <form action={scheduleMaintenance} className="space-y-4">
+              <input type="hidden" name="workspaceId" value={workspaceId} />
+              <input type="hidden" name="monitorId" value={monitor.id} />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="maintenanceStartAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                  Start Time
-                </label>
-                <input
-                  id="maintenanceStartAt"
-                  name="maintenanceStartAt"
-                  type="datetime-local"
-                  defaultValue={monitor.maintenanceStartAt ? new Date(monitor.maintenanceStartAt).toISOString().slice(0, 16) : ""}
-                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="maintenanceStartAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                    Start Time
+                  </label>
+                  <input
+                    id="maintenanceStartAt"
+                    name="maintenanceStartAt"
+                    type="datetime-local"
+                    defaultValue={monitor.maintenanceStartAt ? new Date(monitor.maintenanceStartAt).toISOString().slice(0, 16) : ""}
+                    className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="maintenanceEndAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                    End Time
+                  </label>
+                  <input
+                    id="maintenanceEndAt"
+                    name="maintenanceEndAt"
+                    type="datetime-local"
+                    defaultValue={monitor.maintenanceEndAt ? new Date(monitor.maintenanceEndAt).toISOString().slice(0, 16) : ""}
+                    className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <label htmlFor="maintenanceEndAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                  End Time
-                </label>
-                <input
-                  id="maintenanceEndAt"
-                  name="maintenanceEndAt"
-                  type="datetime-local"
-                  defaultValue={monitor.maintenanceEndAt ? new Date(monitor.maintenanceEndAt).toISOString().slice(0, 16) : ""}
-                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
-                />
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="submit"
-                className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold uppercase tracking-widest py-2 px-5 border-2 border-transparent transition-all text-xs"
-              >
-                Schedule Maintenance
-              </button>
-              {monitor.maintenanceStartAt && (
+              <div className="flex items-center gap-3 pt-2">
                 <button
                   type="submit"
-                  name="clear"
-                  value="true"
-                  className="bg-zinc-900 hover:bg-red-950 text-zinc-400 hover:text-red-400 font-bold uppercase tracking-widest py-2 px-5 border-2 border-zinc-800 hover:border-red-500 transition-all text-xs"
+                  className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold uppercase tracking-widest py-2 px-5 border-2 border-transparent transition-all text-xs"
                 >
-                  Clear
+                  Schedule Maintenance
                 </button>
-              )}
-            </div>
-
-            {monitor.maintenanceStartAt && (
-              <div className="text-[10px] text-zinc-500 font-mono pt-2 border-t-2 border-zinc-900">
-                Current window: {new Date(monitor.maintenanceStartAt).toLocaleString()} — {new Date(monitor.maintenanceEndAt!).toLocaleString()}
+                {monitor.maintenanceStartAt && (
+                  <button
+                    type="submit"
+                    name="clear"
+                    value="true"
+                    className="bg-zinc-900 hover:bg-red-950 text-zinc-400 hover:text-red-400 font-bold uppercase tracking-widest py-2 px-5 border-2 border-zinc-800 hover:border-red-500 transition-all text-xs"
+                  >
+                    Clear
+                  </button>
+                )}
               </div>
-            )}
-          </form>
+
+              {monitor.maintenanceStartAt && (
+                <div className="text-[10px] text-zinc-500 font-mono pt-2 border-t-2 border-zinc-900">
+                  Current window: {new Date(monitor.maintenanceStartAt).toLocaleString()} — {new Date(monitor.maintenanceEndAt!).toLocaleString()}
+                </div>
+              )}
+            </form>
+          ) : (
+            <div className="py-4 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold border-2 border-dashed border-zinc-800">
+              Elevated privileges required to configure maintenance windows.
+            </div>
+          )}
         </div>
 
         {/* Telemetry Charts */}

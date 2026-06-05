@@ -1,3 +1,5 @@
+export type WorkspaceRole = "OWNER" | "ADMIN" | "MEMBER" | "VIEWER";
+
 export type MonitorStatus = "UP" | "DOWN" | "DEGRADED" | "PAUSED";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

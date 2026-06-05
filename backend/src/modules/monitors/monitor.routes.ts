@@ -14,72 +14,76 @@ import {
   updateMonitorController,
 } from "./monitor.controller";
 import { requireApiKey } from "../../middleware/api-key.middleware";
+import { requireRole } from "../../middleware/rbac.middleware";
 import { getMonitorAnalyticsController } from "./monitor.analytics";
 
 export async function monitorRoutes(app: FastifyInstance) {
+  const read = [requireAuth, requireRole(["OWNER", "ADMIN", "MEMBER", "VIEWER"])];
+  const write = [requireAuth, requireRole(["OWNER", "ADMIN"])];
+
   app.post(
     "/workspaces/:workspaceId/monitors",
-    { preHandler: requireAuth },
+    { preHandler: write },
     createMonitorController as any,
   );
 
   app.get(
     "/workspaces/:workspaceId/monitors",
-    { preHandler: requireAuth },
+    { preHandler: read },
     getWorkspaceMonitorsController as any,
   );
 
   app.post(
     "/monitors/:monitorId/check",
-    { preHandler: requireAuth },
+    { preHandler: write },
     runMonitorCheckController as any,
   );
 
   app.get(
     "/monitors/:monitorId/checks",
-    { preHandler: requireAuth },
+    { preHandler: read },
     getMonitorChecksController as any,
   );
 
   app.get(
     "/monitors/:monitorId/stats",
-    { preHandler: requireAuth },
+    { preHandler: read },
     getMonitorStatsController as any,
   );
 
   app.post(
     "/monitors/:monitorId/pause",
-    { preHandler: requireAuth },
+    { preHandler: write },
     pauseMonitorController as any,
   );
 
   app.post(
     "/monitors/:monitorId/resume",
-    { preHandler: requireAuth },
+    { preHandler: write },
     resumeMonitorController as any,
   );
 
   app.get(
     "/workspaces/:workspaceId/monitors/:monitorId",
-    { preHandler: requireAuth },
+    { preHandler: read },
     getMonitorController as any,
   );
 
   app.patch(
     "/monitors/:monitorId",
-    { preHandler: requireAuth },
+    { preHandler: write },
     updateMonitorController as any,
   );
 
   app.delete(
     "/monitors/:monitorId",
-    { preHandler: requireAuth },
+    { preHandler: write },
     deleteMonitorController as any,
   );
 
   app.get(
     "/workspaces/:workspaceId/monitors/:monitorId/analytics",
-    { preHandler: requireAuth },
+    { preHandler: read },
     getMonitorAnalyticsController as any,
   );
 
