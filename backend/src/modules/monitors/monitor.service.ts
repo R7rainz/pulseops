@@ -210,6 +210,30 @@ export async function runMonitorCheckService(monitorId: number) {
   }
 }
 
+export async function getMonitorService(
+  userId: number,
+  workspaceId: number,
+  monitorId: number,
+) {
+  const membership = await prisma.workspaceMember.findUnique({
+    where: { userId_workspaceId: { userId, workspaceId } },
+  });
+
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
+
+  const monitor = await prisma.monitor.findFirst({
+    where: { id: monitorId, workspaceId },
+  });
+
+  if (!monitor) {
+    throw new Error("Monitor not found");
+  }
+
+  return monitor;
+}
+
 export async function getMonitorChecksService(
   userId: number,
   monitorId: number,

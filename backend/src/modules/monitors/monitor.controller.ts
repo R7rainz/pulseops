@@ -4,6 +4,7 @@ import { createMonitorSchema, updateMonitorSchema } from "./monitor.schema";
 import {
   createMonitorService,
   getMonitorChecksService,
+  getMonitorService,
   getMonitorStatsService,
   getWorkspaceMonitorsService,
   pauseMonitorService,
@@ -110,6 +111,32 @@ export async function runMonitorCheckController(
     message: "Monitor check queued successfully",
     data: queuedJob,
   });
+}
+
+export async function getMonitorController(
+  request: FastifyRequest<{
+    Params: { workspaceId: string; monitorId: string };
+  }>,
+  response: FastifyReply,
+) {
+  const workspaceId = Number(request.params.workspaceId);
+  const monitorId = Number(request.params.monitorId);
+
+  if (Number.isNaN(workspaceId) || Number.isNaN(monitorId)) {
+    return response.status(400).send({ message: "Invalid id" });
+  }
+
+  try {
+    const monitor = await getMonitorService(
+      request.user.userId,
+      workspaceId,
+      monitorId,
+    );
+
+    return response.status(200).send({ data: monitor });
+  } catch (error) {
+    return response.status(404).send({ message: "Monitor not found" });
+  }
 }
 
 export async function getMonitorChecksController(
