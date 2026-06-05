@@ -217,7 +217,7 @@ export default async function MonitorDiagnosticsPage({
         </div>
 
         {/* Telemetry Charts */}
-        <MonitorCharts checks={[]} stats={stats} />
+        <MonitorCharts checks={checks} stats={stats} />
 
         {/* Probe Log */}
         <MonitorCheckLog monitorId={monitor.id} />
