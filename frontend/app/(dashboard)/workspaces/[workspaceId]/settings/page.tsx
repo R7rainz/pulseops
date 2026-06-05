@@ -83,6 +83,7 @@ export default async function WorkspaceSettingsPage({
   }
 
   const isOwner = workspace?.role === "OWNER";
+  const canEdit = workspace?.role === "OWNER" || workspace?.role === "ADMIN";
 
   return (
     <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
@@ -137,12 +138,12 @@ export default async function WorkspaceSettingsPage({
                   type="text"
                   defaultValue={workspace.name}
                   required
-                  disabled={!isOwner}
+                  disabled={!canEdit}
                   className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
-              {isOwner && (
+              {canEdit && (
                 <button
                   type="submit"
                   className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-2 px-5 border-2 border-transparent transition-all text-xs"
@@ -194,7 +195,7 @@ export default async function WorkspaceSettingsPage({
                     </p>
                   </div>
 
-                  {key.isActive && isOwner && (
+                  {key.isActive && canEdit && (
                     <form action={revokeApiKey}>
                       <input
                         type="hidden"
@@ -220,11 +221,11 @@ export default async function WorkspaceSettingsPage({
             </p>
           )}
 
-          {isOwner && <CreateApiKeyForm workspaceId={workspaceId} />}
+          {canEdit && <CreateApiKeyForm workspaceId={workspaceId} />}
         </div>
 
         {/* Webhooks */}
-        <WebhookManager workspaceId={workspaceId} webhooks={webhooks} />
+        <WebhookManager workspaceId={workspaceId} webhooks={webhooks} canEdit={canEdit} />
 
         {/* Danger Zone */}
         {isOwner && (

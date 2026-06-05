@@ -23,9 +23,11 @@ interface Monitor {
 export default function MonitorView({
   monitors,
   workspaceId,
+  canEdit = false,
 }: {
   monitors: Monitor[];
   workspaceId: string;
+  canEdit?: boolean;
 }) {
   // Default to grid, but check localStorage so it remembers the user's choice
   const [view, setView] = useState<"grid" | "matrix">("grid");
@@ -133,37 +135,41 @@ export default function MonitorView({
                     </div>
 
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {monitor.status !== "PAUSED" ? (
-                        <form action={pauseMonitor}>
-                          <input type="hidden" name="workspaceId" value={workspaceId} />
-                          <input type="hidden" name="monitorId" value={monitor.id} />
-                          <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-amber-400 hover:border-amber-500 transition-colors" title="Pause Target">
-                            <Pause className="w-4 h-4" />
-                          </button>
-                        </form>
-                      ) : (
-                        <form action={resumeMonitor}>
-                          <input type="hidden" name="workspaceId" value={workspaceId} />
-                          <input type="hidden" name="monitorId" value={monitor.id} />
-                          <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors" title="Resume Target">
-                            <Play className="w-4 h-4" />
-                          </button>
-                        </form>
+                      {canEdit && (
+                        <>
+                          {monitor.status !== "PAUSED" ? (
+                            <form action={pauseMonitor}>
+                              <input type="hidden" name="workspaceId" value={workspaceId} />
+                              <input type="hidden" name="monitorId" value={monitor.id} />
+                              <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-amber-400 hover:border-amber-500 transition-colors" title="Pause Target">
+                                <Pause className="w-4 h-4" />
+                              </button>
+                            </form>
+                          ) : (
+                            <form action={resumeMonitor}>
+                              <input type="hidden" name="workspaceId" value={workspaceId} />
+                              <input type="hidden" name="monitorId" value={monitor.id} />
+                              <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors" title="Resume Target">
+                                <Play className="w-4 h-4" />
+                              </button>
+                            </form>
+                          )}
+                          <form action={triggerCheck}>
+                            <input type="hidden" name="workspaceId" value={workspaceId} />
+                            <input type="hidden" name="monitorId" value={monitor.id} />
+                            <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors" title="Trigger Check">
+                              <ExternalLink className="w-4 h-4" />
+                            </button>
+                          </form>
+                          <form action={deleteMonitor}>
+                            <input type="hidden" name="workspaceId" value={workspaceId} />
+                            <input type="hidden" name="monitorId" value={monitor.id} />
+                            <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors" title="Purge Target">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </form>
+                        </>
                       )}
-                      <form action={triggerCheck}>
-                        <input type="hidden" name="workspaceId" value={workspaceId} />
-                        <input type="hidden" name="monitorId" value={monitor.id} />
-                        <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors" title="Trigger Check">
-                          <ExternalLink className="w-4 h-4" />
-                        </button>
-                      </form>
-                      <form action={deleteMonitor}>
-                        <input type="hidden" name="workspaceId" value={workspaceId} />
-                        <input type="hidden" name="monitorId" value={monitor.id} />
-                        <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors" title="Purge Target">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </form>
                     </div>
                   </div>
                 </div>
@@ -233,29 +239,33 @@ export default function MonitorView({
 
                       <div className="col-span-2 flex items-center justify-end gap-2">
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {node.status !== "PAUSED" ? (
-                            <form action={pauseMonitor}>
-                              <input type="hidden" name="workspaceId" value={workspaceId} />
-                              <input type="hidden" name="monitorId" value={node.id} />
-                              <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-amber-400 hover:border-amber-500 transition-colors"><Pause className="w-3.5 h-3.5" /></button>
-                            </form>
-                          ) : (
-                            <form action={resumeMonitor}>
-                              <input type="hidden" name="workspaceId" value={workspaceId} />
-                              <input type="hidden" name="monitorId" value={node.id} />
-                              <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors"><Play className="w-3.5 h-3.5" /></button>
-                            </form>
+                          {canEdit && (
+                            <>
+                              {node.status !== "PAUSED" ? (
+                                <form action={pauseMonitor}>
+                                  <input type="hidden" name="workspaceId" value={workspaceId} />
+                                  <input type="hidden" name="monitorId" value={node.id} />
+                                  <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-amber-400 hover:border-amber-500 transition-colors"><Pause className="w-3.5 h-3.5" /></button>
+                                </form>
+                              ) : (
+                                <form action={resumeMonitor}>
+                                  <input type="hidden" name="workspaceId" value={workspaceId} />
+                                  <input type="hidden" name="monitorId" value={node.id} />
+                                  <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors"><Play className="w-3.5 h-3.5" /></button>
+                                </form>
+                              )}
+                              <form action={triggerCheck}>
+                                <input type="hidden" name="workspaceId" value={workspaceId} />
+                                <input type="hidden" name="monitorId" value={node.id} />
+                                <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"><ExternalLink className="w-3.5 h-3.5" /></button>
+                              </form>
+                              <form action={deleteMonitor}>
+                                <input type="hidden" name="workspaceId" value={workspaceId} />
+                                <input type="hidden" name="monitorId" value={node.id} />
+                                <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
+                              </form>
+                            </>
                           )}
-                          <form action={triggerCheck}>
-                            <input type="hidden" name="workspaceId" value={workspaceId} />
-                            <input type="hidden" name="monitorId" value={node.id} />
-                            <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"><ExternalLink className="w-3.5 h-3.5" /></button>
-                          </form>
-                          <form action={deleteMonitor}>
-                            <input type="hidden" name="workspaceId" value={workspaceId} />
-                            <input type="hidden" name="monitorId" value={node.id} />
-                            <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-                          </form>
                         </div>
                         <Link
                           href={`/workspaces/${workspaceId}/monitors/${node.id}`}

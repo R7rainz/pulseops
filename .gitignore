@@ -1,2 +1,4 @@
 PR_BODY.md
 pulseops.md
+backend/backend.log
+*.log

@@ -34,18 +34,30 @@ export default async function IncidentsPage({
 
   let incidents: Incident[] = [];
   let incidentsStatus: number | null = null;
+  let role: string | null = null;
 
   try {
-    const res = await apiFetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/incidents`,
-      { token, cookieStore, cache: "no-store" }
-    );
+    const [incidentsRes, wsRes] = await Promise.all([
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/incidents`,
+        { token, cookieStore, cache: "no-store" }
+      ),
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+        { token, cookieStore, cache: "no-store" }
+      ),
+    ]);
 
-    incidentsStatus = res.status;
+    incidentsStatus = incidentsRes.status;
 
-    if (res.ok) {
-      const json = await res.json();
+    if (incidentsRes.ok) {
+      const json = await incidentsRes.json();
       incidents = json.data || [];
+    }
+
+    if (wsRes.ok) {
+      const wsData = await wsRes.json();
+      role = wsData.data?.role ?? null;
     }
   } catch (error) {
     console.error("Failed to load workspace incidents:", error);
@@ -54,6 +66,8 @@ export default async function IncidentsPage({
   if (incidentsStatus === 401 || incidentsStatus === 403) {
     redirect("/login");
   }
+
+  const canEdit = role === "OWNER" || role === "ADMIN";
 
   const openTickets = incidents.filter(i => i.status !== "RESOLVED");
   const closedTickets = incidents.filter(i => i.status === "RESOLVED");
@@ -120,6 +134,7 @@ export default async function IncidentsPage({
                     incidentId={ticket.id}
                     workspaceId={workspaceId}
                     status={ticket.status}
+                    canEdit={canEdit}
                   />
                 </div>
               ))}
