@@ -232,3 +232,50 @@ export async function updateMonitor(formData: FormData) {
 
   revalidatePath(`/workspaces/${workspaceId}/monitors`);
 }
+
+export async function scheduleMaintenance(formData: FormData) {
+  const workspaceId = formData.get("workspaceId") as string;
+  const monitorId = formData.get("monitorId") as string;
+  const maintenanceStartAt = formData.get("maintenanceStartAt") as string;
+  const maintenanceEndAt = formData.get("maintenanceEndAt") as string;
+  const clear = formData.get("clear") === "true";
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get("pulseops_token")?.value;
+  if (!token || !monitorId || !workspaceId) return;
+
+  const body: Record<string, unknown> = {};
+  if (clear) {
+    body.maintenanceStartAt = null;
+    body.maintenanceEndAt = null;
+  } else {
+    if (!maintenanceStartAt || !maintenanceEndAt) {
+      setToast(cookieStore, "Both start and end times are required", "error");
+      return;
+    }
+    body.maintenanceStartAt = new Date(maintenanceStartAt).toISOString();
+    body.maintenanceEndAt = new Date(maintenanceEndAt).toISOString();
+  }
+
+  try {
+    const res = await fetch(`http://127.0.0.1:4000/api/v1/monitors/${monitorId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      setToast(cookieStore, "Failed to schedule maintenance", "error");
+      return;
+    }
+
+    setToast(cookieStore, clear ? "Maintenance window cleared" : "Maintenance scheduled");
+  } catch {
+    setToast(cookieStore, "Network error scheduling maintenance", "error");
+  }
+
+  revalidatePath(`/workspaces/${workspaceId}/monitors/${monitorId}`);
+}

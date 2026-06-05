@@ -28,6 +28,9 @@ export const createMonitorSchema = z.object({
     .min(100, { message: "Expected status must be atleast 100" })
     .max(500, { message: "Expected status cannot exceed 500" })
     .default(200),
+
+  maintenanceStartAt: z.string().nullable().optional(),
+  maintenanceEndAt: z.string().nullable().optional(),
 });
 
 export const updateMonitorSchema = createMonitorSchema.partial(); //this means use the same validation rule as createMonitorSchema but make every field optional
