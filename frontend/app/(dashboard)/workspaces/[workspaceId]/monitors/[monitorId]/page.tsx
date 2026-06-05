@@ -287,7 +287,7 @@ export default async function MonitorDiagnosticsPage({
         <MonitorCharts checks={checks} stats={stats} />
 
         {/* Probe Log */}
-        <MonitorCheckLog monitorId={monitor.id} />
+        <MonitorCheckLog monitorId={monitor.id} token={token} />
 
       </div>
     </main>

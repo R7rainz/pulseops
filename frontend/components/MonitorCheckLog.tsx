@@ -6,28 +6,39 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
   monitorId: number;
+  token: string;
 }
 
 const PAGE_SIZE = 20;
 
-export default function MonitorCheckLog({ monitorId }: Props) {
+export default function MonitorCheckLog({ monitorId, token }: Props) {
   const [checks, setChecks] = useState<MonitorCheck[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  async function fetchWithRefresh(url: string, currentToken: string): Promise<Response> {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${currentToken}` } });
+    if (res.status !== 401) return res;
+    const refreshRes = await fetch("http://127.0.0.1:4000/api/v1/auth/refresh", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${currentToken}` },
+    });
+    if (!refreshRes.ok) return res;
+    const { data } = await refreshRes.json();
+    const newToken = data?.accessToken as string | undefined;
+    if (!newToken) return res;
+    return fetch(url, { headers: { Authorization: `Bearer ${newToken}` } });
+  }
+
   const fetchChecks = useCallback(async (currentOffset: number) => {
     setLoading(true);
     setError(null);
     try {
-      const tokenRes = await fetch("/api/auth/token");
-      const { token } = await tokenRes.json();
-      if (!token) throw new Error("Not authenticated");
-
-      const res = await fetch(
+      const res = await fetchWithRefresh(
         `http://127.0.0.1:4000/api/v1/monitors/${monitorId}/checks?limit=${PAGE_SIZE}&offset=${currentOffset}`,
-        { headers: { Authorization: `Bearer ${token}` } },
+        token,
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
