@@ -14,6 +14,8 @@ export interface Monitor {
   status: MonitorStatus;
   isActive: boolean;
   lastCheckedAt: string | null;
+  maintenanceStartAt: string | null;
+  maintenanceEndAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -49,6 +51,8 @@ export type CreateMonitorInput = {
   intervalSeconds?: number;
   timeoutMs?: number;
   expectedStatus?: number;
+  maintenanceStartAt?: string | null;
+  maintenanceEndAt?: string | null;
 };
 
 export type UpdateMonitorInput = Partial<CreateMonitorInput>;

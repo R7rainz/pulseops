@@ -5,9 +5,10 @@ import { apiFetch } from "@/lib/apiFetch";
 import type { MonitorCheck, MonitorStats } from "@/lib/types";
 import MonitorCharts from "@/components/MonitorCharts";
 import MonitorCheckLog from "@/components/MonitorCheckLog";
+import { scheduleMaintenance } from "../actions";
 import {
   ArrowLeft, Activity, ServerCrash, PauseCircle,
-  TerminalSquare, Lock, AlertTriangle, ShieldCheck, ShieldAlert,
+  TerminalSquare, Lock, AlertTriangle, ShieldCheck, ShieldAlert, Wrench,
 } from "lucide-react";
 
 interface MonitorDiag {
@@ -23,6 +24,8 @@ interface MonitorDiag {
   tlsValidTo: string | null;
   tlsDaysRemaining: number | null;
   lastCheckedAt: string | null;
+  maintenanceStartAt: string | null;
+  maintenanceEndAt: string | null;
 }
 
 export default async function MonitorDiagnosticsPage({
@@ -216,11 +219,75 @@ export default async function MonitorDiagnosticsPage({
 
         </div>
 
+        {/* Scheduled Maintenance */}
+        <div className="p-6 border-2 border-zinc-900 bg-zinc-950 space-y-6">
+          <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
+            <Wrench className="w-4 h-4 text-amber-500" /> Scheduled Maintenance
+          </h2>
+
+          <form action={scheduleMaintenance} className="space-y-4">
+            <input type="hidden" name="workspaceId" value={workspaceId} />
+            <input type="hidden" name="monitorId" value={monitor.id} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="maintenanceStartAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                  Start Time
+                </label>
+                <input
+                  id="maintenanceStartAt"
+                  name="maintenanceStartAt"
+                  type="datetime-local"
+                  defaultValue={monitor.maintenanceStartAt ? new Date(monitor.maintenanceStartAt).toISOString().slice(0, 16) : ""}
+                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="maintenanceEndAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                  End Time
+                </label>
+                <input
+                  id="maintenanceEndAt"
+                  name="maintenanceEndAt"
+                  type="datetime-local"
+                  defaultValue={monitor.maintenanceEndAt ? new Date(monitor.maintenanceEndAt).toISOString().slice(0, 16) : ""}
+                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="submit"
+                className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold uppercase tracking-widest py-2 px-5 border-2 border-transparent transition-all text-xs"
+              >
+                Schedule Maintenance
+              </button>
+              {monitor.maintenanceStartAt && (
+                <button
+                  type="submit"
+                  name="clear"
+                  value="true"
+                  className="bg-zinc-900 hover:bg-red-950 text-zinc-400 hover:text-red-400 font-bold uppercase tracking-widest py-2 px-5 border-2 border-zinc-800 hover:border-red-500 transition-all text-xs"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {monitor.maintenanceStartAt && (
+              <div className="text-[10px] text-zinc-500 font-mono pt-2 border-t-2 border-zinc-900">
+                Current window: {new Date(monitor.maintenanceStartAt).toLocaleString()} — {new Date(monitor.maintenanceEndAt!).toLocaleString()}
+              </div>
+            )}
+          </form>
+        </div>
+
         {/* Telemetry Charts */}
         <MonitorCharts checks={checks} stats={stats} />
 
         {/* Probe Log */}
-        <MonitorCheckLog monitorId={monitor.id} />
+        <MonitorCheckLog monitorId={monitor.id} token={token} />
 
       </div>
     </main>
