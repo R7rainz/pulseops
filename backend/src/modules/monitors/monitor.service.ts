@@ -276,14 +276,30 @@ export async function getMonitorChecksService(
   return { checks, total };
 }
 
+function computeStats(checks: { status: string; responseTimeMs: number | null }[]) {
+  const totalChecks = checks.length;
+  const upChecks = checks.filter((c) => c.status === "UP").length;
+  const downChecks = checks.filter((c) => c.status === "DOWN").length;
+  const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
+  const withRt = checks.filter((c) => c.responseTimeMs !== null);
+  const averageResponseTimeMs = withRt.length === 0
+    ? 0
+    : withRt.reduce((s, c) => s + c.responseTimeMs!, 0) / withRt.length;
+  return {
+    totalChecks,
+    upChecks,
+    downChecks,
+    uptimePercentage: Math.round(uptimePercentage * 100) / 100,
+    averageResponseTimeMs: Math.round(averageResponseTimeMs * 100) / 100,
+  };
+}
+
 export async function getMonitorStatsService(
   userId: number,
   monitorId: number,
 ) {
   const monitor = await prisma.monitor.findUnique({
-    where: {
-      id: monitorId,
-    },
+    where: { id: monitorId },
   });
 
   if (!monitor) {
@@ -292,10 +308,7 @@ export async function getMonitorStatsService(
 
   const membership = await prisma.workspaceMember.findUnique({
     where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: monitor.workspaceId,
-      },
+      userId_workspaceId: { userId, workspaceId: monitor.workspaceId },
     },
   });
 
@@ -303,44 +316,22 @@ export async function getMonitorStatsService(
     throw new Error("You do not have access to this monitor");
   }
 
-  const checks = await prisma.monitorCheck.findMany({
-    where: {
-      monitorId,
-    },
-    orderBy: {
-      checkedAt: "desc",
-    },
+  const allChecks = await prisma.monitorCheck.findMany({
+    where: { monitorId },
+    orderBy: { checkedAt: "desc" },
   });
 
-  const totalChecks = checks.length;
+  const now = new Date();
+  const range24h = allChecks.filter(c => c.checkedAt.getTime() > now.getTime() - 86400000);
+  const range30d = allChecks.filter(c => c.checkedAt.getTime() > now.getTime() - 2592000000);
 
-  const upChecks = checks.filter((check) => check.status === "UP").length;
-  const downChecks = checks.filter((check) => check.status === "DOWN").length;
-
-  const uptimePercentage =
-    totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
-
-  const checksWithResponseTime = checks.filter(
-    (check) => check.responseTimeMs !== null,
-  );
-
-  const averageResponseTimeMs =
-    checksWithResponseTime.length === 0
-      ? 0
-      : checksWithResponseTime.reduce(
-          (sum, check) => sum + check.responseTimeMs!,
-          0,
-        ) / checksWithResponseTime.length;
-
-  const latestStatus = checks[0]?.status ?? monitor.status;
+  const latestStatus = allChecks[0]?.status ?? monitor.status;
 
   return {
-    totalChecks,
-    upChecks,
-    downChecks,
-    uptimePercentage,
-    averageResponseTimeMs,
+    ...computeStats(allChecks),
     latestStatus,
+    range24h: computeStats(range24h),
+    range30d: computeStats(range30d),
   };
 }
 
