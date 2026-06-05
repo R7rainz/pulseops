@@ -140,7 +140,10 @@ export async function getMonitorController(
 }
 
 export async function getMonitorChecksController(
-  request: FastifyRequest<{ Params: RunMonitorCheckParams }>,
+  request: FastifyRequest<{
+    Params: RunMonitorCheckParams;
+    Querystring: { limit?: string; offset?: string };
+  }>,
   response: FastifyReply,
 ) {
   const monitorId = Number(request.params.monitorId);
@@ -149,10 +152,18 @@ export async function getMonitorChecksController(
       message: "Invalid monitor id",
     });
   }
-  const checks = await getMonitorChecksService(request.user.userId, monitorId);
+  const limit = Math.min(Math.max(Number(request.query.limit) || 20, 1), 200);
+  const offset = Math.max(Number(request.query.offset) || 0, 0);
+  const result = await getMonitorChecksService(
+    request.user.userId,
+    monitorId,
+    limit,
+    offset,
+  );
   return response.status(200).send({
     message: "Monitor check fetched successfully",
-    data: checks,
+    data: result.checks,
+    meta: { total: result.total, limit, offset },
   });
 }
 

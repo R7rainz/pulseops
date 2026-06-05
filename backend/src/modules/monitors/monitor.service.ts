@@ -237,6 +237,8 @@ export async function getMonitorService(
 export async function getMonitorChecksService(
   userId: number,
   monitorId: number,
+  limit: number,
+  offset: number,
 ) {
   const monitor = await prisma.monitor.findUnique({
     where: {
@@ -261,16 +263,17 @@ export async function getMonitorChecksService(
     throw new Error("You do not have access to this monitor");
   }
 
-  const checks = await prisma.monitorCheck.findMany({
-    where: {
-      monitorId,
-    },
-    orderBy: {
-      checkedAt: "desc",
-    },
-  });
+  const [checks, total] = await Promise.all([
+    prisma.monitorCheck.findMany({
+      where: { monitorId },
+      orderBy: { checkedAt: "desc" },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.monitorCheck.count({ where: { monitorId } }),
+  ]);
 
-  return checks;
+  return { checks, total };
 }
 
 export async function getMonitorStatsService(
