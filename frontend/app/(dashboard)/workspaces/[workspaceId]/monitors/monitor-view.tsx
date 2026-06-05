@@ -14,7 +14,7 @@ interface Monitor {
   url: string;
   method: string;
   intervalSeconds: number;
-  status: "UP" | "DOWN" | "PAUSED";
+  status: "UP" | "DOWN" | "PAUSED" | "DEGRADED";
   consecutiveFailures: number;
   graceThreshold: number;
   lastCheckedAt: string | null;
@@ -96,12 +96,15 @@ export default function MonitorView({
                     className="flex items-start gap-4"
                   >
                     <div
-                      className={`w-3 h-3 mt-1.5 border flex-shrink-0 ${monitor.status === "UP"
-                        ? "bg-emerald-500 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"
-                        : monitor.status === "DOWN"
-                          ? "bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
-                          : "bg-zinc-600 border-zinc-500"
-                        }`}
+                      className={`w-3 h-3 mt-1.5 border flex-shrink-0 ${
+                        monitor.status === "UP"
+                          ? "bg-emerald-500 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                          : monitor.status === "DOWN"
+                            ? "bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
+                            : monitor.status === "DEGRADED"
+                              ? "bg-amber-500 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
+                              : "bg-zinc-600 border-zinc-500"
+                      }`}
                     />
                     <div className="min-w-0 flex-1">
                       <h3 className="font-bold text-zinc-100 uppercase tracking-widest truncate">
@@ -119,7 +122,8 @@ export default function MonitorView({
                       <span
                         className={
                           monitor.status === "UP" ? "text-emerald-400"
-                            : monitor.status === "DOWN" ? "text-red-400" : ""
+                            : monitor.status === "DOWN" ? "text-red-400"
+                              : monitor.status === "DEGRADED" ? "text-amber-400" : ""
                         }
                       >
                         {monitor.lastCheckedAt
@@ -183,7 +187,8 @@ export default function MonitorView({
                 {monitors.map((node) => {
                   const isDown = node.status === "DOWN";
                   const isPaused = node.status === "PAUSED";
-                  const isFailing = node.consecutiveFailures > 0 && node.consecutiveFailures < (node.graceThreshold || 3);
+                  const isDegraded = node.status === "DEGRADED";
+                  const isFailing = (isDegraded || node.consecutiveFailures > 0) && node.consecutiveFailures < (node.graceThreshold || 3);
                   const isUp = node.status === "UP" && !isFailing;
 
                   return (
