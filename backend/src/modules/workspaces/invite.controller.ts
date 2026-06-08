@@ -5,13 +5,13 @@ import { prisma } from "../../lib/db";
 export async function generateInviteController(
   request: FastifyRequest<{
     Params: { workspaceId: string };
-    Body: { role: "ADMIN" | "MEMBER" | "VIEWER" };
+    Body: { role: "ADMIN" | "MEMBER" | "VIEWER"; email?: string };
   }>,
   response: FastifyReply,
 ) {
   try {
     const workspaceId = Number(request.params.workspaceId);
-    const { role } = request.body;
+    const { role, email } = request.body;
 
     const token = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -21,14 +21,18 @@ export async function generateInviteController(
         workspaceId,
         token,
         role: role || "VIEWER",
+        email: email || null,
         expiresAt,
       },
     });
 
     return response.status(201).send({
-      message: "Secure invite token generated",
+      message: email
+        ? `Secure invite generated for ${email}`
+        : "Secure invite token generated",
       data: {
         id: invite.id,
+        email: invite.email,
         token: invite.token,
         role: invite.role,
         expiresAt: invite.expiresAt.toISOString(),
@@ -153,6 +157,7 @@ export async function listInvitesController(
       select: {
         id: true,
         token: true,
+        email: true,
         role: true,
         expiresAt: true,
         createdAt: true,

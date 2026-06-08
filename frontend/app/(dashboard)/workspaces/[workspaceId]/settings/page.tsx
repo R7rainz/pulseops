@@ -11,14 +11,11 @@ import {
   TerminalSquare,
   Plus,
   UserPlus,
-  Copy,
-  Check,
 } from "lucide-react";
 import { createApiKey, revokeApiKey, updateWorkspaceName } from "./actions";
 import DeleteWorkspaceButton from "./delete-button";
 import CreateApiKeyForm from "./create-apikey-form";
 import WebhookManager from "./webhook-manager";
-import InviteManager from "./invite-manager";
 
 interface Workspace {
   id: number;
@@ -49,10 +46,9 @@ export default async function WorkspaceSettingsPage({
   let workspace: Workspace | null = null;
   let apiKeys: ApiKey[] = [];
   let webhooks: { id: number; url: string; isActive: boolean }[] = [];
-  let inviteData = { active: [], expired: [] };
 
   try {
-    const [wsRes, keysRes, hooksRes, invitesRes] = await Promise.all([
+    const [wsRes, keysRes, hooksRes] = await Promise.all([
       apiFetch(
         `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
         { token, cookieStore, cache: "no-store" },
@@ -63,10 +59,6 @@ export default async function WorkspaceSettingsPage({
       ),
       apiFetch(
         `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/webhooks`,
-        { token, cookieStore, cache: "no-store" },
-      ),
-      apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/invites`,
         { token, cookieStore, cache: "no-store" },
       ),
     ]);
@@ -82,10 +74,6 @@ export default async function WorkspaceSettingsPage({
     if (hooksRes.ok) {
       const hooksData = await hooksRes.json();
       webhooks = hooksData.data || [];
-    }
-    if (invitesRes.ok) {
-      const invitesData = await invitesRes.json();
-      inviteData = invitesData.data || { active: [], expired: [] };
     }
 
     if (wsRes.status === 401 || wsRes.status === 403) {
@@ -238,7 +226,29 @@ export default async function WorkspaceSettingsPage({
         </div>
 
         {/* Invites */}
-        <InviteManager workspaceId={workspaceId} initialData={inviteData} canEdit={canEdit} />
+        {canEdit && (
+          <Link
+            href={`/workspaces/${workspaceId}/invites`}
+            className="flex items-center justify-between p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-colors group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-zinc-900 border-2 border-zinc-800 group-hover:border-cyan-500/50 transition-colors">
+                <UserPlus className="w-5 h-5 text-cyan-400" />
+              </div>
+              <div>
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                  Access Invites
+                </h3>
+                <p className="text-[10px] text-zinc-600 mt-1">
+                  Generate and manage secure invite tokens
+                </p>
+              </div>
+            </div>
+            <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+              Manage &rarr;
+            </span>
+          </Link>
+        )}
 
         {/* Webhooks */}
         <WebhookManager workspaceId={workspaceId} webhooks={webhooks} canEdit={canEdit} />

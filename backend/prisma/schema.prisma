@@ -173,6 +173,7 @@ model WorkspaceInvite {
   id          Int           @id @default(autoincrement())
   workspaceId Int
   token       String        @unique
+  email       String?
   role        WorkspaceRole @default(VIEWER)
   expiresAt   DateTime
   createdAt   DateTime      @default(now())
@@ -181,4 +182,5 @@ model WorkspaceInvite {
 
   @@index([token])
   @@index([workspaceId])
+  @@index([email])
 }
