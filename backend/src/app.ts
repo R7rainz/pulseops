@@ -6,6 +6,7 @@ import { monitorRoutes } from "./modules/monitors/monitor.routes";
 import { incidentRoutes } from "./modules/incidents/incident.routes";
 import { webhookRoutes } from "./modules/webhooks/webhook.routes";
 import { publicStatusRoutes } from "./modules/status/status.routes";
+import { inviteRoutes } from "./modules/workspaces/invite.routes";
 import { startPingEngine } from "./modules/monitors/monitor.engine";
 
 export async function buildApp() {
@@ -47,6 +48,10 @@ export async function buildApp() {
 
   await app.register(publicStatusRoutes, {
     prefix: "/api/v1/status",
+  });
+
+  await app.register(inviteRoutes, {
+    prefix: "/api/v1",
   });
 
   startPingEngine();

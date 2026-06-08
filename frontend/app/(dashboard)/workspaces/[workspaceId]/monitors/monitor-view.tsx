@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Trash2, Play, Pause, ExternalLink, Activity, ServerCrash,
@@ -29,13 +29,41 @@ export default function MonitorView({
   workspaceId: string;
   canEdit?: boolean;
 }) {
-  // Default to grid, but check localStorage so it remembers the user's choice
+  const [liveMonitors, setLiveMonitors] = useState(monitors);
   const [view, setView] = useState<"grid" | "matrix">("grid");
+
+  useEffect(() => {
+    setLiveMonitors(monitors);
+  }, [monitors]);
 
   useEffect(() => {
     const saved = localStorage.getItem("pulseops_view_pref");
     if (saved === "matrix" || saved === "grid") setView(saved);
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const tokenRes = await fetch("/api/auth/token");
+        const { token } = await tokenRes.json();
+        if (!token) return;
+
+        const res = await fetch(
+          `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (res.ok) {
+          const json = await res.json();
+          const data = json.data || [];
+          if (Array.isArray(data)) setLiveMonitors(data);
+        }
+      } catch {
+        // Silently retry on next interval
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [workspaceId]);
 
   const handleViewChange = (newView: "grid" | "matrix") => {
     setView(newView);
@@ -47,12 +75,12 @@ export default function MonitorView({
       {/* 🚨 THE TOGGLE HEADER 🚨 */}
       <div className="flex items-center justify-between border-b-2 border-zinc-900 pb-2">
         <h2 className="text-sm font-bold tracking-widest uppercase text-zinc-400">
-          Telemetry {view === "grid" ? "Grid" : "Matrix"}
+          Telemetry {view === "grid" ? "Grid" : "Matrix"} <span className="text-emerald-500 text-[10px] ml-2">LIVE</span>
         </h2>
 
         <div className="flex items-center gap-4">
           <span className="text-xs font-bold text-zinc-600 uppercase tracking-widest">
-            [{monitors.length} Nodes]
+            [{liveMonitors.length} Nodes]
           </span>
           <div className="flex items-center gap-1 bg-zinc-950 border-2 border-zinc-900 p-1">
             <button
@@ -79,7 +107,7 @@ export default function MonitorView({
         </div>
       </div>
 
-      {monitors.length === 0 ? (
+      {liveMonitors.length === 0 ? (
         <div className="p-12 border-2 border-dashed border-zinc-800 bg-zinc-950 text-center text-zinc-500 text-sm font-bold uppercase tracking-widest">
           Zero targets provisioned in current workspace.
         </div>
@@ -88,7 +116,7 @@ export default function MonitorView({
           {/*grid cards*/}
           {view === "grid" && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {monitors.map((monitor) => (
+              {liveMonitors.map((monitor) => (
                 <div
                   key={monitor.id}
                   className="flex flex-col justify-between h-40 p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-emerald-500/50 transition-colors group"
@@ -190,7 +218,7 @@ export default function MonitorView({
               </div>
 
               <div className="min-w-[900px] divide-y-2 divide-zinc-900">
-                {monitors.map((node) => {
+                {liveMonitors.map((node) => {
                   const isDown = node.status === "DOWN";
                   const isPaused = node.status === "PAUSED";
                   const isDegraded = node.status === "DEGRADED";

@@ -38,6 +38,7 @@ export async function loginUser(
 ): Promise<AuthState> {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const inviteToken = formData.get("invite_token") as string | null;
 
   if (!email || !password) return { error: "Email and password are required." };
 
@@ -66,8 +67,21 @@ export async function loginUser(
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    // 🚨 Fetch the correct path using our new helper
-    destination = await getDestinationPath(token);
+    if (inviteToken) {
+      const acceptRes = await fetch(
+        `http://127.0.0.1:4000/api/v1/invites/${inviteToken}/accept`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (acceptRes.ok) {
+        const acceptData = await acceptRes.json();
+        destination = `/workspaces/${acceptData.data.workspaceId}/monitors`;
+      }
+    } else {
+      destination = await getDestinationPath(token);
+    }
   } catch (err) {
     return { error: "Network error connecting to the server." };
   }
@@ -83,6 +97,7 @@ export async function signupUser(
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const inviteToken = formData.get("invite_token") as string | null;
 
   if (!name || !email || !password)
     return { error: "All fields are required." };
@@ -115,8 +130,22 @@ export async function signupUser(
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    // 🚨 Fetch the correct path using our new helper
-    destination = await getDestinationPath(token);
+    // Auto-accept invite if token present
+    if (inviteToken) {
+      const acceptRes = await fetch(
+        `http://127.0.0.1:4000/api/v1/invites/${inviteToken}/accept`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (acceptRes.ok) {
+        const acceptData = await acceptRes.json();
+        destination = `/workspaces/${acceptData.data.workspaceId}/monitors`;
+      }
+    } else {
+      destination = await getDestinationPath(token);
+    }
   } catch (err) {
     return { error: "Network error connecting to the server." };
   }
