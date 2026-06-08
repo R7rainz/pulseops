@@ -10,11 +10,15 @@ import {
   ShieldAlert,
   TerminalSquare,
   Plus,
+  UserPlus,
+  Copy,
+  Check,
 } from "lucide-react";
 import { createApiKey, revokeApiKey, updateWorkspaceName } from "./actions";
 import DeleteWorkspaceButton from "./delete-button";
 import CreateApiKeyForm from "./create-apikey-form";
 import WebhookManager from "./webhook-manager";
+import InviteManager from "./invite-manager";
 
 interface Workspace {
   id: number;
@@ -45,9 +49,10 @@ export default async function WorkspaceSettingsPage({
   let workspace: Workspace | null = null;
   let apiKeys: ApiKey[] = [];
   let webhooks: { id: number; url: string; isActive: boolean }[] = [];
+  let inviteData = { active: [], expired: [] };
 
   try {
-    const [wsRes, keysRes, hooksRes] = await Promise.all([
+    const [wsRes, keysRes, hooksRes, invitesRes] = await Promise.all([
       apiFetch(
         `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
         { token, cookieStore, cache: "no-store" },
@@ -58,6 +63,10 @@ export default async function WorkspaceSettingsPage({
       ),
       apiFetch(
         `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/webhooks`,
+        { token, cookieStore, cache: "no-store" },
+      ),
+      apiFetch(
+        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/invites`,
         { token, cookieStore, cache: "no-store" },
       ),
     ]);
@@ -73,6 +82,10 @@ export default async function WorkspaceSettingsPage({
     if (hooksRes.ok) {
       const hooksData = await hooksRes.json();
       webhooks = hooksData.data || [];
+    }
+    if (invitesRes.ok) {
+      const invitesData = await invitesRes.json();
+      inviteData = invitesData.data || { active: [], expired: [] };
     }
 
     if (wsRes.status === 401 || wsRes.status === 403) {
@@ -223,6 +236,9 @@ export default async function WorkspaceSettingsPage({
 
           {canEdit && <CreateApiKeyForm workspaceId={workspaceId} />}
         </div>
+
+        {/* Invites */}
+        <InviteManager workspaceId={workspaceId} initialData={inviteData} canEdit={canEdit} />
 
         {/* Webhooks */}
         <WebhookManager workspaceId={workspaceId} webhooks={webhooks} canEdit={canEdit} />

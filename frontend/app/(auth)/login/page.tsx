@@ -1,13 +1,16 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { loginUser } from "../auth.actions";
 import Link from "next/link";
 import { Activity, AlertTriangle } from "lucide-react";
 import PasswordInput from "@/components/PasswordInput";
 
-export default function LoginPage() {
+function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginUser, {});
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get("invite_token");
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-50 font-mono flex items-center justify-center p-6 selection:bg-emerald-500/30 selection:text-emerald-400">
@@ -31,6 +34,9 @@ export default function LoginPage() {
         {/* Sharp Materialistic Form Box with Offset Shadow */}
         <div className="bg-zinc-950 border-2 border-zinc-800 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.1)]">
           <form action={formAction} className="space-y-6">
+            {inviteToken && (
+              <input type="hidden" name="invite_token" value={inviteToken} />
+            )}
             {state?.error && (
               <div className="p-4 bg-red-950/30 border-2 border-red-500/50 flex items-start gap-3 text-sm text-red-400">
                 <AlertTriangle className="w-5 h-5 flex-shrink-0" />
@@ -78,7 +84,7 @@ export default function LoginPage() {
           <p className="text-zinc-500 text-sm">
             No active profile?{" "}
             <Link
-              href="/signup"
+              href={`/signup${inviteToken ? `?invite_token=${inviteToken}` : ""}`}
               className="text-cyan-400 hover:text-cyan-300 hover:underline font-bold uppercase tracking-wide"
             >
               Provision one
@@ -87,5 +93,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -4,166 +4,181 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-    provider = "prisma-client"
-    output   = "../src/generated/prisma"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-    provider = "postgresql"
+  provider = "postgresql"
 }
 
 model User {
-    id           Int      @id @default(autoincrement())
-    name         String?
-    email        String   @unique
-    passwordHash String
-    createdAt    DateTime @default(now())
-    updatedAt    DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-    workspaceMembers WorkspaceMember[]
+  workspaceMembers WorkspaceMember[]
 }
 
 enum WorkspaceRole {
-    OWNER
-    ADMIN
-    MEMBER
-    VIEWER
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
 }
 
 model Workspace {
-    id        Int      @id @default(autoincrement())
-    name      String
-    slug      String   @unique
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    members          WorkspaceMember[]
-    monitors         Monitor[]
-    webhookEndpoints WebhookEndpoint[]
-    apiKeys          ApiKey[]
+  members          WorkspaceMember[]
+  monitors         Monitor[]
+  webhookEndpoints WebhookEndpoint[]
+  apiKeys          ApiKey[]
+  workspaceInvites WorkspaceInvite[]
 }
 
 model WorkspaceMember {
-    id          Int           @id @default(autoincrement())
-    userId      Int
-    workspaceId Int
-    role        WorkspaceRole @default(MEMBER)
-    createdAt   DateTime      @default(now())
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  workspaceId Int
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now())
 
-    user      User      @relation(fields: [userId], references: [id])
-    workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-    @@unique([userId, workspaceId])
+  @@unique([userId, workspaceId])
 }
 
 enum MonitorStatus {
-    UP
-    DOWN
-    DEGRADED
-    PAUSED
+  UP
+  DOWN
+  DEGRADED
+  PAUSED
 }
 
 model Monitor {
-    id                  Int           @id @default(autoincrement())
-    workspaceId         Int
-    name                String
-    url                 String
-    method              String        @default("GET")
-    intervalSeconds     Int           @default(60)
-    timeoutMs           Int           @default(5000)
-    expectedStatus      Int           @default(200)
-    status              MonitorStatus @default(UP)
-    consecutiveFailures Int           @default(0)
-    graceThreshold      Int           @default(3)
-    isActive            Boolean       @default(true)
-    lastCheckedAt       DateTime?
-    tlsIssuer           String?
-    tlsValidTo          DateTime?
-    tlsDaysRemaining    Int?
-    createdAt           DateTime      @default(now())
-    updatedAt           DateTime      @updatedAt
-    maintenanceStartAt  DateTime?
-    maintenanceEndAt    DateTime?
+  id                  Int           @id @default(autoincrement())
+  workspaceId         Int
+  name                String
+  url                 String
+  method              String        @default("GET")
+  intervalSeconds     Int           @default(60)
+  timeoutMs           Int           @default(5000)
+  expectedStatus      Int           @default(200)
+  status              MonitorStatus @default(UP)
+  consecutiveFailures Int           @default(0)
+  graceThreshold      Int           @default(3)
+  isActive            Boolean       @default(true)
+  lastCheckedAt       DateTime?
+  tlsIssuer           String?
+  tlsValidTo          DateTime?
+  tlsDaysRemaining    Int?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  maintenanceStartAt  DateTime?
+  maintenanceEndAt    DateTime?
 
-    workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-    checks    MonitorCheck[]
-    incidents Incident[]
+  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  checks    MonitorCheck[]
+  incidents Incident[]
 
-    @@index([workspaceId])
+  @@index([workspaceId])
 }
 
 model MonitorCheck {
-    id             Int           @id @default(autoincrement())
-    monitorId      Int
-    status         MonitorStatus
-    statusCode     Int?
-    responseTimeMs Int?
-    errorMessage   String?
-    checkedAt      DateTime      @default(now())
+  id             Int           @id @default(autoincrement())
+  monitorId      Int
+  status         MonitorStatus
+  statusCode     Int?
+  responseTimeMs Int?
+  errorMessage   String?
+  checkedAt      DateTime      @default(now())
 
-    monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
 
-    @@index([monitorId])
-    @@index([checkedAt])
+  @@index([monitorId])
+  @@index([checkedAt])
 }
 
 enum IncidentStatus {
-    OPEN
-    ACKNOWLEDGED
-    RESOLVED
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
 }
 
 model Incident {
-    id         Int            @id @default(autoincrement())
-    monitorId  Int
-    status     IncidentStatus @default(OPEN)
-    title      String
-    startedAt  DateTime       @default(now())
-    resolvedAt DateTime?
+  id         Int            @id @default(autoincrement())
+  monitorId  Int
+  status     IncidentStatus @default(OPEN)
+  title      String
+  startedAt  DateTime       @default(now())
+  resolvedAt DateTime?
 
-    monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
 
-    @@index([monitorId])
-    @@index([status])
+  @@index([monitorId])
+  @@index([status])
 }
 
 model ApiKey {
-    id          Int       @id @default(autoincrement())
-    workspaceId Int
-    name        String
-    key         String    @unique
-    lastUsedAt  DateTime?
-    isActive    Boolean   @default(true)
-    createdAt   DateTime  @default(now())
+  id          Int       @id @default(autoincrement())
+  workspaceId Int
+  name        String
+  key         String    @unique
+  lastUsedAt  DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
 
-    workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-    @@index([workspaceId])
+  @@index([workspaceId])
 }
 
 model WebhookEndpoint {
-    id          Int      @id @default(autoincrement())
-    workspaceId Int
-    url         String
-    isActive    Boolean  @default(true)
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+  id          Int      @id @default(autoincrement())
+  workspaceId Int
+  url         String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-    workspace           Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-    webhookDeliveryLogs WebhookDeliveryLog[]
+  workspace           Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  webhookDeliveryLogs WebhookDeliveryLog[]
 
-    @@index([workspaceId])
+  @@index([workspaceId])
 }
 
 model WebhookDeliveryLog {
-    id             Int      @id @default(autoincrement())
-    webhookId      Int
-    url            String
-    requestPayload Json
-    responseStatus Int?
-    responseBody   String?
-    isSuccess      Boolean
-    createdAt      DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  webhookId      Int
+  url            String
+  requestPayload Json
+  responseStatus Int?
+  responseBody   String?
+  isSuccess      Boolean
+  createdAt      DateTime @default(now())
 
-    webhook WebhookEndpoint @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  webhook WebhookEndpoint @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+}
+
+model WorkspaceInvite {
+  id          Int           @id @default(autoincrement())
+  workspaceId Int
+  token       String        @unique
+  role        WorkspaceRole @default(VIEWER)
+  expiresAt   DateTime
+  createdAt   DateTime      @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([workspaceId])
 }
