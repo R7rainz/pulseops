@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Radio,
   Eye,
+  UserPlus,
 } from "lucide-react";
 import { logoutUser } from "@/app/(auth)/auth.actions";
 
@@ -60,9 +61,10 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                 const statusPath = `/status/${ws.slug}`;
                 const isMonitors = pathname === `${wsBase}/monitors`;
                 const isIncidents = pathname === `${wsBase}/incidents`;
+                const isInvites = pathname === `${wsBase}/invites`;
                 const isSettings = pathname === `${wsBase}/settings`;
                 const isStatus = pathname === statusPath;
-                const isActive = isMonitors || isIncidents || isSettings || isStatus;
+                const isActive = isMonitors || isIncidents || isInvites || isSettings || isStatus;
 
                 return (
                   <div
@@ -106,6 +108,12 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                         icon={<AlertTriangle className="w-3.5 h-3.5" />}
                         label="Incidents"
                         isActive={isIncidents}
+                      />
+                      <NavItem
+                        href={`${wsBase}/invites`}
+                        icon={<UserPlus className="w-3.5 h-3.5" />}
+                        label="Invites"
+                        isActive={isInvites}
                       />
                       <NavItem
                         href={`${wsBase}/settings`}
