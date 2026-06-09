@@ -16,7 +16,18 @@ import {
   Link as LinkIcon,
   X,
   ExternalLink,
+  AlertTriangle,
+  CheckCircle2,
 } from "lucide-react";
+
+interface InviteResult {
+  email: string;
+  token: string;
+  link: string;
+  role: string;
+  sent: boolean;
+  error?: string;
+}
 
 interface Invite {
   id: number;
@@ -27,6 +38,13 @@ interface Invite {
   createdAt: string;
 }
 
+function parseEmails(raw: string): string[] {
+  return raw
+    .split(/[,;\n]+/)
+    .map((e) => e.trim())
+    .filter((e) => e.length > 0);
+}
+
 export default function InvitesPage({
   params,
 }: {
@@ -35,11 +53,12 @@ export default function InvitesPage({
   const router = useRouter();
   const [workspaceId, setWorkspaceId] = useState<string>("");
   const [invites, setInvites] = useState<{ active: Invite[]; expired: Invite[] }>({ active: [], expired: [] });
-  const [email, setEmail] = useState("");
+  const [emailsText, setEmailsText] = useState("");
   const [selectedRole, setSelectedRole] = useState("VIEWER");
   const [generating, setGenerating] = useState(false);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [results, setResults] = useState<InviteResult[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -91,17 +110,20 @@ export default function InvitesPage({
           },
           body: JSON.stringify({
             role: selectedRole,
-            email: email.trim() || undefined,
+            emails: emailsText || undefined,
           }),
         },
       );
 
-      if (res.ok) {
-        setEmail("");
+      const data = await res.json().catch(() => ({ message: "Failed to parse response", data: {} }));
+
+      if (res.ok || res.status === 207) {
+        setResults(data.data?.results || []);
+        setEmailsText("");
         await fetchInvites();
+        if (data.message) setError(null);
       } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.message || "Failed to generate invite");
+        setError(data.message || "Failed to generate invites");
       }
     } catch {
       setError("Network error");
@@ -183,18 +205,23 @@ export default function InvitesPage({
           )}
 
           <form onSubmit={handleGenerate} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-            <div className="md:col-span-4 space-y-2">
+            <div className="md:col-span-5 space-y-2">
               <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
                 <Mail className="w-3 h-3" />
-                Operator Email
+                Operator Emails <span className="text-zinc-700 font-normal">(one per line, comma or semicolon)</span>
               </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="engineer@pulseops.dev"
-                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-cyan-500 transition-colors text-sm"
+              <textarea
+                value={emailsText}
+                onChange={(e) => setEmailsText(e.target.value)}
+                placeholder={"alice@pulseops.dev\nbob@acme.com, carol@example.com"}
+                rows={3}
+                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-cyan-500 transition-colors text-sm font-mono resize-none"
               />
+              {emailsText && (
+                <p className="text-[10px] text-zinc-600">
+                  {parseEmails(emailsText).length} recipient(s) detected
+                </p>
+              )}
             </div>
 
             <div className="md:col-span-3 space-y-2">
@@ -213,18 +240,78 @@ export default function InvitesPage({
               </select>
             </div>
 
-            <div className="md:col-span-5">
+            <div className="md:col-span-4">
               <button
                 type="submit"
                 disabled={generating}
                 className="w-full h-[52px] bg-cyan-600 hover:bg-cyan-500 text-zinc-950 font-bold uppercase tracking-widest border-2 border-transparent transition-all text-xs disabled:opacity-50 flex items-center justify-center gap-3"
               >
                 <UserPlus className="w-5 h-5" />
-                {generating ? "Generating Secure Token..." : "Generate Invite Link"}
+                {generating ? "Generating Secure Tokens..." : "Generate Invite Links"}
               </button>
             </div>
           </form>
         </div>
+
+        {/* Generation Results */}
+        {results && results.length > 0 && (
+          <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
+            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2 border-b-2 border-zinc-900 pb-4">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              Delivery Results
+            </h3>
+            <div className="space-y-2">
+              {results.map((r) => (
+                <div
+                  key={r.email}
+                  className="flex items-center justify-between px-3 py-2 bg-zinc-900/50 border border-zinc-800"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {r.sent ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
+                    )}
+                    <span className="text-sm text-zinc-300 truncate">{r.email}</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest border px-1.5 py-0.5 ${
+                      r.role === "ADMIN"
+                        ? "text-purple-400 border-purple-800"
+                        : r.role === "MEMBER"
+                          ? "text-cyan-400 border-cyan-800"
+                          : "text-zinc-400 border-zinc-700"
+                    }`}>
+                      {r.role}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 ml-4">
+                    {r.sent ? (
+                      <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Delivered</span>
+                    ) : (
+                      <span className="text-[10px] text-amber-600 font-bold uppercase tracking-widest">{r.error || "Failed"}</span>
+                    )}
+                    {r.token && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/invite/${r.token}`);
+                        }}
+                        className="p-1.5 bg-zinc-950 border border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"
+                        title="Copy invite link"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setResults(null)}
+              className="mt-4 px-4 py-2 bg-zinc-900 border-2 border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
+            >
+              Dismiss Results
+            </button>
+          </div>
+        )}
 
         {/* Active Invites */}
         <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">

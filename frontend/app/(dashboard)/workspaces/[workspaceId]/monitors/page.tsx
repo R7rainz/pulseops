@@ -4,6 +4,7 @@ import { apiFetch } from "@/lib/apiFetch";
 import { createMonitor } from "./actions";
 import { PlusSquare, TerminalSquare } from "lucide-react";
 import MonitorView from "./monitor-view";
+import MembersPanel from "@/components/MembersPanel";
 
 export default async function MonitorsPage({
   params,
@@ -140,7 +141,14 @@ export default async function MonitorsPage({
         )}
 
         {/* client toggle */}
-        <MonitorView monitors={monitors} workspaceId={workspaceId} canEdit={canEdit} />
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+          <div className="xl:col-span-3">
+            <MonitorView monitors={monitors} workspaceId={workspaceId} canEdit={canEdit} />
+          </div>
+          <div className="xl:col-span-1">
+            <MembersPanel workspaceId={workspaceId} />
+          </div>
+        </div>
 
       </div>
     </main>

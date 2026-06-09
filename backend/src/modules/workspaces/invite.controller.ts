@@ -1,47 +1,130 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import crypto from "crypto";
 import { prisma } from "../../lib/db";
+import { sendInviteEmail } from "../../lib/email";
+
+function parseEmails(raw: string): string[] {
+  return raw
+    .split(/[,;\n]+/)
+    .map((e) => e.trim())
+    .filter((e) => e.length > 0);
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateEmail(email: string): boolean {
+  return EMAIL_RE.test(email);
+}
 
 export async function generateInviteController(
   request: FastifyRequest<{
     Params: { workspaceId: string };
-    Body: { role: "ADMIN" | "MEMBER" | "VIEWER"; email?: string };
+    Body: { role?: "ADMIN" | "MEMBER" | "VIEWER"; emails?: string; email?: string };
   }>,
   response: FastifyReply,
 ) {
   try {
     const workspaceId = Number(request.params.workspaceId);
-    const { role, email } = request.body;
+    const role = request.body.role || "VIEWER";
 
-    const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    // Accept both `emails` (bulk) and `email` (single) for backwards compat
+    const rawEmails = request.body.emails || request.body.email || "";
+    const parsed = parseEmails(rawEmails);
 
-    const invite = await prisma.workspaceInvite.create({
-      data: {
-        workspaceId,
-        token,
-        role: role || "VIEWER",
-        email: email || null,
-        expiresAt,
-      },
+    if (parsed.length === 0) {
+      return response.status(400).send({
+        message: "At least one email address is required",
+      });
+    }
+
+    const invalid = parsed.filter((e) => !validateEmail(e));
+    if (invalid.length > 0) {
+      return response.status(400).send({
+        message: `Invalid email addresses: ${invalid.join(", ")}`,
+        data: { invalid },
+      });
+    }
+
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { name: true },
     });
 
-    return response.status(201).send({
-      message: email
-        ? `Secure invite generated for ${email}`
-        : "Secure invite token generated",
-      data: {
-        id: invite.id,
-        email: invite.email,
-        token: invite.token,
-        role: invite.role,
-        expiresAt: invite.expiresAt.toISOString(),
-        link: `http://localhost:3000/invite/${invite.token}`,
-      },
+    if (!workspace) {
+      return response.status(404).send({ message: "Workspace not found" });
+    }
+
+    const inviter = await prisma.user.findUnique({
+      where: { id: request.user.userId },
+      select: { name: true },
+    });
+
+    const invitedByName = inviter?.name || "A workspace admin";
+
+    const results: Array<{
+      email: string;
+      token: string;
+      link: string;
+      role: string;
+      sent: boolean;
+      error?: string;
+    }> = [];
+
+    for (const email of parsed) {
+      try {
+        const token = crypto.randomBytes(32).toString("hex");
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+        const invite = await prisma.workspaceInvite.create({
+          data: { workspaceId, token, role, email, expiresAt },
+        });
+
+        const baseUrl = process.env.APP_URL || "http://localhost:3000";
+        const link = `${baseUrl}/invite/${invite.token}`;
+
+        try {
+          await sendInviteEmail({
+            to: email,
+            workspaceName: workspace.name,
+            inviteLink: link,
+            role: invite.role,
+            invitedByName,
+          });
+          results.push({ email, token: invite.token, link, role: invite.role, sent: true });
+        } catch (mailErr) {
+          const errMsg = mailErr instanceof Error ? mailErr.message : String(mailErr);
+          console.error(`[INVITE] Email failed for ${email}:`, errMsg);
+          results.push({
+            email,
+            token: invite.token,
+            link,
+            role: invite.role,
+            sent: false,
+            error: errMsg,
+          });
+        }
+      } catch (err) {
+        results.push({
+          email,
+          token: "",
+          link: "",
+          role,
+          sent: false,
+          error: "Failed to create invite",
+        });
+      }
+    }
+
+    const succeeded = results.filter((r) => r.sent);
+    const failed = results.filter((r) => !r.sent);
+
+    return response.status(failed.length === 0 ? 201 : 207).send({
+      message: `Generated ${succeeded.length} invite(s), ${failed.length} failed`,
+      data: { results, succeeded: succeeded.length, failed: failed.length },
     });
   } catch (error) {
     return response.status(500).send({
-      message: "Failed to generate cryptographic token",
+      message: "Failed to generate invites",
     });
   }
 }
