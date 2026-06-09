@@ -13,6 +13,11 @@ import {
   getApiKeysController,
   revokeApiKeyController,
 } from "./api-key.controller.js";
+import {
+  listMembersController,
+  removeMemberController,
+  updateMemberRoleController,
+} from "./member.controller.js";
 
 export async function workspaceRoutes(app: FastifyInstance) {
   const read = [requireAuth, requireRole(["OWNER", "ADMIN", "MEMBER", "VIEWER"])];
@@ -24,6 +29,10 @@ export async function workspaceRoutes(app: FastifyInstance) {
   app.get("/:workspaceId", { preHandler: read }, getWorkspaceController as any);
   app.patch("/:workspaceId", { preHandler: write }, updateWorkspaceController as any);
   app.delete("/:workspaceId", { preHandler: ownerOnly }, deleteWorkspaceController as any);
+
+  app.get("/:workspaceId/members", { preHandler: read }, listMembersController as any);
+  app.delete("/:workspaceId/members/:userId", { preHandler: write }, removeMemberController as any);
+  app.patch("/:workspaceId/members/:userId", { preHandler: write }, updateMemberRoleController as any);
 
   app.post("/:workspaceId/api-keys", { preHandler: write }, createApiKeyController as any);
   app.get("/:workspaceId/api-keys", { preHandler: read }, getApiKeysController as any);

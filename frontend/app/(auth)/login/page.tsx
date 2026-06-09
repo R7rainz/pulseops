@@ -10,6 +10,7 @@ import PasswordInput from "@/components/PasswordInput";
 function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginUser, {});
   const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
   const inviteToken = searchParams.get("invite_token");
 
   return (
@@ -34,6 +35,9 @@ function LoginForm() {
         {/* Sharp Materialistic Form Box with Offset Shadow */}
         <div className="bg-zinc-950 border-2 border-zinc-800 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.1)]">
           <form action={formAction} className="space-y-6">
+            {callbackUrl && (
+              <input type="hidden" name="callbackUrl" value={callbackUrl} />
+            )}
             {inviteToken && (
               <input type="hidden" name="invite_token" value={inviteToken} />
             )}

@@ -39,6 +39,7 @@ export async function loginUser(
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const inviteToken = formData.get("invite_token") as string | null;
+  const callbackUrl = formData.get("callbackUrl") as string | null;
 
   if (!email || !password) return { error: "Email and password are required." };
 
@@ -67,18 +68,10 @@ export async function loginUser(
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    if (inviteToken) {
-      const acceptRes = await fetch(
-        `http://127.0.0.1:4000/api/v1/invites/${inviteToken}/accept`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      if (acceptRes.ok) {
-        const acceptData = await acceptRes.json();
-        destination = `/workspaces/${acceptData.data.workspaceId}/monitors`;
-      }
+    if (callbackUrl) {
+      destination = callbackUrl;
+    } else if (inviteToken) {
+      destination = `/invite/${inviteToken}`;
     } else {
       destination = await getDestinationPath(token);
     }
@@ -130,19 +123,9 @@ export async function signupUser(
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    // Auto-accept invite if token present
+    // If signup came from an invite, send them to the invite page to review & accept
     if (inviteToken) {
-      const acceptRes = await fetch(
-        `http://127.0.0.1:4000/api/v1/invites/${inviteToken}/accept`,
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      if (acceptRes.ok) {
-        const acceptData = await acceptRes.json();
-        destination = `/workspaces/${acceptData.data.workspaceId}/monitors`;
-      }
+      destination = `/invite/${inviteToken}`;
     } else {
       destination = await getDestinationPath(token);
     }
