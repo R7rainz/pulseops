@@ -242,12 +242,24 @@ export async function getMonitorService(
     throw new Error("You do not have access to this workspace");
   }
 
-  const monitor = await prisma.monitor.findFirst({
-    where: { id: monitorId, workspaceId },
-  });
+  const [monitor, workspace] = await Promise.all([
+    prisma.monitor.findFirst({
+      where: { id: monitorId, workspaceId },
+    }),
+    prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { planTier: true },
+    }),
+  ]);
 
   if (!monitor) {
     throw new Error("Monitor not found");
+  }
+
+  if (workspace?.planTier === "FREE") {
+    monitor.tlsIssuer = null;
+    monitor.tlsValidTo = null;
+    monitor.tlsDaysRemaining = null;
   }
 
   return monitor;
