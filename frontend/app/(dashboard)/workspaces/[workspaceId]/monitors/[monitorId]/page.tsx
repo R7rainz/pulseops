@@ -43,6 +43,7 @@ export default async function MonitorDiagnosticsPage({
   let checks: MonitorCheck[] = [];
   let stats: MonitorStats | null = null;
   let role: string | null = null;
+  let planTier: string | null = null;
 
   try {
     const [monitorRes, wsRes] = await Promise.all([
@@ -66,6 +67,7 @@ export default async function MonitorDiagnosticsPage({
     if (wsRes.ok) {
       const wsData = await wsRes.json();
       role = wsData.data?.role ?? null;
+      planTier = wsData.data?.planTier ?? null;
     }
   } catch (error) {
     console.error("Diag fetch failed:", error);
@@ -209,7 +211,23 @@ export default async function MonitorDiagnosticsPage({
               Cryptographic Profile
             </h2>
 
-            {monitor.tlsIssuer ? (
+            {planTier !== "PRO" && monitor.tlsIssuer ? (
+              <div className="py-8 text-center space-y-3">
+                <ShieldAlert className="w-8 h-8 text-amber-500 mx-auto" />
+                <p className="text-xs text-amber-400 font-bold uppercase tracking-widest">
+                  PRO Tier Required
+                </p>
+                <p className="text-[10px] text-zinc-600">
+                  SSL/TLS Cryptographic telemetry is locked behind the PRO subscription.
+                </p>
+                <Link
+                  href={`/workspaces/${workspaceId}/billing`}
+                  className="inline-block mt-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold uppercase tracking-widest text-xs border-2 border-transparent transition-all"
+                >
+                  Upgrade to PRO
+                </Link>
+              </div>
+            ) : monitor.tlsIssuer ? (
               <div className="space-y-4">
                 <div>
                   <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Certificate Authority</p>

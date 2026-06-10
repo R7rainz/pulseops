@@ -36,16 +36,23 @@ export async function createMonitorController(
   }
 
   const body = createMonitorSchema.parse(request.body);
-  const monitor = await createMonitorService(
-    request.user.userId,
-    numWorkspaceID,
-    body,
-  );
+  try {
+    const monitor = await createMonitorService(
+      request.user.userId,
+      numWorkspaceID,
+      body,
+    );
 
-  return response.status(201).send({
-    message: "Monitor created successfully",
-    data: monitor,
-  });
+    return response.status(201).send({
+      message: "Monitor created successfully",
+      data: monitor,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("FREE tier limited")) {
+      return response.status(403).send({ message: error.message });
+    }
+    throw error;
+  }
 }
 
 export async function getWorkspaceMonitorsController(
