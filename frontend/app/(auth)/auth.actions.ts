@@ -69,7 +69,8 @@ export async function loginUser(
     });
 
     if (callbackUrl) {
-      destination = callbackUrl;
+      const isSafe = callbackUrl.startsWith("/") && !callbackUrl.startsWith("//");
+      destination = isSafe ? callbackUrl : "/workspaces/new";
     } else if (inviteToken) {
       destination = `/invite/${inviteToken}`;
     } else {
