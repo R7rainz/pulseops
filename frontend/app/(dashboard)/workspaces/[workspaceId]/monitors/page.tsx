@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import { createMonitor } from "./actions";
-import { PlusSquare, TerminalSquare } from "lucide-react";
+import { PlusSquare, TerminalSquare, Crown, Zap } from "lucide-react";
 import MonitorView from "./monitor-view";
 import MembersPanel from "@/components/MembersPanel";
 
@@ -22,6 +22,7 @@ export default async function MonitorsPage({
   let monitors = [];
   let monitorsStatus: number | null = null;
   let role: string | null = null;
+  let planTier: string | null = null;
 
   try {
     const [monitorsRes, wsRes] = await Promise.all([
@@ -46,6 +47,7 @@ export default async function MonitorsPage({
     if (wsRes.ok) {
       const wsData = await wsRes.json();
       role = wsData.data?.role ?? null;
+      planTier = wsData.data?.planTier ?? null;
     }
   } catch (error) {
     console.error("Network error fetching monitors:", error);
@@ -72,9 +74,19 @@ export default async function MonitorsPage({
               Active Routing & Telemetry
             </p>
           </div>
-          <div className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2">
-            <span className="w-2 h-2 bg-cyan-400 animate-pulse" />
-            Workspace ID: {workspaceId}
+          <div className="flex items-center gap-3">
+            <div className={`px-4 py-2 border-2 text-xs font-bold uppercase tracking-widest flex items-center gap-2 ${
+              planTier === "PRO"
+                ? "bg-amber-950/20 border-amber-800 text-amber-400"
+                : "bg-zinc-950 border-zinc-800 text-zinc-500"
+            }`}>
+              {planTier === "PRO" ? <Crown className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
+              {planTier || "FREE"}
+            </div>
+            <div className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 bg-cyan-400 animate-pulse" />
+              Workspace ID: {workspaceId}
+            </div>
           </div>
         </div>
 
