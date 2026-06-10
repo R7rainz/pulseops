@@ -7,6 +7,7 @@ import { incidentRoutes } from "./modules/incidents/incident.routes";
 import { webhookRoutes } from "./modules/webhooks/webhook.routes";
 import { publicStatusRoutes } from "./modules/status/status.routes";
 import { inviteRoutes } from "./modules/workspaces/invite.routes";
+import { billingRoutes } from "./modules/billing/billing.routes";
 import { startPingEngine } from "./modules/monitors/monitor.engine";
 
 export async function buildApp() {
@@ -51,6 +52,10 @@ export async function buildApp() {
   });
 
   await app.register(inviteRoutes, {
+    prefix: "/api/v1",
+  });
+
+  await app.register(billingRoutes, {
     prefix: "/api/v1",
   });
 
