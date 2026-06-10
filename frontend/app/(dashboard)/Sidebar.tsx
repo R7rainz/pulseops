@@ -92,11 +92,11 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                       </span>
                     </Link>
 
-                    {/* SUB-NAV — collapsed by default, expands on hover */}
+                    {/* SUB-NAV — always visible when active, otherwise on hover */}
                     <div className={`divide-y divide-zinc-900 transition-all duration-200 overflow-hidden ${
                       isActive
-                        ? "max-h-52 opacity-100 visible"
-                        : "max-h-0 opacity-0 invisible group-hover:max-h-52 group-hover:opacity-100 group-hover:visible"
+                        ? "max-h-96 opacity-100 visible"
+                        : "max-h-0 opacity-0 invisible group-hover:max-h-96 group-hover:opacity-100 group-hover:visible"
                     }`}>
                       <div className="border-t border-zinc-900" />
                       <NavItem
