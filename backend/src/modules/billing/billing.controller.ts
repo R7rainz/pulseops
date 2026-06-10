@@ -8,6 +8,71 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET!
 })
 
+export async function razorpayWebhookController(
+  request: FastifyRequest,
+  response: FastifyReply,
+) {
+  try {
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      return response.status(500).send({ message: "Webhook secret not configured" });
+    }
+
+    const signature = request.headers["x-razorpay-signature"] as string;
+    if (!signature) {
+      return response.status(401).send({ message: "Missing webhook signature" });
+    }
+
+    const body = JSON.stringify(request.body);
+    const expectedSignature = crypto
+      .createHmac("sha256", webhookSecret)
+      .update(body)
+      .digest("hex");
+
+    if (signature !== expectedSignature) {
+      return response.status(401).send({ message: "Invalid webhook signature" });
+    }
+
+    const event = request.body as {
+      event: string;
+      payload: {
+        subscription?: { entity: { id: string } };
+        payment?: { entity: { id: string; status: string } };
+      };
+    };
+
+    if (event.event === "subscription.charged") {
+      const subscriptionId = event.payload.subscription?.entity?.id;
+      if (!subscriptionId) {
+        return response.status(400).send({ message: "Missing subscription ID in payload" });
+      }
+
+      const workspace = await prisma.workspace.findFirst({
+        where: { razorpaySubId: subscriptionId },
+      });
+
+      if (!workspace) {
+        return response.status(404).send({ message: "Workspace not found for subscription" });
+      }
+
+      await prisma.workspace.update({
+        where: { id: workspace.id },
+        data: {
+          planTier: "FREE",
+          subscriptionStatus: "inactive",
+        },
+      });
+
+      console.log(`[BILLING] Workspace ${workspace.id} downgraded to FREE (payment failed)`);
+    }
+
+    return response.status(200).send({ message: "Webhook processed" });
+  } catch (error) {
+    console.error("[BILLING] Webhook error:", error);
+    return response.status(500).send({ message: "Webhook processing failed" });
+  }
+}
+
 export async function createSubscriptionController(
   request: FastifyRequest<{Params: {workspaceId: string}}>, response: FastifyReply
 ) {

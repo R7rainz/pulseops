@@ -4,6 +4,7 @@ import { requireRole } from "../../middleware/rbac.middleware";
 import {
   createSubscriptionController,
   verifyPaymentController,
+  razorpayWebhookController,
 } from "./billing.controller";
 
 export async function billingRoutes(app: FastifyInstance) {
@@ -11,4 +12,6 @@ export async function billingRoutes(app: FastifyInstance) {
 
   app.post("/workspaces/:workspaceId/subscription", { preHandler: owner }, createSubscriptionController as any);
   app.post("/workspaces/:workspaceId/subscription/verify", { preHandler: owner }, verifyPaymentController as any);
+
+  app.post("/billing/webhook", razorpayWebhookController as any);
 }

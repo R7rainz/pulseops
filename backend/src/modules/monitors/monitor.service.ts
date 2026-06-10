@@ -22,6 +22,25 @@ export async function createMonitorService(
     throw new Error("You do not have access to this workspace");
   }
 
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { planTier: true },
+  });
+
+  if (!workspace) {
+    throw new Error("Workspace not found");
+  }
+
+  if (workspace.planTier === "FREE") {
+    const activeCount = await prisma.monitor.count({
+      where: { workspaceId },
+    });
+
+    if (activeCount >= 5) {
+      throw new Error("FREE tier limited to 5 monitors. Upgrade to PRO for unlimited monitoring.");
+    }
+  }
+
   const monitor = await prisma.monitor.create({
     data: {
       workspaceId,
