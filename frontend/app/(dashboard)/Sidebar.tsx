@@ -13,6 +13,7 @@ import {
   Radio,
   Eye,
   UserPlus,
+  CreditCard,
 } from "lucide-react";
 import { logoutUser } from "@/app/(auth)/auth.actions";
 
@@ -62,9 +63,10 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                 const isMonitors = pathname === `${wsBase}/monitors`;
                 const isIncidents = pathname === `${wsBase}/incidents`;
                 const isInvites = pathname === `${wsBase}/invites`;
+                const isBilling = pathname === `${wsBase}/billing`;
                 const isSettings = pathname === `${wsBase}/settings`;
                 const isStatus = pathname === statusPath;
-                const isActive = isMonitors || isIncidents || isInvites || isSettings || isStatus;
+                const isActive = isMonitors || isIncidents || isBilling || isInvites || isSettings || isStatus;
 
                 return (
                   <div
@@ -114,6 +116,12 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                         icon={<UserPlus className="w-3.5 h-3.5" />}
                         label="Invites"
                         isActive={isInvites}
+                      />
+                      <NavItem
+                        href={`${wsBase}/billing`}
+                        icon={<CreditCard className="w-3.5 h-3.5" />}
+                        label="Billing"
+                        isActive={isBilling}
                       />
                       <NavItem
                         href={`${wsBase}/settings`}

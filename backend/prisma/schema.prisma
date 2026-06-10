@@ -31,11 +31,15 @@ enum WorkspaceRole {
 }
 
 model Workspace {
-  id        Int      @id @default(autoincrement())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 Int      @id @default(autoincrement())
+  name               String
+  slug               String   @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  planTier           String   @default("FREE")
+  razorpayCustomerId String?
+  razorpaySubId      String?
+  subscriptionStatus String?
 
   members          WorkspaceMember[]
   monitors         Monitor[]
