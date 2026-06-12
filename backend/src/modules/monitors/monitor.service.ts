@@ -3,548 +3,565 @@ import { prisma } from "../../lib/db";
 import axios from "axios";
 import { monitorCheckQueue } from "../../queues/monitor.queue";
 import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
+import { kafkaProducer } from "../../lib/kafka";
 
 export async function createMonitorService(
-  userId: number,
-  workspaceId: number,
-  input: CreateMonitorInput,
+    userId: number,
+    workspaceId: number,
+    input: CreateMonitorInput,
 ) {
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId,
-      },
-    },
-  });
-
-  if (!membership) {
-    throw new Error("You do not have access to this workspace");
-  }
-
-  const workspace = await prisma.workspace.findUnique({
-    where: { id: workspaceId },
-    select: { planTier: true },
-  });
-
-  if (!workspace) {
-    throw new Error("Workspace not found");
-  }
-
-  if (workspace.planTier === "FREE") {
-    const activeCount = await prisma.monitor.count({
-      where: { workspaceId },
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: {
+                userId,
+                workspaceId,
+            },
+        },
     });
 
-    if (activeCount >= 5) {
-      throw new Error("FREE tier limited to 5 monitors. Upgrade to PRO for unlimited monitoring.");
+    if (!membership) {
+        throw new Error("You do not have access to this workspace");
     }
-  }
 
-  const monitor = await prisma.monitor.create({
-    data: {
-      workspaceId,
-      name: input.name,
-      url: input.url,
-      method: input.method,
-      intervalSeconds: input.intervalSeconds,
-      timeoutMs: input.timeoutMs,
-      expectedStatus: input.expectedStatus,
-    },
-  });
+    const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { planTier: true },
+    });
 
-  return monitor;
+    if (!workspace) {
+        throw new Error("Workspace not found");
+    }
+
+    if (workspace.planTier === "FREE") {
+        const activeCount = await prisma.monitor.count({
+            where: { workspaceId },
+        });
+
+        if (activeCount >= 5) {
+            throw new Error("FREE tier limited to 5 monitors. Upgrade to PRO for unlimited monitoring.");
+        }
+    }
+
+    const monitor = await prisma.monitor.create({
+        data: {
+            workspaceId,
+            name: input.name,
+            url: input.url,
+            method: input.method,
+            intervalSeconds: input.intervalSeconds,
+            timeoutMs: input.timeoutMs,
+            expectedStatus: input.expectedStatus,
+        },
+    });
+
+    return monitor;
 }
 
 export async function getWorkspaceMonitorsService(
-  userId: number,
-  workspaceId: number,
+    userId: number,
+    workspaceId: number,
 ) {
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId,
-      },
-    },
-  });
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: {
+                userId,
+                workspaceId,
+            },
+        },
+    });
 
-  if (!membership) {
-    throw new Error("You do not have access to this workspace");
-  }
+    if (!membership) {
+        throw new Error("You do not have access to this workspace");
+    }
 
-  const monitors = await prisma.monitor.findMany({
-    where: {
-      workspaceId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+    const monitors = await prisma.monitor.findMany({
+        where: {
+            workspaceId,
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
 
-  return monitors;
+    return monitors;
 }
 
 async function handleIncidentTransition(
-  monitorId: number,
-  oldStatus: string,
-  newStatus: string,
+    monitorId: number,
+    oldStatus: string,
+    newStatus: string,
 ) {
-  // 1. Fetch monitor details needed for the webhook payload
-  const monitor = await prisma.monitor.findUnique({
-    where: { id: monitorId },
-    select: { workspaceId: true, name: true },
-  });
-
-  if (!monitor) return; // Safeguard in case monitor was deleted
-
-  // 2. Handle Monitor DOWN (Create Incident)
-  if (oldStatus !== "DOWN" && newStatus === "DOWN") {
-    const newIncident = await prisma.incident.create({
-      data: {
-        monitorId,
-        title: `Monitor ${monitor.name} is down`,
-        status: "OPEN",
-      },
+    // 1. Fetch monitor details needed for the webhook payload
+    const monitor = await prisma.monitor.findUnique({
+        where: { id: monitorId },
+        select: { workspaceId: true, name: true },
     });
 
-    // Trigger Webhook for New Incident
-    await sendWebhookNotifications(monitor.workspaceId, {
-      event: "incident.opened",
-      incidentId: newIncident.id,
-      monitorId: monitorId,
-      workspaceId: monitor.workspaceId,
-      message: `Monitor is DOWN: ${monitor.name}`,
-      timestamp: new Date().toISOString(),
-    });
-  }
+    if (!monitor) return; // Safeguard in case monitor was deleted
 
-  // 3. Handle Monitor UP (Resolve Incident)
-  if (oldStatus === "DOWN" && newStatus === "UP") {
-    // Find the currently open incident for this monitor
-    const openIncident = await prisma.incident.findFirst({
-      where: {
-        monitorId,
-        status: {
-          in: ["OPEN", "ACKNOWLEDGED"],
-        },
-      },
-    });
+    // 2. Handle Monitor DOWN (Create Incident)
+    if (oldStatus !== "DOWN" && newStatus === "DOWN") {
+        const newIncident = await prisma.incident.create({
+            data: {
+                monitorId,
+                title: `Monitor ${monitor.name} is down`,
+                status: "OPEN",
+            },
+        });
 
-    if (openIncident) {
-      // Update the specific incident so we get the returned data
-      const resolvedIncident = await prisma.incident.update({
-        where: { id: openIncident.id },
-        data: {
-          status: "RESOLVED",
-          resolvedAt: new Date(),
-        },
-      });
-
-      // Trigger Webhook for Auto-Resolved Incident
-      await sendWebhookNotifications(monitor.workspaceId, {
-        event: "incident.resolved",
-        incidentId: resolvedIncident.id,
-        monitorId: monitorId,
-        workspaceId: monitor.workspaceId,
-        message: `Monitor is back UP: ${monitor.name}`,
-        timestamp: new Date().toISOString(),
-      });
+        // Trigger Webhook for New Incident
+        await sendWebhookNotifications(monitor.workspaceId, {
+            event: "incident.opened",
+            incidentId: newIncident.id,
+            monitorId: monitorId,
+            workspaceId: monitor.workspaceId,
+            message: `Monitor is DOWN: ${monitor.name}`,
+            timestamp: new Date().toISOString(),
+        });
     }
-  }
+
+    // 3. Handle Monitor UP (Resolve Incident)
+    if (oldStatus === "DOWN" && newStatus === "UP") {
+        // Find the currently open incident for this monitor
+        const openIncident = await prisma.incident.findFirst({
+            where: {
+                monitorId,
+                status: {
+                    in: ["OPEN", "ACKNOWLEDGED"],
+                },
+            },
+        });
+
+        if (openIncident) {
+            // Update the specific incident so we get the returned data
+            const resolvedIncident = await prisma.incident.update({
+                where: { id: openIncident.id },
+                data: {
+                    status: "RESOLVED",
+                    resolvedAt: new Date(),
+                },
+            });
+
+            // Trigger Webhook for Auto-Resolved Incident
+            await sendWebhookNotifications(monitor.workspaceId, {
+                event: "incident.resolved",
+                incidentId: resolvedIncident.id,
+                monitorId: monitorId,
+                workspaceId: monitor.workspaceId,
+                message: `Monitor is back UP: ${monitor.name}`,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    }
 }
 
 export async function runMonitorCheckService(monitorId: number) {
-  const monitor = await prisma.monitor.findUnique({
-    where: {
-      id: monitorId,
-    },
-  });
-
-  if (!monitor) {
-    throw new Error("Monitor not found");
-  }
-
-  const startTime = Date.now();
-
-  try {
-    const response = await axios.request({
-      method: monitor.method,
-      url: monitor.url,
-      timeout: monitor.timeoutMs,
-      validateStatus: () => true,
+    const monitor = await prisma.monitor.findUnique({
+        where: {
+            id: monitorId,
+        },
     });
 
-    const responseTimeMs = Date.now() - startTime;
+    if (!monitor) {
+        throw new Error("Monitor not found");
+    }
 
-    const status = response.status === monitor.expectedStatus ? "UP" : "DOWN";
+    const startTime = Date.now();
 
-    await handleIncidentTransition(monitor.id, monitor.status, status);
+    try {
+        const response = await axios.request({
+            method: monitor.method,
+            url: monitor.url,
+            timeout: monitor.timeoutMs,
+            validateStatus: () => true,
+        });
 
-    const check = await prisma.monitorCheck.create({
-      data: {
-        monitorId: monitor.id,
-        status,
-        statusCode: response.status,
-        responseTimeMs,
-      },
-    });
+        const responseTimeMs = Date.now() - startTime;
 
-    await prisma.monitor.update({
-      where: {
-        id: monitor.id,
-      },
-      data: {
-        status,
-        lastCheckedAt: new Date(),
-      },
-    });
+        const status = response.status === monitor.expectedStatus ? "UP" : "DOWN";
 
-    return check;
-  } catch (error) {
-    const responseTimeMs = Date.now() - startTime;
+        await handleIncidentTransition(monitor.id, monitor.status, status);
 
-    await handleIncidentTransition(monitor.id, monitor.status, "DOWN");
+        const check = await prisma.monitorCheck.create({
+            data: {
+                monitorId: monitor.id,
+                status,
+                statusCode: response.status,
+                responseTimeMs,
+            },
+        });
 
-    const check = await prisma.monitorCheck.create({
-      data: {
-        monitorId: monitor.id,
-        status: "DOWN",
-        responseTimeMs,
-        errorMessage: error instanceof Error ? error.message : "Request failed",
-      },
-    });
+        await prisma.monitor.update({
+            where: {
+                id: monitor.id,
+            },
+            data: {
+                status,
+                lastCheckedAt: new Date(),
+            },
+        });
 
-    await prisma.monitor.update({
-      where: {
-        id: monitor.id,
-      },
-      data: {
-        status: "DOWN",
-        lastCheckedAt: new Date(),
-      },
-    });
+        return check;
+    } catch (error) {
+        const responseTimeMs = Date.now() - startTime;
 
-    return check;
-  }
+        await handleIncidentTransition(monitor.id, monitor.status, "DOWN");
+
+        const check = await prisma.monitorCheck.create({
+            data: {
+                monitorId: monitor.id,
+                status: "DOWN",
+                responseTimeMs,
+                errorMessage: error instanceof Error ? error.message : "Request failed",
+            },
+        });
+
+        await prisma.monitor.update({
+            where: {
+                id: monitor.id,
+            },
+            data: {
+                status: "DOWN",
+                lastCheckedAt: new Date(),
+            },
+        });
+
+        return check;
+    }
 }
 
 export async function getMonitorService(
-  userId: number,
-  workspaceId: number,
-  monitorId: number,
+    userId: number,
+    workspaceId: number,
+    monitorId: number,
 ) {
-  const membership = await prisma.workspaceMember.findUnique({
-    where: { userId_workspaceId: { userId, workspaceId } },
-  });
+    const membership = await prisma.workspaceMember.findUnique({
+        where: { userId_workspaceId: { userId, workspaceId } },
+    });
 
-  if (!membership) {
-    throw new Error("You do not have access to this workspace");
-  }
+    if (!membership) {
+        throw new Error("You do not have access to this workspace");
+    }
 
-  const [monitor, workspace] = await Promise.all([
-    prisma.monitor.findFirst({
-      where: { id: monitorId, workspaceId },
-    }),
-    prisma.workspace.findUnique({
-      where: { id: workspaceId },
-      select: { planTier: true },
-    }),
-  ]);
+    const [monitor, workspace] = await Promise.all([
+        prisma.monitor.findFirst({
+            where: { id: monitorId, workspaceId },
+        }),
+        prisma.workspace.findUnique({
+            where: { id: workspaceId },
+            select: { planTier: true },
+        }),
+    ]);
 
-  if (!monitor) {
-    throw new Error("Monitor not found");
-  }
+    if (!monitor) {
+        throw new Error("Monitor not found");
+    }
 
-  if (workspace?.planTier === "FREE") {
-    monitor.tlsIssuer = null;
-    monitor.tlsValidTo = null;
-    monitor.tlsDaysRemaining = null;
-  }
+    if (workspace?.planTier === "FREE") {
+        monitor.tlsIssuer = null;
+        monitor.tlsValidTo = null;
+        monitor.tlsDaysRemaining = null;
+    }
 
-  return monitor;
+    return monitor;
 }
 
 export async function getMonitorChecksService(
-  userId: number,
-  monitorId: number,
-  limit: number,
-  offset: number,
+    userId: number,
+    monitorId: number,
+    limit: number,
+    offset: number,
 ) {
-  const monitor = await prisma.monitor.findUnique({
-    where: {
-      id: monitorId,
-    },
-  });
+    const monitor = await prisma.monitor.findUnique({
+        where: {
+            id: monitorId,
+        },
+    });
 
-  if (!monitor) {
-    throw new Error("Monitor not found");
-  }
+    if (!monitor) {
+        throw new Error("Monitor not found");
+    }
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: monitor.workspaceId,
-      },
-    },
-  });
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: {
+                userId,
+                workspaceId: monitor.workspaceId,
+            },
+        },
+    });
 
-  if (!membership) {
-    throw new Error("You do not have access to this monitor");
-  }
+    if (!membership) {
+        throw new Error("You do not have access to this monitor");
+    }
 
-  const [checks, total] = await Promise.all([
-    prisma.monitorCheck.findMany({
-      where: { monitorId },
-      orderBy: { checkedAt: "desc" },
-      take: limit,
-      skip: offset,
-    }),
-    prisma.monitorCheck.count({ where: { monitorId } }),
-  ]);
+    const [checks, total] = await Promise.all([
+        prisma.monitorCheck.findMany({
+            where: { monitorId },
+            orderBy: { checkedAt: "desc" },
+            take: limit,
+            skip: offset,
+        }),
+        prisma.monitorCheck.count({ where: { monitorId } }),
+    ]);
 
-  return { checks, total };
+    return { checks, total };
 }
 
 function computeStats(checks: { status: string; responseTimeMs: number | null }[]) {
-  const totalChecks = checks.length;
-  const upChecks = checks.filter((c) => c.status === "UP").length;
-  const downChecks = checks.filter((c) => c.status === "DOWN").length;
-  const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
-  const withRt = checks.filter((c) => c.responseTimeMs !== null);
-  const averageResponseTimeMs = withRt.length === 0
-    ? 0
-    : withRt.reduce((s, c) => s + c.responseTimeMs!, 0) / withRt.length;
-  return {
-    totalChecks,
-    upChecks,
-    downChecks,
-    uptimePercentage: Math.round(uptimePercentage * 100) / 100,
-    averageResponseTimeMs: Math.round(averageResponseTimeMs * 100) / 100,
-  };
+    const totalChecks = checks.length;
+    const upChecks = checks.filter((c) => c.status === "UP").length;
+    const downChecks = checks.filter((c) => c.status === "DOWN").length;
+    const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
+    const withRt = checks.filter((c) => c.responseTimeMs !== null);
+    const averageResponseTimeMs = withRt.length === 0
+        ? 0
+        : withRt.reduce((s, c) => s + c.responseTimeMs!, 0) / withRt.length;
+    return {
+        totalChecks,
+        upChecks,
+        downChecks,
+        uptimePercentage: Math.round(uptimePercentage * 100) / 100,
+        averageResponseTimeMs: Math.round(averageResponseTimeMs * 100) / 100,
+    };
 }
 
 export async function getMonitorStatsService(
-  userId: number,
-  monitorId: number,
+    userId: number,
+    monitorId: number,
 ) {
-  const monitor = await prisma.monitor.findUnique({
-    where: { id: monitorId },
-  });
+    const monitor = await prisma.monitor.findUnique({
+        where: { id: monitorId },
+    });
 
-  if (!monitor) {
-    throw new Error("Monitor not found");
-  }
+    if (!monitor) {
+        throw new Error("Monitor not found");
+    }
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: { userId, workspaceId: monitor.workspaceId },
-    },
-  });
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: { userId, workspaceId: monitor.workspaceId },
+        },
+    });
 
-  if (!membership) {
-    throw new Error("You do not have access to this monitor");
-  }
+    if (!membership) {
+        throw new Error("You do not have access to this monitor");
+    }
 
-  const allChecks = await prisma.monitorCheck.findMany({
-    where: { monitorId },
-    orderBy: { checkedAt: "desc" },
-  });
+    const allChecks = await prisma.monitorCheck.findMany({
+        where: { monitorId },
+        orderBy: { checkedAt: "desc" },
+    });
 
-  const now = new Date();
-  const range24h = allChecks.filter(c => c.checkedAt.getTime() > now.getTime() - 86400000);
-  const range30d = allChecks.filter(c => c.checkedAt.getTime() > now.getTime() - 2592000000);
+    const now = new Date();
+    const range24h = allChecks.filter(c => c.checkedAt.getTime() > now.getTime() - 86400000);
+    const range30d = allChecks.filter(c => c.checkedAt.getTime() > now.getTime() - 2592000000);
 
-  const latestStatus = allChecks[0]?.status ?? monitor.status;
+    const latestStatus = allChecks[0]?.status ?? monitor.status;
 
-  return {
-    ...computeStats(allChecks),
-    latestStatus,
-    range24h: computeStats(range24h),
-    range30d: computeStats(range30d),
-  };
+    return {
+        ...computeStats(allChecks),
+        latestStatus,
+        range24h: computeStats(range24h),
+        range30d: computeStats(range30d),
+    };
 }
 
 export async function pauseMonitorService(userId: number, monitorId: number) {
-  const monitor = await prisma.monitor.findUnique({
-    where: {
-      id: monitorId,
-    },
-  });
+    const monitor = await prisma.monitor.findUnique({
+        where: {
+            id: monitorId,
+        },
+    });
 
-  if (!monitor) {
-    throw new Error("Monitor not found");
-  }
+    if (!monitor) {
+        throw new Error("Monitor not found");
+    }
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: monitor.workspaceId,
-      },
-    },
-  });
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: {
+                userId,
+                workspaceId: monitor.workspaceId,
+            },
+        },
+    });
 
-  if (!membership) {
-    throw new Error("You do not have access to this workspace");
-  }
+    if (!membership) {
+        throw new Error("You do not have access to this workspace");
+    }
 
-  const updatedMonitor = await prisma.monitor.update({
-    where: {
-      id: monitorId,
-    },
-    data: {
-      isActive: false,
-      status: "PAUSED",
-    },
-  });
+    const updatedMonitor = await prisma.monitor.update({
+        where: {
+            id: monitorId,
+        },
+        data: {
+            isActive: false,
+            status: "PAUSED",
+        },
+    });
 
-  return updatedMonitor;
+    return updatedMonitor;
 }
 
 export async function resumeMonitorService(userId: number, monitorId: number) {
-  const monitor = await prisma.monitor.findUnique({
-    where: {
-      id: monitorId,
-    },
-  });
+    const monitor = await prisma.monitor.findUnique({
+        where: {
+            id: monitorId,
+        },
+    });
 
-  if (!monitor) {
-    throw new Error("Monitor not found");
-  }
+    if (!monitor) {
+        throw new Error("Monitor not found");
+    }
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: monitor.workspaceId,
-      },
-    },
-  });
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: {
+                userId,
+                workspaceId: monitor.workspaceId,
+            },
+        },
+    });
 
-  if (!membership) {
-    throw new Error("You do not have access to this workspace");
-  }
+    if (!membership) {
+        throw new Error("You do not have access to this workspace");
+    }
 
-  const updatedMonitor = await prisma.monitor.update({
-    where: {
-      id: monitorId,
-    },
-    data: {
-      isActive: true,
-      status: "UP",
-    },
-  });
+    const updatedMonitor = await prisma.monitor.update({
+        where: {
+            id: monitorId,
+        },
+        data: {
+            isActive: true,
+            status: "UP",
+        },
+    });
 
-  return updatedMonitor;
+    return updatedMonitor;
 }
 
 export async function updateMonitorService(
-  userId: number,
-  monitorId: number,
-  input: UpdateMonitorInput,
+    userId: number,
+    monitorId: number,
+    input: UpdateMonitorInput,
 ) {
-  const monitor = await prisma.monitor.findUnique({
-    where: {
-      id: monitorId,
-    },
-  });
+    const monitor = await prisma.monitor.findUnique({
+        where: {
+            id: monitorId,
+        },
+    });
 
-  if (!monitor) {
-    throw new Error("Monitor not found");
-  }
+    if (!monitor) {
+        throw new Error("Monitor not found");
+    }
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: monitor.workspaceId,
-      },
-    },
-  });
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: {
+                userId,
+                workspaceId: monitor.workspaceId,
+            },
+        },
+    });
 
-  if (!membership) {
-    throw new Error("You do not have access to this workspace");
-  }
+    if (!membership) {
+        throw new Error("You do not have access to this workspace");
+    }
 
-  const updatedMonitor = await prisma.monitor.update({
-    where: {
-      id: monitorId,
-    },
-    data: input,
-  });
+    const updatedMonitor = await prisma.monitor.update({
+        where: {
+            id: monitorId,
+        },
+        data: input,
+    });
 
-  return updatedMonitor;
+    return updatedMonitor;
 }
 
 export async function deleteMonitorService(userId: number, monitorId: number) {
-  const monitor = await prisma.monitor.findUnique({
-    where: {
-      id: monitorId,
-    },
-  });
+    const monitor = await prisma.monitor.findUnique({
+        where: {
+            id: monitorId,
+        },
+    });
 
-  if (!monitor) {
-    throw new Error("Monitor not found");
-  }
+    if (!monitor) {
+        throw new Error("Monitor not found");
+    }
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: monitor.workspaceId,
-      },
-    },
-  });
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: {
+                userId,
+                workspaceId: monitor.workspaceId,
+            },
+        },
+    });
 
-  if (!membership) {
-    throw new Error("You do not have access to this workspace");
-  }
+    if (!membership) {
+        throw new Error("You do not have access to this workspace");
+    }
 
-  const deletedMonitor = await prisma.monitor.delete({
-    where: {
-      id: monitorId,
-    },
-  });
+    const deletedMonitor = await prisma.monitor.delete({
+        where: {
+            id: monitorId,
+        },
+    });
 
-  return deletedMonitor;
+    return deletedMonitor;
 }
 
 export async function enqueueMonitorCheckService(
-  userId: number,
-  monitorId: number,
+    userId: number,
+    monitorId: number,
 ) {
-  const monitor = await prisma.monitor.findUnique({
-    where: {
-      id: monitorId,
-    },
-  });
+    const monitor = await prisma.monitor.findUnique({
+        where: {
+            id: monitorId,
+        },
+    });
 
-  if (!monitor) {
-    throw new Error("Monitor not found");
-  }
+    if (!monitor) {
+        throw new Error("Monitor not found");
+    }
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: monitor.workspaceId,
-      },
-    },
-  });
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: {
+                userId,
+                workspaceId: monitor.workspaceId,
+            },
+        },
+    });
 
-  if (!membership) {
-    throw new Error("You do not have access to this workspace");
-  }
+    if (!membership) {
+        throw new Error("You do not have access to this workspace");
+    }
 
-  const job = await monitorCheckQueue.add("run-check", {
-    monitorId,
-  });
+    const job = await monitorCheckQueue.add("run-check", {
+        monitorId,
+    });
 
-  return {
-    jobId: job.id,
-    monitorId,
-    status: "queued",
-  };
+    return {
+        jobId: job.id,
+        monitorId,
+        status: "queued",
+    };
+}
+
+export async function dispatchMonitorsToWorkers(monitors: any[]) {
+    const payloads = monitors.map((monitor) => ({
+        key: monitor.workspaceId.toString(), // Enforces in-order execution per workspace partition
+        value: JSON.stringify({
+            id: monitor.id,
+            url: monitor.url,
+            workspace_id: monitor.workspaceId,
+        }),
+    }));
+
+    await kafkaProducer.send({
+        topic: process.env.KAFKA_TARGETS_TOPIC!,
+        messages: payloads,
+    });
 }
