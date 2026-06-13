@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Trash2, Play, Pause, ExternalLink, Activity, ServerCrash,
-  PauseCircle, AlertTriangle, LayoutGrid, List
+  PauseCircle, AlertTriangle, LayoutGrid, List,
 } from "lucide-react";
 import { pauseMonitor, resumeMonitor, triggerCheck, deleteMonitor } from "./actions";
+import MonitorGrid from "@/components/MonitorGrid";
 
 interface Monitor {
   id: number;
@@ -29,41 +30,12 @@ export default function MonitorView({
   workspaceId: string;
   canEdit?: boolean;
 }) {
-  const [liveMonitors, setLiveMonitors] = useState(monitors);
   const [view, setView] = useState<"grid" | "matrix">("grid");
-
-  useEffect(() => {
-    setLiveMonitors(monitors);
-  }, [monitors]);
 
   useEffect(() => {
     const saved = localStorage.getItem("pulseops_view_pref");
     if (saved === "matrix" || saved === "grid") setView(saved);
   }, []);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const tokenRes = await fetch("/api/auth/token");
-        const { token } = await tokenRes.json();
-        if (!token) return;
-
-        const res = await fetch(
-          `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        if (res.ok) {
-          const json = await res.json();
-          const data = json.data || [];
-          if (Array.isArray(data)) setLiveMonitors(data);
-        }
-      } catch {
-        // Silently retry on next interval
-      }
-    }, 10000);
-
-    return () => clearInterval(interval);
-  }, [workspaceId]);
 
   const handleViewChange = (newView: "grid" | "matrix") => {
     setView(newView);
@@ -72,7 +44,6 @@ export default function MonitorView({
 
   return (
     <div className="space-y-6">
-      {/* 🚨 THE TOGGLE HEADER 🚨 */}
       <div className="flex items-center justify-between border-b-2 border-zinc-900 pb-2">
         <h2 className="text-sm font-bold tracking-widest uppercase text-zinc-400">
           Telemetry {view === "grid" ? "Grid" : "Matrix"} <span className="text-emerald-500 text-[10px] ml-2">LIVE</span>
@@ -80,7 +51,7 @@ export default function MonitorView({
 
         <div className="flex items-center gap-4">
           <span className="text-xs font-bold text-zinc-600 uppercase tracking-widest">
-            [{liveMonitors.length} Nodes]
+            [{monitors.length} Nodes]
           </span>
           <div className="flex items-center gap-1 bg-zinc-950 border-2 border-zinc-900 p-1">
             <button
@@ -107,102 +78,18 @@ export default function MonitorView({
         </div>
       </div>
 
-      {liveMonitors.length === 0 ? (
+      {monitors.length === 0 ? (
         <div className="p-12 border-2 border-dashed border-zinc-800 bg-zinc-950 text-center text-zinc-500 text-sm font-bold uppercase tracking-widest">
           Zero targets provisioned in current workspace.
         </div>
       ) : (
         <>
-          {/*grid cards*/}
           {view === "grid" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {liveMonitors.map((monitor) => (
-                <div
-                  key={monitor.id}
-                  className="flex flex-col justify-between h-40 p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-emerald-500/50 transition-colors group"
-                >
-                  <Link
-                    href={`/workspaces/${workspaceId}/monitors/${monitor.id}`}
-                    className="flex items-start gap-4"
-                  >
-                    <div
-                      className={`w-3 h-3 mt-1.5 border flex-shrink-0 ${
-                        monitor.status === "UP"
-                          ? "bg-emerald-500 border-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"
-                          : monitor.status === "DOWN"
-                            ? "bg-red-500 border-red-400 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
-                            : monitor.status === "DEGRADED"
-                              ? "bg-amber-500 border-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]"
-                              : "bg-zinc-600 border-zinc-500"
-                      }`}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-bold text-zinc-100 uppercase tracking-widest truncate">
-                        {monitor.name}
-                      </h3>
-                      <p className="text-xs text-zinc-500 truncate mt-1">
-                        {monitor.url}
-                      </p>
-                    </div>
-                  </Link>
-
-                  <div className="flex items-end justify-between mt-4 pt-4 border-t-2 border-zinc-900">
-                    <div className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold flex flex-col gap-1">
-                      <span className="text-zinc-600">Last Ping</span>
-                      <span
-                        className={
-                          monitor.status === "UP" ? "text-emerald-400"
-                            : monitor.status === "DOWN" ? "text-red-400"
-                              : monitor.status === "DEGRADED" ? "text-amber-400" : ""
-                        }
-                      >
-                        {monitor.lastCheckedAt
-                          ? new Date(monitor.lastCheckedAt).toLocaleTimeString()
-                          : "Awaiting..."}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {canEdit && (
-                        <>
-                          {monitor.status !== "PAUSED" ? (
-                            <form action={pauseMonitor}>
-                              <input type="hidden" name="workspaceId" value={workspaceId} />
-                              <input type="hidden" name="monitorId" value={monitor.id} />
-                              <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-amber-400 hover:border-amber-500 transition-colors" title="Pause Target">
-                                <Pause className="w-4 h-4" />
-                              </button>
-                            </form>
-                          ) : (
-                            <form action={resumeMonitor}>
-                              <input type="hidden" name="workspaceId" value={workspaceId} />
-                              <input type="hidden" name="monitorId" value={monitor.id} />
-                              <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors" title="Resume Target">
-                                <Play className="w-4 h-4" />
-                              </button>
-                            </form>
-                          )}
-                          <form action={triggerCheck}>
-                            <input type="hidden" name="workspaceId" value={workspaceId} />
-                            <input type="hidden" name="monitorId" value={monitor.id} />
-                            <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors" title="Trigger Check">
-                              <ExternalLink className="w-4 h-4" />
-                            </button>
-                          </form>
-                          <form action={deleteMonitor}>
-                            <input type="hidden" name="workspaceId" value={workspaceId} />
-                            <input type="hidden" name="monitorId" value={monitor.id} />
-                            <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors" title="Purge Target">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </form>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <MonitorGrid
+              workspaceId={workspaceId}
+              initialMonitors={monitors}
+              canEdit={canEdit}
+            />
           )}
 
           {/*matrix or list view typeof*/}
