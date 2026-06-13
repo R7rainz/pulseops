@@ -105,7 +105,7 @@ export default function MonitorView({
               </div>
 
               <div className="min-w-[900px] divide-y-2 divide-zinc-900">
-                {liveMonitors.map((node) => {
+                {monitors.map((node) => {
                   const isDown = node.status === "DOWN";
                   const isPaused = node.status === "PAUSED";
                   const isDegraded = node.status === "DEGRADED";
