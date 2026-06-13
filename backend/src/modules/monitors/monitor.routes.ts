@@ -5,6 +5,7 @@ import {
   deleteMonitorController,
   getMonitorChecksController,
   getMonitorController,
+  getLiveMonitorsController,
   getMonitorStatsController,
   getWorkspaceMonitorsController,
   monitorHeartbeatController,
@@ -31,6 +32,12 @@ export async function monitorRoutes(app: FastifyInstance) {
     "/workspaces/:workspaceId/monitors",
     { preHandler: read },
     getWorkspaceMonitorsController as any,
+  );
+
+  app.get(
+    "/workspaces/:workspaceId/monitors/live",
+    { preHandler: read },
+    getLiveMonitorsController as any,
   );
 
   app.post(
