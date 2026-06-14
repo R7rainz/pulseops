@@ -4,13 +4,15 @@ RUN corepack enable && corepack prepare pnpm@11 --activate
 WORKDIR /app
 
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
 COPY frontend/tsconfig.json frontend/next.config.ts frontend/postcss.config.mjs frontend/eslint.config.mjs frontend/components.json frontend/middleware.ts ./
 COPY frontend/app ./app
 COPY frontend/components ./components
 COPY frontend/lib ./lib
 COPY frontend/public ./public
 
-RUN pnpm install --frozen-lockfile && pnpm run build
+RUN pnpm run build
 
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -21,6 +23,6 @@ EXPOSE 3000
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./frontend/.next/static
+COPY --from=builder /app/.next/static ./.next/static
 
-CMD ["node", "frontend/server.js"]
+CMD ["node", "server.js"]
