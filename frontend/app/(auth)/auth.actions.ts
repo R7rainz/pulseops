@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { API_URL } from "@/lib/constants";
 
 export type AuthState = {
   error?: string;
@@ -10,7 +11,7 @@ export type AuthState = {
 // 🚨 NEW HELPER: Determines where the user should go after logging in
 async function getDestinationPath(token: string) {
   try {
-    const res = await fetch("http://127.0.0.1:4000/api/v1/workspaces", {
+    const res = await fetch(`${API_URL}/api/v1/workspaces`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
@@ -46,7 +47,7 @@ export async function loginUser(
   let destination = "/workspaces/new"; // Default fallback
 
   try {
-    const res = await fetch("http://127.0.0.1:4000/api/v1/auth/login", {
+    const res = await fetch(`${API_URL}/api/v1/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
@@ -99,7 +100,7 @@ export async function signupUser(
   let destination = "/workspaces/new";
 
   try {
-    const res = await fetch("http://127.0.0.1:4000/api/v1/auth/signup", {
+    const res = await fetch(`${API_URL}/api/v1/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, password }),

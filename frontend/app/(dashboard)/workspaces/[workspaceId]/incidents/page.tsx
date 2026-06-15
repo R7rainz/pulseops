@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiFetch";
@@ -40,11 +41,11 @@ export default async function IncidentsPage({
   try {
     const [incidentsRes, wsRes] = await Promise.all([
       apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/incidents`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/incidents`,
         { token, cookieStore, cache: "no-store" }
       ),
       apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}`,
         { token, cookieStore, cache: "no-store" }
       ),
     ]);

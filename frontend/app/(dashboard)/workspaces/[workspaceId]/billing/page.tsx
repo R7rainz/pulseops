@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { API_URL } from "@/lib/constants";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -47,7 +48,7 @@ export default function BillingPage({
       if (!token) return;
 
       const res = await fetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (res.ok) {
@@ -67,7 +68,7 @@ export default function BillingPage({
       if (!token) return;
 
       const subRes = await fetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/subscription`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/subscription`,
         { method: "POST", headers: { Authorization: `Bearer ${token}` } },
       );
       if (!subRes.ok) {
@@ -96,7 +97,7 @@ export default function BillingPage({
         image: "",
         handler: async function (response: any) {
           const verifyRes = await fetch(
-            `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/subscription/verify`,
+            `${API_URL}/api/v1/workspaces/${workspaceId}/subscription/verify`,
             {
               method: "POST",
               headers: {

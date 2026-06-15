@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { revalidatePath } from "next/cache";
 
 function setToast(
@@ -26,7 +27,7 @@ export async function updateWorkspaceName(formData: FormData) {
 
   try {
     const res = await fetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}`,
       {
         method: "PATCH",
         headers: {
@@ -61,7 +62,7 @@ export async function createApiKey(formData: FormData) {
 
   try {
     const res = await fetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/api-keys`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}/api-keys`,
       {
         method: "POST",
         headers: {
@@ -102,7 +103,7 @@ export async function createWebhook(formData: FormData) {
 
   try {
     const res = await fetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/webhooks`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}/webhooks`,
       {
         method: "POST",
         headers: {
@@ -140,7 +141,7 @@ export async function deleteWebhook(formData: FormData) {
 
   try {
     const res = await fetch(
-      `http://127.0.0.1:4000/api/v1/webhooks/${webhookId}`,
+      `${API_URL}/api/v1/webhooks/${webhookId}`,
       {
         method: "DELETE",
         headers: {
@@ -176,7 +177,7 @@ export async function revokeApiKey(formData: FormData) {
 
   try {
     const res = await fetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/api-keys/${keyId}`,
+      `${API_URL}/api/v1/workspaces/api-keys/${keyId}`,
       {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },

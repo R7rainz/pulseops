@@ -1,6 +1,7 @@
 "use client"
 
 import useSWR from "swr"
+import { API_URL } from "@/lib/constants";
 
 interface LiveMonitorState {
     status: "UP" | "DOWN"
@@ -22,7 +23,7 @@ const fetcher = async (url: string) => {
 }
 
 export function useLiveMonitors(workspaceId: number) {
-    const { data, error, isLoading } = useSWR(`http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors/live`, fetcher,
+    const { data, error, isLoading } = useSWR(`${API_URL}/api/v1/workspaces/${workspaceId}/monitors/live`, fetcher,
         {
             refreshInterval: 5000,
             revalidateOnFocus: true,

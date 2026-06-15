@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { apiFetch } from "@/lib/apiFetch";
 import { AcceptInviteButton } from "./accept-button";
 import Link from "next/link";
@@ -23,7 +24,7 @@ export default async function InvitePage({
 
   try {
     const res = await fetch(
-      `http://127.0.0.1:4000/api/v1/invites/${token}`,
+      `${API_URL}/api/v1/invites/${token}`,
       { cache: "no-store" },
     );
     if (res.ok) {

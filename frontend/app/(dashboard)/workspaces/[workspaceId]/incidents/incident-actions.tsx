@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 
-const API = "http://127.0.0.1:4000";
+import { API_URL } from "@/lib/constants";
+const API = API_URL;
 
 function ToastMsg({
   message,

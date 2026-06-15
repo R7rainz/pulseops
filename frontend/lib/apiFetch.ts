@@ -1,8 +1,10 @@
+import { API_URL } from "@/lib/constants";
+
 type CookieStore = Awaited<ReturnType<typeof import("next/headers").cookies>>;
 
 async function refreshToken(token: string): Promise<string | null> {
   try {
-    const res = await fetch("http://127.0.0.1:4000/api/v1/auth/refresh", {
+    const res = await fetch(`${API_URL}/api/v1/auth/refresh`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });

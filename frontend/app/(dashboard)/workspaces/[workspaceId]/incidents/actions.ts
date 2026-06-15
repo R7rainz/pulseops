@@ -3,7 +3,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-const API = "http://127.0.0.1:4000";
+import { API_URL } from "@/lib/constants";
+const API = API_URL;
 
 export async function acknowledgeIncident(formData: FormData) {
   const cookieStore = await cookies();

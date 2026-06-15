@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
@@ -50,15 +51,15 @@ export default async function WorkspaceSettingsPage({
   try {
     const [wsRes, keysRes, hooksRes] = await Promise.all([
       apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}`,
         { token, cookieStore, cache: "no-store" },
       ),
       apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/api-keys`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/api-keys`,
         { token, cookieStore, cache: "no-store" },
       ),
       apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/webhooks`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/webhooks`,
         { token, cookieStore, cache: "no-store" },
       ),
     ]);
