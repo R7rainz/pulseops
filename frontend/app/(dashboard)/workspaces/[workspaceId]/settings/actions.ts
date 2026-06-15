@@ -140,7 +140,7 @@ export async function deleteWebhook(formData: FormData) {
 
   try {
     const res = await fetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/webhooks/${webhookId}`,
+      `http://127.0.0.1:4000/api/v1/webhooks/${webhookId}`,
       {
         method: "DELETE",
         headers: {
