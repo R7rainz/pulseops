@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { apiFetch } from "@/lib/apiFetch";
 import { Crown, Shield, User, Mail } from "lucide-react";
 
@@ -32,7 +33,7 @@ export default async function MembersPanel({ workspaceId }: { workspaceId: strin
   let members: Member[] = [];
   try {
     const res = await apiFetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/members`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}/members`,
       { token, cookieStore, cache: "no-store" },
     );
     if (res.ok) {

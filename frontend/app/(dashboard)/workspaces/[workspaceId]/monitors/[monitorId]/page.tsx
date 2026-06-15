@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiFetch";
@@ -48,11 +49,11 @@ export default async function MonitorDiagnosticsPage({
   try {
     const [monitorRes, wsRes] = await Promise.all([
       apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors/${monitorId}`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitorId}`,
         { token, cookieStore, cache: "no-store" },
       ),
       apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}`,
         { token, cookieStore, cache: "no-store" },
       ),
     ]);
@@ -81,15 +82,15 @@ export default async function MonitorDiagnosticsPage({
     try {
       const [checksRes, statsRes, analyticsRes] = await Promise.all([
         apiFetch(
-          `http://127.0.0.1:4000/api/v1/monitors/${monitor.id}/checks?limit=100&offset=0`,
+          `${API_URL}/api/v1/monitors/${monitor.id}/checks?limit=100&offset=0`,
           { token, cookieStore, cache: "no-store" },
         ),
         apiFetch(
-          `http://127.0.0.1:4000/api/v1/monitors/${monitor.id}/stats`,
+          `${API_URL}/api/v1/monitors/${monitor.id}/stats`,
           { token, cookieStore, cache: "no-store" },
         ),
         apiFetch(
-          `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/monitors/${monitor.id}/analytics`,
+          `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitor.id}/analytics`,
           { token, cookieStore, cache: "no-store" },
         ),
       ]);

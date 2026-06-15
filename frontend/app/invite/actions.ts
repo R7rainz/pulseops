@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 
 export async function acceptInvite(
@@ -14,7 +15,7 @@ export async function acceptInvite(
   if (!userToken) redirect("/login");
 
   const res = await fetch(
-    `http://127.0.0.1:4000/api/v1/invites/${resolvedToken}/accept`,
+    `${API_URL}/api/v1/invites/${resolvedToken}/accept`,
     {
       method: "POST",
       headers: { Authorization: `Bearer ${userToken}` },

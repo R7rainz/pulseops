@@ -61,8 +61,8 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
               workspaces.map((ws: any) => {
                 const wsBase = `/workspaces/${ws.id}`;
                 const statusPath = `/status/${ws.slug}`;
-                const isMonitors = pathname === `${wsBase}/monitors`;
-                const isIncidents = pathname === `${wsBase}/incidents`;
+                const isMonitors = pathname.startsWith(`${wsBase}/monitors`);
+                const isIncidents = pathname.startsWith(`${wsBase}/incidents`);
                 const isInvites = pathname === `${wsBase}/invites`;
                 const isBilling = pathname === `${wsBase}/billing`;
                 const isSettings = pathname === `${wsBase}/settings`;

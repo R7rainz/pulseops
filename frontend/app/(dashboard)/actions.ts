@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 
 export async function logoutUser() {
@@ -22,7 +23,7 @@ export async function createWorkspace(prevState: unknown, formData: FormData) {
   if (!token) return { error: "Authentication required." };
 
   try {
-    const res = await fetch("http://127.0.0.1:4000/api/v1/workspaces", {
+    const res = await fetch(`${API_URL}/api/v1/workspaces`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -53,7 +54,7 @@ export async function deleteWorkspace(formData: FormData) {
 
   try {
     const res = await fetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}`,
       {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },

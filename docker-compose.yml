@@ -87,6 +87,7 @@ services:
       - ./frontend/.env
     environment:
       - NODE_ENV=production
+      - API_URL=http://api:4000
 
 volumes:
   pulseops_postgres_data:

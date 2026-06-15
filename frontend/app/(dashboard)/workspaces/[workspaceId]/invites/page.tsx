@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { API_URL } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -73,7 +74,7 @@ export default function InvitesPage({
       if (!token) return;
 
       const res = await fetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${resolvedWsId}/invites`,
+        `${API_URL}/api/v1/workspaces/${resolvedWsId}/invites`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (res.ok) {
@@ -101,7 +102,7 @@ export default function InvitesPage({
       if (!token) return;
 
       const res = await fetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/invites`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/invites`,
         {
           method: "POST",
           headers: {
@@ -139,7 +140,7 @@ export default function InvitesPage({
       if (!token) return;
 
       await fetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/invites/${inviteId}`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/invites/${inviteId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

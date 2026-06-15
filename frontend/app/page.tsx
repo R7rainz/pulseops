@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { API_URL } from "@/lib/constants";
 import {
   Activity,
   Terminal,
@@ -22,7 +23,7 @@ export default async function RootPage() {
 
   if (token) {
     try {
-      const res = await fetch("http://127.0.0.1:4000/api/v1/workspaces", {
+      const res = await fetch(`${API_URL}/api/v1/workspaces`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });

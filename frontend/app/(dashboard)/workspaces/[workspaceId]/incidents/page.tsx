@@ -1,7 +1,9 @@
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { apiFetch } from "@/lib/apiFetch";
-import { AlertOctagon, CheckCircle2, ShieldAlert, ShieldCheck, Clock } from "lucide-react";
+import { AlertOctagon, CheckCircle2, ShieldAlert, ShieldCheck, Clock, ExternalLink } from "lucide-react";
 import { IncidentActions } from "./incident-actions";
 
 interface Incident {
@@ -39,11 +41,11 @@ export default async function IncidentsPage({
   try {
     const [incidentsRes, wsRes] = await Promise.all([
       apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}/incidents`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/incidents`,
         { token, cookieStore, cache: "no-store" }
       ),
       apiFetch(
-        `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}`,
         { token, cookieStore, cache: "no-store" }
       ),
     ]);
@@ -109,8 +111,11 @@ export default async function IncidentsPage({
           ) : (
             <div className="border-2 border-zinc-800 bg-zinc-950 divide-y-2 divide-zinc-900">
               {openTickets.map((ticket) => (
-                <div key={ticket.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors hover:bg-zinc-900/40">
-                  <div className="space-y-2 min-w-0 flex-1">
+                  <div key={ticket.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors hover:bg-zinc-900/40">
+                  <Link
+                    href={`/workspaces/${workspaceId}/incidents/${ticket.id}`}
+                    className="space-y-2 min-w-0 flex-1 group"
+                  >
                     <div className="flex items-center gap-3">
                       <span className={`px-2 py-0.5 text-[9px] font-bold border uppercase tracking-widest ${ticket.status === "OPEN"
                           ? "bg-red-950 text-red-400 border-red-800 animate-pulse"
@@ -118,8 +123,9 @@ export default async function IncidentsPage({
                         }`}>
                         {ticket.status}
                       </span>
-                      <h3 className="text-sm font-bold text-zinc-200 uppercase tracking-widest truncate">
+                      <h3 className="text-sm font-bold text-zinc-200 group-hover:text-emerald-400 uppercase tracking-widest truncate flex items-center gap-2">
                         {ticket.title}
+                        <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500" />
                       </h3>
                     </div>
                     <p className="text-xs text-zinc-500 truncate">
@@ -128,7 +134,7 @@ export default async function IncidentsPage({
                     <div className="text-[10px] text-zinc-600 font-bold flex items-center gap-1 uppercase">
                       <Clock className="w-3 h-3" /> Tripped at: {new Date(ticket.startedAt).toLocaleString()}
                     </div>
-                  </div>
+                  </Link>
 
                   <IncidentActions
                     incidentId={ticket.id}

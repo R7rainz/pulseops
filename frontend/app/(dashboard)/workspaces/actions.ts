@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { API_URL } from "@/lib/constants";
 
 export async function createWorkspace(prevState: any, formData: FormData) {
   const name = formData.get("name") as string;
@@ -18,7 +19,7 @@ export async function createWorkspace(prevState: any, formData: FormData) {
   let destination = "";
 
   try {
-    const res = await fetch("http://127.0.0.1:4000/api/v1/workspaces", {
+    const res = await fetch(`${API_URL}/api/v1/workspaces`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

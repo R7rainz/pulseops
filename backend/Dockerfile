@@ -1,10 +1,10 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
-RUN corepack enable && corepack prepare pnpm@11 --activate
+RUN npm install -g pnpm@10
 WORKDIR /app
 
 COPY backend/package.json backend/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 COPY backend/prisma ./prisma
 COPY backend/tsconfig.json ./
@@ -12,9 +12,8 @@ COPY backend/src ./src
 
 RUN npx prisma generate
 RUN pnpm run build
-RUN pnpm prune --prod
 
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -25,4 +24,4 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./
 
-CMD ["node", "dist/server.js"]
+CMD ["./node_modules/.bin/tsx", "dist/server.js"]

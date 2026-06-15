@@ -1,4 +1,5 @@
-const API_BASE = "http://127.0.0.1:4000/api/v1";
+import { API_URL } from "@/lib/constants";
+const API_BASE = `${API_URL}/api/v1`;
 
 export class ApiError extends Error {
   constructor(

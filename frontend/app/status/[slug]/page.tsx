@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { API_URL } from "@/lib/constants";
 import Link from "next/link";
 import { ArrowLeft, Activity, ServerCrash, PauseCircle, ShieldCheck, AlertTriangle } from "lucide-react";
 
@@ -27,7 +28,7 @@ export default async function PublicStatusPage({
   let statusData: StatusData | null = null;
 
   try {
-    const res = await fetch(`http://127.0.0.1:4000/api/v1/status/${slug}`, {
+    const res = await fetch(`${API_URL}/api/v1/status/${slug}`, {
       next: { revalidate: 30 },
     });
 

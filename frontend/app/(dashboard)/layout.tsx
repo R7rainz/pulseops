@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Toast from "@/components/Toast";
 import { apiFetch } from "@/lib/apiFetch";
+import { API_URL } from "@/lib/constants";
 
 export default async function DashboardLayout({
   children,
@@ -18,7 +19,7 @@ export default async function DashboardLayout({
   let workspacesStatus: number | null = null;
 
   try {
-    const res = await apiFetch("http://127.0.0.1:4000/api/v1/workspaces", {
+    const res = await apiFetch(`${API_URL}/api/v1/workspaces`, {
       token,
       cookieStore,
     });

@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import { WorkspaceRoleProvider } from "@/lib/workspace-context";
@@ -21,7 +22,7 @@ export default async function WorkspaceLayout({
 
   try {
     const res = await apiFetch(
-      `http://127.0.0.1:4000/api/v1/workspaces/${workspaceId}`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}`,
       { token, cookieStore, cache: "no-store" },
     );
     if (res.ok) {

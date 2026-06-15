@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { API_URL } from "@/lib/constants";
 import type { MonitorCheck } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -21,7 +22,7 @@ export default function MonitorCheckLog({ monitorId, token }: Props) {
   async function fetchWithRefresh(url: string, currentToken: string): Promise<Response> {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${currentToken}` } });
     if (res.status !== 401) return res;
-    const refreshRes = await fetch("http://127.0.0.1:4000/api/v1/auth/refresh", {
+    const refreshRes = await fetch(`${API_URL}/api/v1/auth/refresh`, {
       method: "POST",
       headers: { Authorization: `Bearer ${currentToken}` },
     });
@@ -37,7 +38,7 @@ export default function MonitorCheckLog({ monitorId, token }: Props) {
     setError(null);
     try {
       const res = await fetchWithRefresh(
-        `http://127.0.0.1:4000/api/v1/monitors/${monitorId}/checks?limit=${PAGE_SIZE}&offset=${currentOffset}`,
+        `${API_URL}/api/v1/monitors/${monitorId}/checks?limit=${PAGE_SIZE}&offset=${currentOffset}`,
         token,
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
