@@ -14,6 +14,7 @@ import {
   Eye,
   UserPlus,
   CreditCard,
+  Zap,
 } from "lucide-react";
 import { logoutUser } from "@/app/(auth)/auth.actions";
 
@@ -66,7 +67,8 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                 const isBilling = pathname === `${wsBase}/billing`;
                 const isSettings = pathname === `${wsBase}/settings`;
                 const isStatus = pathname === statusPath;
-                const isActive = isMonitors || isIncidents || isBilling || isInvites || isSettings || isStatus;
+                const isWebhooks = pathname.startsWith(`${wsBase}/webhooks/`);
+                const isActive = isMonitors || isIncidents || isBilling || isInvites || isSettings || isStatus || isWebhooks;
 
                 return (
                   <div
@@ -135,6 +137,12 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                         label="Status Page"
                         isActive={isStatus}
                       />
+                      <NavItem
+                        href={`${wsBase}/settings`}
+                        icon={<Zap className="w-3.5 h-3.5" />}
+                        label="Webhooks"
+                        isActive={isWebhooks}
+                      />
                     </div>
                   </div>
                 );
@@ -143,20 +151,6 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
           </div>
         </section>
 
-        {/* GLOBAL NAV */}
-        <section>
-          <h2 className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em] mb-4 px-2">
-            System
-          </h2>
-          <div className="space-y-1">
-            <GlobalNavItem
-              href="/webhooks"
-              icon={<TerminalSquare className="w-4 h-4" />}
-              label="Webhooks"
-              isActive={pathname === "/webhooks"}
-            />
-          </div>
-        </section>
       </nav>
 
       {/* PROFILE & LOGOUT */}
@@ -215,28 +209,4 @@ function NavItem({
   );
 }
 
-function GlobalNavItem({
-  href,
-  icon,
-  label,
-  isActive,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  isActive: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`flex items-center gap-3 px-3 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors border-2 ${
-        isActive
-          ? "bg-zinc-900 border-emerald-800/50 text-emerald-400 shadow-[2px_2px_0px_0px_rgba(52,211,153,0.08)]"
-          : "border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 hover:border-zinc-800"
-      }`}
-    >
-      <span className="flex-shrink-0">{icon}</span>
-      {label}
-    </Link>
-  );
-}
+
