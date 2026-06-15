@@ -70,6 +70,7 @@ services:
       - DATABASE_URL=postgresql://rainz:brainz@postgres:5432/pulseops
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379
       - NODE_ENV=production
       - APP_URL=http://localhost:3000
 
