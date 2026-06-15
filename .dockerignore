@@ -4,5 +4,7 @@ node_modules
 *.md
 dist
 .next
+.env
 .env.local
+.env.*
 *.log

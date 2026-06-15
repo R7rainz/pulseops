@@ -4,15 +4,15 @@ RUN corepack enable && corepack prepare pnpm@11 --activate
 WORKDIR /app
 
 COPY backend/package.json backend/pnpm-lock.yaml ./
-COPY backend/prisma ./prisma
-COPY backend/src ./src
-COPY backend/tsconfig.json ./
+RUN pnpm install --frozen-lockfile
 
-RUN pnpm install --frozen-lockfile --prod && \
-    pnpm install --frozen-lockfile -D typescript @types/node && \
-    npx prisma generate && \
-    pnpm run build && \
-    rm -rf src tsconfig.json
+COPY backend/prisma ./prisma
+COPY backend/tsconfig.json ./
+COPY backend/src ./src
+
+RUN npx prisma generate
+RUN pnpm run build
+RUN pnpm prune --prod
 
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -24,6 +24,5 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./
-COPY --from=builder /app/pnpm-lock.yaml ./
 
 CMD ["node", "dist/server.js"]
