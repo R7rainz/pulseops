@@ -71,6 +71,10 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_URL=redis://redis:6379
+      - KAFKA_BROKERS=kafka:9092
+      - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets
+      - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics
+      - KAFKAJS_NO_PARTITIONER_WARNING=1
       - NODE_ENV=production
       - APP_URL=http://localhost:3000
 
