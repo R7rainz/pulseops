@@ -67,25 +67,25 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                 const isBilling = pathname === `${wsBase}/billing`;
                 const isSettings = pathname === `${wsBase}/settings`;
                 const isStatus = pathname === statusPath;
-                const isWebhooks = pathname.startsWith(`${wsBase}/webhooks`);
-                const isActive =
-                  isMonitors ||
-                  isIncidents ||
-                  isBilling ||
-                  isInvites ||
-                  isSettings ||
-                  isStatus ||
-                  isWebhooks;
+                const isWebhooks = pathname.startsWith(`${wsBase}/webhooks/`);
+                const isActive = isMonitors || isIncidents || isBilling || isInvites || isSettings || isStatus || isWebhooks;
 
                 return (
-                  <div key={ws.id} className="flex flex-col gap-1">
+                  <div
+                    key={ws.id}
+                    className={`group border-2 transition-colors ${
+                      isActive
+                        ? "border-emerald-900/50 bg-emerald-950/10"
+                        : "border-zinc-900 hover:border-zinc-800 bg-zinc-950"
+                    }`}
+                  >
                     {/* WORKSPACE HEADER */}
                     <Link
                       href={`${wsBase}/monitors`}
-                      className={`flex items-center gap-3 px-3 py-3 text-sm font-bold transition-colors border-2 ${
+                      className={`flex items-center gap-3 px-3 py-3 text-sm font-bold transition-colors ${
                         isActive
-                          ? "border-emerald-500 text-emerald-400 bg-emerald-950/10"
-                          : "border-zinc-900 text-zinc-300 hover:text-zinc-100 hover:border-zinc-800 bg-zinc-950"
+                          ? "text-emerald-400"
+                          : "text-zinc-300 hover:text-zinc-100"
                       }`}
                     >
                       <Layers className="w-4 h-4 flex-shrink-0" />
@@ -94,14 +94,13 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                       </span>
                     </Link>
 
-                    {/* SUB-NAV — Only visible when the workspace is active */}
-                    <div
-                      className={`transition-all duration-200 overflow-hidden flex flex-col ${
-                        isActive
-                          ? "max-h-[500px] opacity-100 visible"
-                          : "max-h-0 opacity-0 invisible"
-                      }`}
-                    >
+                    {/* SUB-NAV — always visible when active, otherwise on hover */}
+                    <div className={`divide-y divide-zinc-900 transition-all duration-200 overflow-hidden ${
+                      isActive
+                        ? "max-h-96 opacity-100 visible"
+                        : "max-h-0 opacity-0 invisible group-hover:max-h-96 group-hover:opacity-100 group-hover:visible"
+                    }`}>
+                      <div className="border-t border-zinc-900" />
                       <NavItem
                         href={`${wsBase}/monitors`}
                         icon={<Radio className="w-3.5 h-3.5" />}
@@ -139,7 +138,7 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                         isActive={isStatus}
                       />
                       <NavItem
-                        href={`${wsBase}/webhooks`}
+                        href={`${wsBase}/settings`}
                         icon={<Zap className="w-3.5 h-3.5" />}
                         label="Webhooks"
                         isActive={isWebhooks}
@@ -151,6 +150,7 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
             )}
           </div>
         </section>
+
       </nav>
 
       {/* PROFILE & LOGOUT */}
@@ -208,3 +208,5 @@ function NavItem({
     </Link>
   );
 }
+
+
