@@ -95,12 +95,17 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                     </Link>
 
                     {/* SUB-NAV — always visible when active, otherwise on hover */}
-                    <div className={`divide-y divide-zinc-900 transition-all duration-200 overflow-hidden ${
+                    <div className={`transition-all duration-200 overflow-hidden ${
                       isActive
                         ? "max-h-96 opacity-100 visible"
                         : "max-h-0 opacity-0 invisible group-hover:max-h-96 group-hover:opacity-100 group-hover:visible"
                     }`}>
-                      <div className="border-t border-zinc-900" />
+                      <div className="border-t border-zinc-900 mt-0" />
+
+                      {/* Monitoring */}
+                      <div className="px-3 pt-3 pb-1">
+                        <p className="text-[9px] text-zinc-700 uppercase tracking-[0.2em] font-bold">Monitoring</p>
+                      </div>
                       <NavItem
                         href={`${wsBase}/monitors`}
                         icon={<Radio className="w-3.5 h-3.5" />}
@@ -113,24 +118,12 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                         label="Incidents"
                         isActive={isIncidents}
                       />
-                      <NavItem
-                        href={`${wsBase}/invites`}
-                        icon={<UserPlus className="w-3.5 h-3.5" />}
-                        label="Invites"
-                        isActive={isInvites}
-                      />
-                      <NavItem
-                        href={`${wsBase}/billing`}
-                        icon={<CreditCard className="w-3.5 h-3.5" />}
-                        label="Billing"
-                        isActive={isBilling}
-                      />
-                      <NavItem
-                        href={`${wsBase}/settings`}
-                        icon={<Settings className="w-3.5 h-3.5" />}
-                        label="Settings"
-                        isActive={isSettings}
-                      />
+
+                      {/* Publishing */}
+                      <div className="border-t border-zinc-900/50 mt-2" />
+                      <div className="px-3 pt-3 pb-1">
+                        <p className="text-[9px] text-zinc-700 uppercase tracking-[0.2em] font-bold">Publishing</p>
+                      </div>
                       <NavItem
                         href={statusPath}
                         icon={<Eye className="w-3.5 h-3.5" />}
@@ -142,6 +135,30 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
                         icon={<Zap className="w-3.5 h-3.5" />}
                         label="Webhooks"
                         isActive={isWebhooks}
+                      />
+
+                      {/* Administration */}
+                      <div className="border-t border-zinc-900/50 mt-2" />
+                      <div className="px-3 pt-3 pb-1">
+                        <p className="text-[9px] text-zinc-700 uppercase tracking-[0.2em] font-bold">Administration</p>
+                      </div>
+                      <NavItem
+                        href={`${wsBase}/invites`}
+                        icon={<UserPlus className="w-3.5 h-3.5" />}
+                        label="Invites"
+                        isActive={isInvites}
+                      />
+                      <NavItem
+                        href={`${wsBase}/settings`}
+                        icon={<Settings className="w-3.5 h-3.5" />}
+                        label="Settings"
+                        isActive={isSettings}
+                      />
+                      <NavItem
+                        href={`${wsBase}/billing`}
+                        icon={<CreditCard className="w-3.5 h-3.5" />}
+                        label="Billing"
+                        isActive={isBilling}
                       />
                     </div>
                   </div>
