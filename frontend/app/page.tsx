@@ -13,6 +13,15 @@ import {
   Radio,
   Gauge,
   Timer,
+  Bell,
+  Globe,
+  BarChart3,
+  Siren,
+  Webhook,
+  ScrollText,
+  Server,
+  Workflow,
+  AlarmClock,
 } from "lucide-react";
 
 export default async function RootPage() {
@@ -96,7 +105,7 @@ export default async function RootPage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
             </span>
-            System V1.0 — Live
+            v1.0 — Kafka Pipeline &bull; Redis Cache &bull; BullMQ Workers
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 max-w-4xl mx-auto leading-none uppercase">
@@ -108,9 +117,9 @@ export default async function RootPage() {
           </h1>
 
           <p className="text-zinc-500 text-base md:text-lg max-w-2xl mx-auto mb-12 leading-relaxed uppercase tracking-wider font-bold">
-            Developer-first uptime monitoring engine.
+            Developer-first uptime monitoring with incident management,
             <br />
-            Rigid workspaces, millisecond latency tracking, terminal-grade reliability.
+            Kafka-driven scheduling, real-time webhook alerts, and public status pages.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -170,41 +179,108 @@ export default async function RootPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-all hover:-translate-y-1">
               <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-cyan-500/50 transition-colors">
-                <Zap className="w-5 h-5 text-cyan-400" />
+                <Server className="w-5 h-5 text-cyan-400" />
               </div>
               <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                Edge-Optimized
+                Kafka Pipeline
               </h3>
               <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                Pings execute with minimal overhead. Exact latency metrics without
-                frontend processing delay.
+                Monitor dispatch flows through Kafka topics. Go worker pool
+                executes probes — decoupled, scalable, resilient.
               </p>
             </div>
 
             <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-emerald-500/50 transition-all hover:-translate-y-1">
               <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-emerald-500/50 transition-colors">
-                <Shield className="w-5 h-5 text-emerald-400" />
+                <Activity className="w-5 h-5 text-emerald-400" />
               </div>
               <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                Strict Isolation
+                Real-Time Dashboard
               </h3>
               <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                Hard boundaries between workspaces. Production and staging
-                targets never bleed data.
+                SWR-driven live metrics with Redis cache layer. Monitor status,
+                latency histograms, and uptime heatmaps update in real time.
               </p>
             </div>
 
             <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-red-500/50 transition-all hover:-translate-y-1">
               <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-red-500/50 transition-colors">
-                <Terminal className="w-5 h-5 text-red-400" />
+                <Siren className="w-5 h-5 text-red-400" />
               </div>
               <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                CLI Native
+                Incident Management
               </h3>
               <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                Keyboard-driven engineering. Clean UI, raw execution logs, and
-                straightforward architecture.
+                Automatic incident creation on threshold breach. Full timeline
+                with acknowledge/resolve workflow and probe context.
               </p>
+            </div>
+
+            <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-emerald-500/50 transition-all hover:-translate-y-1">
+              <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-emerald-500/50 transition-colors">
+                <Bell className="w-5 h-5 text-emerald-400" />
+              </div>
+              <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
+                Webhook Alerts
+              </h3>
+              <p className="text-zinc-500 text-sm leading-relaxed font-medium">
+                Fire webhook notifications on status changes. Delivery logs,
+                retry logic, and per-endpoint configuration.
+              </p>
+            </div>
+
+            <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-all hover:-translate-y-1">
+              <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-cyan-500/50 transition-colors">
+                <Globe className="w-5 h-5 text-cyan-400" />
+              </div>
+              <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
+                Public Status Pages
+              </h3>
+              <p className="text-zinc-500 text-sm leading-relaxed font-medium">
+                Shareable status pages with 90-day uptime heatmap, live monitor
+                states, and incident history.
+              </p>
+            </div>
+
+            <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-red-500/50 transition-all hover:-translate-y-1">
+              <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-red-500/50 transition-colors">
+                <BarChart3 className="w-5 h-5 text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
+                SSL &amp; TLS Monitoring
+              </h3>
+              <p className="text-zinc-500 text-sm leading-relaxed font-medium">
+                Automatic SSL certificate inspection with expiry alerts.
+                Degraded state triggers separate incident threads.
+              </p>
+            </div>
+          </div>
+
+          {/* ARCHITECTURE HIGHLIGHT */}
+          <div className="mt-16 p-10 border-2 border-zinc-800 bg-zinc-950/50">
+            <div className="flex flex-col md:flex-row items-start gap-8">
+              <div className="w-14 h-14 bg-zinc-900 border-2 border-zinc-700 flex items-center justify-center shrink-0">
+                <Workflow className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
+                  Pipeline Architecture
+                </h3>
+                <p className="text-zinc-500 text-sm leading-relaxed font-medium mb-4">
+                  Kafka dispatches monitor checks to a dedicated Go worker pool
+                  for parallel execution. Results flow through BullMQ queues for
+                  incident evaluation, webhook delivery, and alert processing.
+                  Redis caches live metrics for sub-millisecond dashboard reads.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Kafka</span>
+                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Go Workers</span>
+                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">BullMQ</span>
+                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Redis</span>
+                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Fastify</span>
+                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">PostgreSQL</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -226,11 +302,11 @@ export default async function RootPage() {
                   Q3 2026
                 </h4>
                 <p className="text-zinc-200 font-bold text-sm uppercase tracking-wide">
-                  Multi-Region Ping Execution
+                  Multi-Region Ping Grid
                 </p>
                 <p className="text-zinc-600 text-xs mt-1.5 leading-relaxed">
-                  Dispatch workers from US-East, EU-Central, and AP-South
-                  concurrently for global coverage.
+                  Dispatch probes from US-East, EU-Central, and AP-South
+                  concurrently for global latency coverage.
                 </p>
               </div>
 
@@ -240,11 +316,11 @@ export default async function RootPage() {
                   Q4 2026
                 </h4>
                 <p className="text-zinc-300 font-bold text-sm uppercase tracking-wide">
-                  Webhook Incident Routing
+                  Slack / Discord Integrations
                 </p>
                 <p className="text-zinc-600 text-xs mt-1.5 leading-relaxed">
-                  Native Discord and Slack integration for automated downtime
-                  alerting.
+                  Native messaging platform alerting with rich incident
+                  payloads and acknowledge-from-chat.
                 </p>
               </div>
 
@@ -258,7 +334,7 @@ export default async function RootPage() {
                 </p>
                 <p className="text-zinc-600 text-xs mt-1.5 leading-relaxed">
                   Define threshold-based escalation policies per monitor with
-                  multi-channel dispatch.
+                  multi-channel dispatch and pager duty rotation.
                 </p>
               </div>
             </div>
@@ -291,7 +367,7 @@ export default async function RootPage() {
 
             <div className="mt-6 p-8 border-2 border-zinc-800 bg-zinc-950 hover:border-zinc-700 transition-colors">
               <p className="text-zinc-400 leading-relaxed italic mb-8 text-sm">
-                &ldquo;PulseOps replaced three separate tools. On-call rotation,
+                &ldquo;Replaced three separate tools. On-call rotation,
                 status page, and ping monitoring all in one rigid stack.&rdquo;
               </p>
               <div className="border-t-2 border-zinc-900 pt-6">
@@ -299,7 +375,7 @@ export default async function RootPage() {
                   DevOps Lead
                 </p>
                 <p className="text-zinc-600 text-xs mt-1">
-                  SaaS Infrastructure — 200+ Nodes
+                  SaaS Infrastructure &mdash; 200+ Nodes
                 </p>
               </div>
             </div>
