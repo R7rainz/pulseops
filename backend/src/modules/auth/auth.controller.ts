@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { loginSchema, signupSchema } from "./auth.schema";
-import { loginService, signupService, refreshTokenService } from "./auth.service";
+import { loginSchema, signupSchema, updateMeSchema } from "./auth.schema";
+import { loginService, signupService, refreshTokenService, updateMeService } from "./auth.service";
 import { getMeService } from "./auth.service";
 
 export async function signupController(
@@ -77,5 +77,22 @@ export async function meController(
       .send({ message: "Current user fetched successfully", data: user });
   } catch (error) {
     return response.status(401).send({ message: "Invalid or expired token" });
+  }
+}
+
+export async function updateMeController(
+  request: FastifyRequest,
+  response: FastifyReply,
+) {
+  try {
+    const body = updateMeSchema.parse(request.body);
+    const user = await updateMeService(request.user.userId, body);
+    return response
+      .status(200)
+      .send({ message: "Profile updated successfully", data: user });
+  } catch (error) {
+    return response.status(400).send({
+      message: error instanceof Error ? error.message : "Update failed",
+    });
   }
 }

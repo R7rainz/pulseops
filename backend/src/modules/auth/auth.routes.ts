@@ -4,6 +4,7 @@ import {
   meController,
   signupController,
   refreshTokenController,
+  updateMeController,
 } from "./auth.controller";
 import { requireAuth } from "../../middleware/auth.middleware";
 
@@ -12,4 +13,5 @@ export async function authRoutes(app: FastifyInstance) {
   app.post("/login", loginController);
   app.post("/refresh", refreshTokenController);
   app.get("/me", { preHandler: requireAuth }, meController);
+  app.patch("/me", { preHandler: requireAuth }, updateMeController);
 }

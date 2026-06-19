@@ -32,6 +32,32 @@ export const loginSchema = z.object({
   }),
 });
 
+export const updateMeSchema = z.object({
+  name: z
+    .string()
+    .min(2, { message: "Name must be at least 2 characters long" })
+    .max(50, { message: "Name cannot exceed 50 characters" })
+    .optional(),
+  email: z.email({ message: "Invalid email address format" }).optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z
+    .string()
+    .min(8, { message: "Password length should be at least 8 characters" })
+    .max(128, { message: "Password length cannot exceed 128 characters" })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      message: "Password must contain at least one lowercase letter",
+    })
+    .regex(/[0-9]/, { message: "Password must contain at least one number" })
+    .regex(/[@$!%*?&]/, {
+      message: "Password must contain at least one special character (@$!%*?&)",
+    })
+    .optional(),
+});
+
 //this says - "TypeScript, look at my Zod schema and create a TypeScript type from it."
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type UpdateMeInput = z.infer<typeof updateMeSchema>;

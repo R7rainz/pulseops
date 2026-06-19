@@ -15,10 +15,11 @@ import {
   UserPlus,
   CreditCard,
   Zap,
+  User,
 } from "lucide-react";
 import { logoutUser } from "@/app/(auth)/auth.actions";
 
-export default function Sidebar({ workspaces }: { workspaces: any[] }) {
+export default function Sidebar({ workspaces, user }: { workspaces: any[]; user: { name: string; email: string } }) {
   const pathname = usePathname();
 
   return (
@@ -161,13 +162,25 @@ export default function Sidebar({ workspaces }: { workspaces: any[] }) {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-bold text-zinc-200 truncate uppercase tracking-widest">
-              OP: RAINZ
+              {user.name ? `OP: ${user.name.toUpperCase()}` : "OP: OPERATOR"}
             </p>
             <p className="text-[10px] text-zinc-600 uppercase tracking-widest truncate">
-              Root Access
+              {user.email || "No email"}
             </p>
           </div>
         </div>
+
+        <Link
+          href="/account"
+          className={`flex items-center gap-3 px-3 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors border-2 ${
+            pathname === "/account"
+              ? "border-emerald-500 text-emerald-400 bg-emerald-950/10"
+              : "border-zinc-900 text-zinc-500 hover:text-zinc-300 hover:border-zinc-800"
+          }`}
+        >
+          <User className="w-3.5 h-3.5" />
+          My Account
+        </Link>
 
         <form action={logoutUser}>
           <button

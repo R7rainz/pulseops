@@ -1,6 +1,6 @@
 import { prisma } from "../../lib/db";
 import { checkPassword, hashPassword } from "../../lib/password";
-import { LoginInput, SignupInput } from "./auth.schema";
+import { LoginInput, SignupInput, UpdateMeInput } from "./auth.schema";
 import {
   signAccessToken,
   verifyAccessTokenIgnoringExpiry,
@@ -83,4 +83,36 @@ export async function getMeService(userId: number) {
   }
 
   return user;
+}
+
+export async function updateMeService(userId: number, input: UpdateMeInput) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (input.newPassword) {
+    if (!input.currentPassword) {
+      throw new Error("Current password is required to set a new password");
+    }
+    const valid = await checkPassword(input.currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new Error("Current password is incorrect");
+    }
+  }
+
+  const data: { name?: string; email?: string; passwordHash?: string } = {};
+  if (input.name) data.name = input.name;
+  if (input.email) data.email = input.email;
+  if (input.newPassword) data.passwordHash = await hashPassword(input.newPassword);
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data,
+    select: { id: true, name: true, email: true, createdAt: true },
+  });
+
+  return updated;
 }
