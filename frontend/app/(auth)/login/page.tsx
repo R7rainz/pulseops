@@ -73,6 +73,15 @@ function LoginForm() {
               placeholder="••••••••"
             />
 
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-[11px] text-zinc-500 hover:text-cyan-400 font-bold uppercase tracking-widest transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             <button
               type="submit"
               disabled={isPending}
