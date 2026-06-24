@@ -51,23 +51,24 @@ export async function updateProfile(formData: FormData) {
   }
 }
 
-export async function changePassword(formData: FormData) {
+export async function changePassword(
+  prevState: { error?: string; success?: string },
+  formData: FormData,
+): Promise<{ error?: string; success?: string }> {
   const cookieStore = await cookies();
   const token = cookieStore.get("pulseops_token")?.value;
-  if (!token) return redirect("/login");
+  if (!token) return { error: "Not authenticated" };
 
   const currentPassword = formData.get("currentPassword") as string;
   const newPassword = formData.get("newPassword") as string;
   const confirmPassword = formData.get("confirmPassword") as string;
 
   if (!currentPassword || !newPassword) {
-    setToast(cookieStore, "Both current and new password are required.", "error");
-    return;
+    return { error: "Both current and new password are required." };
   }
 
   if (newPassword !== confirmPassword) {
-    setToast(cookieStore, "Passwords do not match.", "error");
-    return;
+    return { error: "Passwords do not match." };
   }
 
   try {
@@ -82,12 +83,11 @@ export async function changePassword(formData: FormData) {
 
     if (!res.ok) {
       const json = await res.json();
-      setToast(cookieStore, json.message || "Failed to change password.", "error");
-      return;
+      return { error: json.message || "Failed to change password." };
     }
 
-    setToast(cookieStore, "Password changed", "success");
+    return { success: "Password changed successfully" };
   } catch {
-    setToast(cookieStore, "Network error changing password.", "error");
+    return { error: "Network error changing password." };
   }
 }

@@ -2,8 +2,9 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import { API_URL } from "@/lib/constants";
-import { Key, Mail, Terminal, User, Calendar, ShieldCheck } from "lucide-react";
-import { updateProfile, changePassword } from "./actions";
+import { Mail, Terminal, Calendar, ShieldCheck } from "lucide-react";
+import { updateProfile } from "./actions";
+import ChangePasswordForm from "./ChangePasswordForm";
 
 export default async function AccountPage() {
   const cookieStore = await cookies();
@@ -104,53 +105,7 @@ export default async function AccountPage() {
       </div>
 
       {/* CHANGE PASSWORD */}
-      <div className="border-2 border-zinc-900 bg-zinc-950 p-6 mb-8">
-        <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-widest mb-6 flex items-center gap-2">
-          <Key className="w-4 h-4 text-amber-400" />
-          Change Password
-        </h2>
-        <form action={changePassword} className="space-y-5">
-          <div>
-            <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
-              Current Password
-            </label>
-            <input
-              name="currentPassword"
-              type="password"
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm uppercase tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors"
-              placeholder="Current password"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
-              New Password
-            </label>
-            <input
-              name="newPassword"
-              type="password"
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm uppercase tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors"
-              placeholder="New password"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
-              Confirm New Password
-            </label>
-            <input
-              name="confirmPassword"
-              type="password"
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm uppercase tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors"
-              placeholder="Confirm new password"
-            />
-          </div>
-          <button
-            type="submit"
-            className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors"
-          >
-            Update Password
-          </button>
-        </form>
-      </div>
+      <ChangePasswordForm />
 
       {/* SECURITY NOTE */}
       <div className="border-2 border-zinc-900/50 bg-zinc-950/50 p-4 flex items-start gap-3">

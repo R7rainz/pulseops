@@ -82,11 +82,11 @@ export default async function MonitorDiagnosticsPage({
     try {
       const [checksRes, statsRes, analyticsRes] = await Promise.all([
         apiFetch(
-          `${API_URL}/api/v1/monitors/${monitor.id}/checks?limit=100&offset=0`,
+          `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitor.id}/checks?limit=100&offset=0`,
           { token, cookieStore, cache: "no-store" },
         ),
         apiFetch(
-          `${API_URL}/api/v1/monitors/${monitor.id}/stats`,
+          `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitor.id}/stats`,
           { token, cookieStore, cache: "no-store" },
         ),
         apiFetch(
@@ -374,7 +374,7 @@ export default async function MonitorDiagnosticsPage({
         <MonitorCharts checks={checks} stats={stats} />
 
         {/* Probe Log */}
-        <MonitorCheckLog monitorId={monitor.id} token={token} />
+        <MonitorCheckLog workspaceId={workspaceId} monitorId={monitor.id} token={token} />
 
       </div>
     </main>

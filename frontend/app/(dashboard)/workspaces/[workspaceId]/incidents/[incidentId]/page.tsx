@@ -122,7 +122,7 @@ export default async function IncidentDetailPage({
   // Fetch checks for the associated monitor
   try {
     const checksRes = await apiFetch(
-      `${API_URL}/api/v1/monitors/${incident.monitorId}/checks?limit=25`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${incident.monitorId}/checks?limit=25`,
       { token, cookieStore, cache: "no-store" },
     );
     if (checksRes.ok) {

@@ -1,6 +1,8 @@
+import crypto from "node:crypto";
 import { prisma } from "../../lib/db";
 import { checkPassword, hashPassword } from "../../lib/password";
-import { LoginInput, SignupInput, UpdateMeInput } from "./auth.schema";
+import { LoginInput, SignupInput, UpdateMeInput, ForgotPasswordInput, ResetPasswordInput } from "./auth.schema";
+import { sendResetPasswordEmail } from "../../lib/email";
 import {
   signAccessToken,
   verifyAccessTokenIgnoringExpiry,
@@ -115,4 +117,58 @@ export async function updateMeService(userId: number, input: UpdateMeInput) {
   });
 
   return updated;
+}
+
+export async function forgotPasswordService(input: ForgotPasswordInput) {
+  const user = await prisma.user.findUnique({
+    where: { email: input.email },
+  });
+
+  if (!user) {
+    // Don't reveal whether the email exists
+    return;
+  }
+
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: expires,
+    },
+  });
+
+  const appUrl = process.env.APP_URL || "http://localhost:3000";
+  const resetLink = `${appUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(input.email)}`;
+
+  await sendResetPasswordEmail({ to: input.email, resetLink });
+}
+
+export async function resetPasswordService(input: ResetPasswordInput) {
+  const hashedToken = crypto.createHash("sha256").update(input.token).digest("hex");
+
+  const user = await prisma.user.findFirst({
+    where: {
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { gt: new Date() },
+    },
+  });
+
+  if (!user) {
+    throw new Error("Invalid or expired reset token.");
+  }
+
+  const passwordHash = await hashPassword(input.password);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      passwordHash,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    },
+  });
 }

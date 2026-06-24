@@ -57,7 +57,30 @@ export const updateMeSchema = z.object({
     .optional(),
 });
 
-//this says - "TypeScript, look at my Zod schema and create a TypeScript type from it."
+export const forgotPasswordSchema = z.object({
+  email: z.email({ message: "Invalid email address format" }),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, { message: "Reset token is required" }),
+  password: z
+    .string()
+    .min(8, { message: "Password length should be at least 8 characters" })
+    .max(128, { message: "Password length cannot exceed 128 characters" })
+    .regex(/[A-Z]/, {
+      message: "Password must contain at least one uppercase letter",
+    })
+    .regex(/[a-z]/, {
+      message: "Password must contain at least one lowercase letter",
+    })
+    .regex(/[0-9]/, { message: "Password must contain at least one number" })
+    .regex(/[@$!%*?&]/, {
+      message: "Password must contain at least one special character (@$!%*?&)",
+    }),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type UpdateMeInput = z.infer<typeof updateMeSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

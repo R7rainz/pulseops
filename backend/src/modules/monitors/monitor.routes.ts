@@ -41,31 +41,31 @@ export async function monitorRoutes(app: FastifyInstance) {
   );
 
   app.post(
-    "/monitors/:monitorId/check",
+    "/workspaces/:workspaceId/monitors/:monitorId/check",
     { preHandler: write },
     runMonitorCheckController as any,
   );
 
   app.get(
-    "/monitors/:monitorId/checks",
+    "/workspaces/:workspaceId/monitors/:monitorId/checks",
     { preHandler: read },
     getMonitorChecksController as any,
   );
 
   app.get(
-    "/monitors/:monitorId/stats",
+    "/workspaces/:workspaceId/monitors/:monitorId/stats",
     { preHandler: read },
     getMonitorStatsController as any,
   );
 
   app.post(
-    "/monitors/:monitorId/pause",
+    "/workspaces/:workspaceId/monitors/:monitorId/pause",
     { preHandler: write },
     pauseMonitorController as any,
   );
 
   app.post(
-    "/monitors/:monitorId/resume",
+    "/workspaces/:workspaceId/monitors/:monitorId/resume",
     { preHandler: write },
     resumeMonitorController as any,
   );
@@ -77,13 +77,13 @@ export async function monitorRoutes(app: FastifyInstance) {
   );
 
   app.patch(
-    "/monitors/:monitorId",
+    "/workspaces/:workspaceId/monitors/:monitorId",
     { preHandler: write },
     updateMonitorController as any,
   );
 
   app.delete(
-    "/monitors/:monitorId",
+    "/workspaces/:workspaceId/monitors/:monitorId",
     { preHandler: write },
     deleteMonitorController as any,
   );
