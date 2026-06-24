@@ -21,6 +21,7 @@ type CreateMonitorParams = {
 };
 
 type RunMonitorCheckParams = {
+    workspaceId: string;
     monitorId: string;
 };
 
