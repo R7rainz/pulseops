@@ -6,13 +6,14 @@ import type { MonitorCheck } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Props {
+  workspaceId: string;
   monitorId: number;
   token: string;
 }
 
 const PAGE_SIZE = 20;
 
-export default function MonitorCheckLog({ monitorId, token }: Props) {
+export default function MonitorCheckLog({ workspaceId, monitorId, token }: Props) {
   const [checks, setChecks] = useState<MonitorCheck[]>([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -38,7 +39,7 @@ export default function MonitorCheckLog({ monitorId, token }: Props) {
     setError(null);
     try {
       const res = await fetchWithRefresh(
-        `${API_URL}/api/v1/monitors/${monitorId}/checks?limit=${PAGE_SIZE}&offset=${currentOffset}`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitorId}/checks?limit=${PAGE_SIZE}&offset=${currentOffset}`,
         token,
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

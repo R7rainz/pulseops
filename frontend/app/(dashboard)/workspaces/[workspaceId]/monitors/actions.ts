@@ -73,7 +73,7 @@ export async function deleteMonitor(formData: FormData) {
 
   try {
     const res = await fetch(
-      `${API_URL}/api/v1/monitors/${monitorId}`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitorId}`,
       {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
@@ -103,7 +103,7 @@ export async function pauseMonitor(formData: FormData) {
 
   try {
     const res = await fetch(
-      `${API_URL}/api/v1/monitors/${monitorId}/pause`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitorId}/pause`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -133,7 +133,7 @@ export async function resumeMonitor(formData: FormData) {
 
   try {
     const res = await fetch(
-      `${API_URL}/api/v1/monitors/${monitorId}/resume`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitorId}/resume`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -163,7 +163,7 @@ export async function triggerCheck(formData: FormData) {
 
   try {
     const res = await fetch(
-      `${API_URL}/api/v1/monitors/${monitorId}/check`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitorId}/check`,
       {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -212,7 +212,7 @@ export async function updateMonitor(formData: FormData) {
   if (expectedStatus) body.expectedStatus = expectedStatus;
 
   try {
-    const res = await fetch(`${API_URL}/api/v1/monitors/${monitorId}`, {
+    const res = await fetch(`${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitorId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -259,7 +259,7 @@ export async function scheduleMaintenance(formData: FormData) {
   }
 
   try {
-    const res = await fetch(`${API_URL}/api/v1/monitors/${monitorId}`, {
+    const res = await fetch(`${API_URL}/api/v1/workspaces/${workspaceId}/monitors/${monitorId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
