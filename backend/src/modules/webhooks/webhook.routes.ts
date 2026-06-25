@@ -28,31 +28,31 @@ export async function webhookRoutes(app: FastifyInstance) {
   );
 
   app.patch(
-    "/webhooks/:webhookId",
+    "/workspaces/:workspaceId/webhooks/:webhookId",
     { preHandler: write },
     updateWebhookController as any,
   );
 
   app.delete(
-    "/webhooks/:webhookId",
+    "/workspaces/:workspaceId/webhooks/:webhookId",
     { preHandler: write },
     deleteWebhookController as any,
   );
 
   app.post(
-    "/webhooks/:webhookId/toggle",
+    "/workspaces/:workspaceId/webhooks/:webhookId/toggle",
     { preHandler: write },
     toggleWebhookController as any,
   );
 
   app.post(
-    "/webhooks/:webhookId/test",
+    "/workspaces/:workspaceId/webhooks/:webhookId/test",
     { preHandler: write },
     testWebhookController as any,
   );
 
   app.get(
-    "/webhooks/:webhookId/delivery-logs",
+    "/workspaces/:workspaceId/webhooks/:webhookId/delivery-logs",
     { preHandler: read },
     getWebhookDeliveryLogsController as any,
   );
