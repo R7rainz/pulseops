@@ -70,10 +70,10 @@ export default function WebGLBackground() {
       const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer({
         canvas,
         antialias: true,
-        alpha: true,
+        alpha: false,
       });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setClearColor(0x000000, 0);
+      renderer.setClearColor(0x070B09, 1);
 
       const w = window.innerWidth;
       const h = window.innerHeight;

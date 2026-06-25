@@ -54,7 +54,7 @@
 }
 
 :root {
-  --nexus-bg: #9FD8BD;
+  --nexus-bg: #070B09;
   --nexus-primary: #9FD8BD;
   --nexus-secondary: #E2A356;
   --nexus-tertiary: #A3D1DF;
@@ -75,7 +75,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-[#9FD8BD] text-[#EEEAE0] font-body antialiased;
+    @apply bg-[#070B09] text-[#EEEAE0] font-body antialiased;
   }
   html {
     @apply font-body;
