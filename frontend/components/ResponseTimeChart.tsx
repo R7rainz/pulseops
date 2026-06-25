@@ -18,7 +18,7 @@ interface Props {
 export default function ResponseTimeChart({ checks }: Props) {
   if (checks.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-zinc-600 text-xs font-bold uppercase tracking-widest border-2 border-dashed border-zinc-800 bg-zinc-950">
+      <div className="flex items-center justify-center h-48 text-[#93A096]/60 text-body-md font-medium border border-dashed border-[rgba(238,234,224,0.1)] rounded-[9px] bg-[rgba(238,234,224,0.02)]">
         No data available
       </div>
     );
@@ -37,12 +37,12 @@ export default function ResponseTimeChart({ checks }: Props) {
     data.reduce((sum, d) => sum + d.responseTime, 0) / data.length;
 
   return (
-    <div className="bg-zinc-950 border-2 border-zinc-800 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+    <div className="glass rounded-[9px] p-[12px]">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-sm font-medium text-[#93A096]">
           Response Time History
         </h3>
-        <span className="text-[10px] text-zinc-600 font-mono">
+        <span className="text-body-md text-[#93A096]">
           avg {avg.toFixed(0)}ms &middot; {checks.length} samples
         </span>
       </div>
@@ -50,35 +50,35 @@ export default function ResponseTimeChart({ checks }: Props) {
       <div className="h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(238,234,224,0.06)" />
             <XAxis
               dataKey="time"
-              tick={{ fill: "#52525b", fontSize: 10, fontFamily: "monospace" }}
+              tick={{ fill: "#93A096", fontSize: 10, fontFamily: "Instrument Sans" }}
               tickLine={false}
-              axisLine={{ stroke: "#27272a" }}
+              axisLine={{ stroke: "rgba(238,234,224,0.06)" }}
               interval="preserveStartEnd"
             />
             <YAxis
-              tick={{ fill: "#52525b", fontSize: 10, fontFamily: "monospace" }}
+              tick={{ fill: "#93A096", fontSize: 10, fontFamily: "Instrument Sans" }}
               tickLine={false}
-              axisLine={{ stroke: "#27272a" }}
+              axisLine={{ stroke: "rgba(238,234,224,0.06)" }}
               unit="ms"
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#09090b",
-                border: "2px solid #27272a",
-                borderRadius: 0,
+                backgroundColor: "rgba(7,11,9,0.95)",
+                border: "1px solid rgba(238,234,224,0.1)",
+                borderRadius: 9,
                 fontSize: 12,
-                fontFamily: "monospace",
+                fontFamily: "Instrument Sans",
               }}
-              labelStyle={{ color: "#a1a1aa" }}
+              labelStyle={{ color: "#93A096" }}
               formatter={(value: unknown, _name: unknown, entry: { payload?: { status?: string; statusCode?: number | null } }) => {
                 const v = typeof value === "number" ? value : 0;
                 const p = entry?.payload;
                 return [
-                  <span key="val" className="text-zinc-100">{v}ms</span>,
-                  <span key="name" className={p?.status === "UP" ? "text-emerald-400" : "text-red-400"}>
+                  <span key="val" className="text-[#EEEAE0]">{v}ms</span>,
+                  <span key="name" className={p?.status === "UP" ? "text-[#9FD8BD]" : "text-[#C2766B]"}>
                     {p?.status ?? "N/A"}{p?.statusCode ? ` (HTTP ${p.statusCode})` : ""}
                   </span>,
                 ];
@@ -87,10 +87,10 @@ export default function ResponseTimeChart({ checks }: Props) {
             <Line
               type="monotone"
               dataKey="responseTime"
-              stroke="#34d399"
+              stroke="#9FD8BD"
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 4, fill: "#34d399", stroke: "#09090b", strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: "#9FD8BD", stroke: "#070B09", strokeWidth: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>

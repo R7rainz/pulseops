@@ -71,32 +71,32 @@ export default async function WebhooksPage({
   const canEdit = role === "OWNER" || role === "ADMIN";
 
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
+    <main className="p-8 md:p-12 text-[#EEEAE0] min-h-screen">
       <div className="max-w-4xl mx-auto space-y-10">
         <div>
           <Link
             href={`/workspaces/${workspaceId}/monitors`}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-transparent border border-[rgba(238,234,224,0.06)] text-xs font-medium text-[#93A096] hover:text-[#9FD8BD] hover:border-[#9FD8BD] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Return to Grid
           </Link>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-900 pb-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[rgba(238,234,224,0.08)] pb-6">
             <div>
-              <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100 flex items-center gap-3">
-                <Zap className="w-8 h-8 text-cyan-400" />
-                Webhook <span className="text-cyan-400">Endpoints</span>
+              <h1 className="text-3xl font-medium text-[#EEEAE0] flex items-center gap-3">
+                <Zap className="w-8 h-8 text-[#A3D1DF]" />
+                Webhook <span className="text-[#A3D1DF]">Endpoints</span>
               </h1>
-              <p className="text-sm text-zinc-500 mt-2 uppercase tracking-widest font-bold">
+              <p className="text-sm text-[#93A096] mt-2">
                 {workspaceName || `Workspace #${workspaceId}`}
               </p>
             </div>
-            <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-widest">
-              <span className="px-3 py-1.5 bg-zinc-900 border border-zinc-700 text-zinc-300">
+            <div className="flex items-center gap-3 text-xs font-medium">
+              <span className="px-3 py-1.5 bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] text-[#EEEAE0]">
                 {webhooks.length} Configured
               </span>
-              <span className="px-3 py-1.5 bg-emerald-950/30 border border-emerald-800 text-emerald-400">
+              <span className="px-3 py-1.5 bg-[rgba(159,216,189,0.1)] border border-[#9FD8BD]/50 text-[#9FD8BD]">
                 {webhooks.filter((w) => w.isActive).length} Active
               </span>
             </div>
@@ -106,39 +106,39 @@ export default async function WebhooksPage({
         {canEdit && <CreateWebhookForm workspaceId={workspaceId} />}
 
         {webhooks.length === 0 ? (
-          <div className="p-12 border-2 border-dashed border-zinc-800 bg-zinc-950 text-center text-zinc-500 text-sm font-bold uppercase tracking-widest">
+          <div className="p-12 border border-dashed border-[rgba(238,234,224,0.06)] bg-transparent text-center text-[#93A096] text-sm font-medium">
             No webhook endpoints configured.
             {canEdit && (
-              <p className="text-zinc-600 text-xs mt-3">
+              <p className="text-[#93A096] text-xs mt-3">
                 Add one above to receive incident alerts via HTTP POST.
               </p>
             )}
           </div>
         ) : (
-          <div className="border-2 border-zinc-800 bg-zinc-950 divide-y-2 divide-zinc-900">
+          <div className="border border-[rgba(238,234,224,0.06)] bg-transparent divide-y divide-[rgba(238,234,224,0.08)]">
             {webhooks.map((wh) => (
               <div
                 key={wh.id}
-                className="p-5 hover:bg-zinc-900/30 transition-colors"
+                className="p-5 hover:bg-[rgba(238,234,224,0.04)] transition-colors"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-center gap-3">
-                      <span className={`p-1.5 border-2 ${
+                      <span className={`p-1.5 border ${
                         wh.isActive
-                          ? "bg-emerald-950/20 border-emerald-500/50"
-                          : "bg-zinc-900 border-zinc-700"
+                          ? "bg-[rgba(159,216,189,0.1)] border-[#9FD8BD]/50"
+                          : "bg-[rgba(238,234,224,0.04)] border-[rgba(238,234,224,0.06)]"
                       }`}>
                         {wh.isActive
-                          ? <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                          : <Zap className="w-3.5 h-3.5 text-zinc-600" />
+                          ? <Zap className="w-3.5 h-3.5 text-[#9FD8BD]" />
+                          : <Zap className="w-3.5 h-3.5 text-[#93A096]" />
                         }
                       </span>
                       <div>
-                        <h3 className="text-sm font-bold text-zinc-200 uppercase tracking-widest">
+                        <h3 className="text-sm font-medium text-[#EEEAE0]">
                           {wh.name || "Unnamed Webhook"}
                         </h3>
-                        <p className="text-xs text-zinc-500 truncate max-w-lg mt-0.5 font-mono">
+                        <p className="text-xs text-[#93A096] truncate max-w-lg mt-0.5">
                           {wh.url}
                         </p>
                       </div>
@@ -148,7 +148,7 @@ export default async function WebhooksPage({
                       {wh.events.map((evt) => (
                         <span
                           key={evt}
-                          className="text-[10px] font-bold px-2 py-0.5 border bg-zinc-950 uppercase tracking-widest text-cyan-400 border-cyan-800"
+                          className="text-[10px] font-medium px-2 py-0.5 border bg-transparent text-[#A3D1DF] border-[#A3D1DF]/50"
                         >
                           {evt}
                         </span>
@@ -156,7 +156,7 @@ export default async function WebhooksPage({
                     </div>
 
                     {wh.lastTestedAt && (
-                      <p className="text-[10px] text-zinc-600 uppercase tracking-widest">
+                      <p className="text-[10px] text-[#93A096]">
                         Last tested: {new Date(wh.lastTestedAt).toLocaleString()}
                       </p>
                     )}
@@ -165,7 +165,7 @@ export default async function WebhooksPage({
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Link
                       href={`/workspaces/${workspaceId}/webhooks/${wh.id}`}
-                      className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"
+                      className="p-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#A3D1DF] hover:border-[#A3D1DF]/40 transition-colors"
                       title="Delivery Logs"
                     >
                       <FileText className="w-4 h-4" />

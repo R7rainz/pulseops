@@ -46,21 +46,21 @@ export default function CreateApiKeyForm({
 
   if (newKey) {
     return (
-      <div className="border-2 border-emerald-500/30 bg-emerald-500/5 p-4">
-        <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">
+      <div className="border border-[#9FD8BD]/30 bg-[rgba(159,216,189,0.05)] p-4">
+        <p className="text-[10px] font-medium text-[#9FD8BD] mb-2">
           API Key Created — Copy it now
         </p>
         <div className="flex items-center gap-2">
-          <code className="flex-1 bg-zinc-900 border-2 border-zinc-800 px-3 py-2 text-xs text-zinc-200 break-all font-mono select-all">
+          <code className="flex-1 bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-3 py-2 text-xs text-[#EEEAE0] break-all select-all">
             {newKey}
           </code>
           <button
             onClick={handleCopy}
-            className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-400 hover:text-emerald-400 hover:border-emerald-500 transition-colors"
+            className="p-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#9FD8BD] hover:border-[#9FD8BD]/40 transition-colors"
             title="Copy"
           >
             {copied ? (
-              <Check className="w-4 h-4 text-emerald-400" />
+              <Check className="w-4 h-4 text-[#9FD8BD]" />
             ) : (
               <Copy className="w-4 h-4" />
             )}
@@ -68,7 +68,7 @@ export default function CreateApiKeyForm({
         </div>
         <button
           onClick={() => setNewKey(null)}
-          className="mt-3 text-[10px] text-zinc-500 hover:text-zinc-300 uppercase tracking-widest font-bold transition-colors"
+          className="mt-3 text-[10px] text-[#93A096] hover:text-[#EEEAE0] font-medium transition-colors"
         >
           &larr; Create another
         </button>
@@ -81,7 +81,7 @@ export default function CreateApiKeyForm({
       {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-emerald-400 hover:bg-emerald-500/10 text-xs font-bold uppercase tracking-widest transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#9FD8BD] hover:bg-[rgba(159,216,189,0.1)] text-xs font-medium transition-colors"
         >
           <Plus className="w-4 h-4" />
           Generate Key
@@ -91,7 +91,7 @@ export default function CreateApiKeyForm({
           <div className="flex-1 space-y-2">
             <label
               htmlFor="key-name"
-              className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
+              className="block text-[10px] font-medium text-[#93A096]"
             >
               Key Name
             </label>
@@ -102,13 +102,13 @@ export default function CreateApiKeyForm({
               onChange={(e) => setName(e.target.value)}
               placeholder="CI/CD Pipeline"
               required
-              className="w-full bg-zinc-900 border-2 border-zinc-800 px-3 py-2 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-3 py-2 text-[#EEEAE0] placeholder:text-[rgba(238,234,224,0.2)] focus:outline-none focus:border-[#9FD8BD] transition-colors"
             />
           </div>
           <button
             type="submit"
             disabled={pending || !name.trim()}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest text-xs border-2 border-transparent transition-all disabled:opacity-50 h-[42px]"
+            className="px-4 py-2 bg-[#9FD8BD] hover:bg-[#9FD8BD] text-zinc-950 font-medium text-xs rounded-[999px] transition-all disabled:opacity-50 h-[42px]"
           >
             {pending ? "..." : "Create"}
           </button>
@@ -116,7 +116,7 @@ export default function CreateApiKeyForm({
             type="button"
             onClick={() => setOpen(false)}
             disabled={pending}
-            className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-400 hover:text-zinc-100 text-xs font-bold uppercase tracking-widest transition-colors h-[42px]"
+            className="px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#EEEAE0] text-xs font-medium transition-colors h-[42px]"
           >
             Cancel
           </button>

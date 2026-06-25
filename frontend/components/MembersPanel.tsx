@@ -13,10 +13,10 @@ interface Member {
 
 const ROLE_ORDER = ["OWNER", "ADMIN", "MEMBER", "VIEWER"];
 const ROLE_COLORS: Record<string, string> = {
-  OWNER: "text-amber-400 border-amber-800 bg-amber-950/20",
-  ADMIN: "text-purple-400 border-purple-800 bg-purple-950/20",
-  MEMBER: "text-cyan-400 border-cyan-800 bg-cyan-950/20",
-  VIEWER: "text-zinc-400 border-zinc-700 bg-zinc-900",
+  OWNER: "text-[#E2A356] border-[rgba(226,163,86,0.3)] bg-[rgba(226,163,86,0.08)]",
+  ADMIN: "text-[#A3D1DF] border-[rgba(163,209,223,0.3)] bg-[rgba(163,209,223,0.08)]",
+  MEMBER: "text-[#9FD8BD] border-[rgba(159,216,189,0.3)] bg-[rgba(159,216,189,0.08)]",
+  VIEWER: "text-[#93A096] border-[rgba(238,234,224,0.1)] bg-[rgba(238,234,224,0.03)]",
 };
 const ROLE_ICONS: Record<string, React.ReactNode> = {
   OWNER: <Crown className="w-3 h-3" />,
@@ -53,36 +53,36 @@ export default async function MembersPanel({ workspaceId }: { workspaceId: strin
   }
 
   return (
-    <div className="border-2 border-zinc-800 bg-zinc-950 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.03)]">
-      <div className="px-5 py-3 border-b-2 border-zinc-900 flex items-center gap-2">
-        <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-          <User className="w-3.5 h-3.5 text-emerald-400" />
+    <div className="glass rounded-[9px]">
+      <div className="px-5 py-3 border-b border-[rgba(238,234,224,0.06)] flex items-center gap-2">
+        <p className="text-sm font-medium text-[#93A096] flex items-center gap-2">
+          <User className="w-3.5 h-3.5 text-[#9FD8BD]" />
           Team Roster
         </p>
-        <span className="text-[10px] text-zinc-600 ml-auto">{members.length} operator(s)</span>
+        <span className="text-body-md text-[#93A096]/60 ml-auto">{members.length} operator(s)</span>
       </div>
-      <div className="divide-y divide-zinc-900">
+      <div className="divide-y divide-[rgba(238,234,224,0.04)]">
         {ROLE_ORDER.map((role) => {
           const roleMembers = groups[role];
           if (!roleMembers) return null;
           return (
             <div key={role}>
-              <div className={`px-5 py-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${ROLE_COLORS[role]}`}>
+              <div className={`px-5 py-2 flex items-center gap-2 text-[11px] font-medium ${ROLE_COLORS[role]}`}>
                 {ROLE_ICONS[role]}
                 {role} — {roleMembers.length}
               </div>
               {roleMembers.map((m) => (
-                <div key={m.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-zinc-900/30 transition-colors">
-                  <div className="w-8 h-8 flex-shrink-0 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center">
-                    <span className="text-xs font-bold text-zinc-400 uppercase">
+                <div key={m.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-[rgba(238,234,224,0.02)] transition-colors">
+                  <div className="w-8 h-8 flex-shrink-0 bg-[rgba(238,234,224,0.05)] border border-[rgba(238,234,224,0.1)] rounded-[4px] flex items-center justify-center">
+                    <span className="text-xs font-medium text-[#93A096]">
                       {(m.user.name || m.user.email)[0]}
                     </span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-zinc-200 truncate uppercase tracking-widest">
+                    <p className="text-sm font-medium text-[#EEEAE0] truncate">
                       {m.user.name || "Unnamed"}
                     </p>
-                    <p className="text-[10px] text-zinc-500 truncate">{m.user.email}</p>
+                    <p className="text-body-md text-[#93A096] truncate">{m.user.email}</p>
                   </div>
                 </div>
               ))}

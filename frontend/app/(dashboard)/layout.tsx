@@ -44,11 +44,9 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-950 text-zinc-50 font-mono selection:bg-emerald-500/30 selection:text-emerald-400">
+    <div className="flex min-h-screen">
       <Sidebar workspaces={workspaces} user={currentUser} />
-
-      <div className="flex-1 min-w-0 bg-zinc-950 relative z-0">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808010_1px,transparent_1px),linear-gradient(to_bottom,#80808010_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none -z-10" />
+      <div className="flex-1 min-w-0 relative z-0">
         <Toast />
         {children}
       </div>

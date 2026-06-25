@@ -23,15 +23,15 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
   const pathname = usePathname();
 
   return (
-    <aside className="w-72 border-r-2 border-zinc-900 bg-zinc-950 flex flex-col justify-between h-screen sticky top-0 z-50">
+    <aside className="w-72 glass border-r border-[rgba(238,234,224,0.08)] flex flex-col justify-between h-screen sticky top-0 z-50">
       {/* LOGO */}
-      <div className="px-5 pt-5 pb-4 border-b-2 border-zinc-900/50">
+      <div className="px-5 pt-5 pb-4 border-b border-[rgba(238,234,224,0.06)]">
         <div className="flex items-center gap-3">
-          <div className="p-1.5 bg-emerald-500/10 border-2 border-emerald-500/30">
-            <Activity className="w-5 h-5 text-emerald-400" />
+          <div className="p-1.5 bg-[rgba(159,216,189,0.1)] border border-[rgba(159,216,189,0.2)] rounded-[4px]">
+            <Activity className="w-5 h-5 text-[#9FD8BD]" />
           </div>
-          <span className="font-bold text-lg tracking-widest text-zinc-100 uppercase">
-            Pulse<span className="text-emerald-400">Ops</span>
+          <span className="font-medium text-lg tracking-wider text-[#EEEAE0]">
+            Pulse<span className="text-[#9FD8BD]">Ops</span>
           </span>
         </div>
       </div>
@@ -41,12 +41,12 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
         {/* WORKSPACES */}
         <section>
           <div className="flex items-center justify-between mb-4 px-2">
-            <h2 className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em]">
+            <h2 className="text-label-md text-[#93A096]">
               Workspaces
             </h2>
             <Link
               href="/workspaces/new"
-              className="p-1 border-2 border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors"
+              className="p-1 border border-[rgba(238,234,224,0.1)] rounded-[999px] text-[#93A096] hover:text-[#9FD8BD] hover:border-[#9FD8BD]/30 transition-colors"
               title="New Workspace"
             >
               <Plus className="w-3 h-3" />
@@ -55,7 +55,7 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
 
           <div className="space-y-2">
             {workspaces.length === 0 ? (
-              <p className="text-xs text-zinc-600 px-2 py-3 italic font-medium">
+              <p className="text-body-md text-[#93A096]/60 px-2 py-3 italic font-medium">
                 No workspaces yet.
               </p>
             ) : (
@@ -74,34 +74,34 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
                 return (
                   <div
                     key={ws.id}
-                    className={`group border-2 transition-colors ${
+                    className={`group rounded-[4px] border transition-all ${
                       isActive
-                        ? "border-emerald-900/50 bg-emerald-950/10"
-                        : "border-zinc-900 hover:border-zinc-800 bg-zinc-950"
+                        ? "border-[#9FD8BD]/30 bg-[rgba(159,216,189,0.06)]"
+                        : "border-transparent bg-transparent hover:border-[rgba(238,234,224,0.1)] hover:bg-[rgba(238,234,224,0.03)]"
                     }`}
                   >
                     {/* WORKSPACE HEADER */}
                     <Link
                       href={`${wsBase}/monitors`}
-                      className={`flex items-center gap-3 px-3 py-3 text-sm font-bold transition-colors ${
+                      className={`flex items-center gap-3 px-3 py-3 text-sm font-medium transition-colors ${
                         isActive
-                          ? "text-emerald-400"
-                          : "text-zinc-300 hover:text-zinc-100"
+                          ? "text-[#9FD8BD]"
+                          : "text-[#93A096] hover:text-[#EEEAE0]"
                       }`}
                     >
                       <Layers className="w-4 h-4 flex-shrink-0" />
-                      <span className="truncate uppercase tracking-widest">
+                      <span className="truncate">
                         {ws.name}
                       </span>
                     </Link>
 
-                    {/* SUB-NAV — always visible when active, otherwise on hover */}
-                    <div className={`divide-y divide-zinc-900 transition-all duration-200 overflow-hidden ${
+                    {/* SUB-NAV */}
+                    <div className={`divide-y divide-[rgba(238,234,224,0.04)] transition-all duration-[300ms] ease-[cubic-bezier(0.19,1,0.22,1)] overflow-hidden ${
                       isActive
                         ? "max-h-96 opacity-100 visible"
                         : "max-h-0 opacity-0 invisible group-hover:max-h-96 group-hover:opacity-100 group-hover:visible"
                     }`}>
-                      <div className="border-t border-zinc-900" />
+                      <div className="border-t border-[rgba(238,234,224,0.04)]" />
                       <NavItem
                         href={`${wsBase}/monitors`}
                         icon={<Radio className="w-3.5 h-3.5" />}
@@ -155,16 +155,16 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
       </nav>
 
       {/* PROFILE & LOGOUT */}
-      <div className="px-3 py-4 border-t-2 border-zinc-900 space-y-3">
+      <div className="px-3 py-4 border-t border-[rgba(238,234,224,0.06)] space-y-3">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-8 h-8 bg-zinc-950 border-2 border-zinc-800 flex items-center justify-center text-cyan-400">
+          <div className="w-8 h-8 bg-[rgba(238,234,224,0.05)] border border-[rgba(238,234,224,0.1)] rounded-[4px] flex items-center justify-center text-[#9FD8BD]">
             <TerminalSquare className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-zinc-200 truncate uppercase tracking-widest">
-              {user.name ? `OP: ${user.name.toUpperCase()}` : "OP: OPERATOR"}
+            <p className="text-sm font-medium text-[#EEEAE0] truncate">
+              {user.name ? `OP: ${user.name}` : "OP: OPERATOR"}
             </p>
-            <p className="text-[10px] text-zinc-600 uppercase tracking-widest truncate">
+            <p className="text-body-md text-[#93A096] truncate">
               {user.email || "No email"}
             </p>
           </div>
@@ -172,10 +172,10 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
 
         <Link
           href="/account"
-          className={`flex items-center gap-3 px-3 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors border-2 ${
+          className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors rounded-[4px] border ${
             pathname === "/account"
-              ? "border-emerald-500 text-emerald-400 bg-emerald-950/10"
-              : "border-zinc-900 text-zinc-500 hover:text-zinc-300 hover:border-zinc-800"
+              ? "border-[#9FD8BD]/30 bg-[rgba(159,216,189,0.06)] text-[#9FD8BD]"
+              : "border-transparent text-[#93A096] hover:text-[#EEEAE0] hover:bg-[rgba(238,234,224,0.03)] hover:border-[rgba(238,234,224,0.1)]"
           }`}
         >
           <User className="w-3.5 h-3.5" />
@@ -185,7 +185,7 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
         <form action={logoutUser}>
           <button
             type="submit"
-            className="flex items-center justify-between w-full px-3 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-red-400 border-2 border-zinc-900 hover:border-red-800 hover:bg-red-950/20 transition-all group cursor-pointer"
+            className="flex items-center justify-between w-full px-3 py-2.5 text-sm font-medium text-[#93A096] hover:text-[#C2766B] rounded-[4px] border border-transparent hover:border-[rgba(194,118,107,0.2)] hover:bg-[rgba(194,118,107,0.05)] transition-all cursor-pointer"
           >
             <span>Terminate Session</span>
             <LogOut className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
@@ -210,10 +210,10 @@ function NavItem({
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 px-4 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors ${
+      className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-[300ms] ${
         isActive
-          ? "bg-emerald-950/20 text-emerald-400 border-l-2 border-emerald-500"
-          : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/50 border-l-2 border-transparent"
+          ? "bg-[rgba(159,216,189,0.08)] text-[#9FD8BD] border-l border-[#9FD8BD]"
+          : "text-[#93A096] hover:text-[#EEEAE0] hover:bg-[rgba(238,234,224,0.03)] border-l border-transparent"
       }`}
     >
       <span className="flex-shrink-0">{icon}</span>
@@ -221,5 +221,3 @@ function NavItem({
     </Link>
   );
 }
-
-
