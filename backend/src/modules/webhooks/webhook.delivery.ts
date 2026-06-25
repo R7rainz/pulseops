@@ -85,7 +85,7 @@ export const sendWebhookNotifications = async (
     return {
       webhookId: webhook.id,
       url: webhook.url,
-      requestPayload: payload,
+      requestPayload: payload as any,
       responseStatus,
       responseBody,
       isSuccess: result.status === "fulfilled",
