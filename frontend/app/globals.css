@@ -16,29 +16,29 @@
   --color-surface: #EEEAE0;
   --color-destructive: #C2766B;
   --color-destructive-foreground: #EEEAE0;
-  --color-border: rgba(238, 234, 224, 0.1);
+  --color-border: rgba(238, 234, 224, 0.15);
   --color-input: rgba(238, 234, 224, 0.15);
   --color-ring: #9FD8BD;
-  --color-muted: rgba(238, 234, 224, 0.05);
+  --color-muted: rgba(238, 234, 224, 0.08);
   --color-muted-foreground: #93A096;
   --color-accent: #9FD8BD;
   --color-accent-foreground: #0A0F0C;
   --color-popover: rgba(7, 11, 9, 0.95);
   --color-popover-foreground: #EEEAE0;
-  --color-card: rgba(238, 234, 224, 0.05);
+  --color-card: rgba(238, 234, 224, 0.08);
   --color-card-foreground: #EEEAE0;
   --color-chart-1: #9FD8BD;
   --color-chart-2: #E2A356;
   --color-chart-3: #A3D1DF;
   --color-chart-4: #93A096;
   --color-chart-5: #C2766B;
-  --color-sidebar: rgba(238, 234, 224, 0.04);
+  --color-sidebar: rgba(238, 234, 224, 0.06);
   --color-sidebar-foreground: #EEEAE0;
   --color-sidebar-primary: #9FD8BD;
   --color-sidebar-primary-foreground: #0A0F0C;
-  --color-sidebar-accent: rgba(238, 234, 224, 0.06);
+  --color-sidebar-accent: rgba(238, 234, 224, 0.08);
   --color-sidebar-accent-foreground: #EEEAE0;
-  --color-sidebar-border: rgba(238, 234, 224, 0.08);
+  --color-sidebar-border: rgba(238, 234, 224, 0.1);
   --color-sidebar-ring: #9FD8BD;
   --font-sans: var(--font-body);
   --font-mono: var(--font-body);
@@ -46,11 +46,11 @@
   --font-body: var(--font-body);
   --radius-sm: 4px;
   --radius-md: 9px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 20px;
-  --radius-3xl: 24px;
-  --radius-4xl: 28px;
+  --radius-lg: 9px;
+  --radius-xl: 9px;
+  --radius-2xl: 9px;
+  --radius-3xl: 9px;
+  --radius-4xl: 9px;
 }
 
 :root {
@@ -61,10 +61,10 @@
   --nexus-neutral: #93A096;
   --nexus-surface: #EEEAE0;
   --nexus-destructive: #C2766B;
-  --nexus-text: #93A096;
+  --nexus-text: #0A0F0C;
   --nexus-text-secondary: #EEEAE0;
-  --nexus-border: rgba(238, 234, 224, 0.1);
-  --nexus-glass-bg: rgba(238, 234, 224, 0.05);
+  --nexus-border: rgba(238, 234, 224, 0.15);
+  --nexus-glass-bg: rgba(238, 234, 224, 0.08);
   --nexus-glass-blur: 6px;
   --nexus-shadow: rgba(159, 216, 189, 0.377) 0px 0px 0px 1.45954px, rgba(238, 234, 224, 0.25) 0px 8px 30px -10px;
   --radius: 9px;
@@ -75,7 +75,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-[#070B09] text-[#93A096] font-body antialiased;
+    @apply bg-[#070B09] text-[#EEEAE0] font-body antialiased;
   }
   html {
     @apply font-body;
@@ -88,19 +88,19 @@
 
 @layer utilities {
   .glass {
-    background: rgba(238, 234, 224, 0.05);
+    background: rgba(238, 234, 224, 0.08);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    border: 1px solid rgba(238, 234, 224, 0.1);
+    border: 1px solid rgba(238, 234, 224, 0.12);
     box-shadow: rgba(159, 216, 189, 0.377) 0px 0px 0px 1.45954px,
                 rgba(238, 234, 224, 0.25) 0px 8px 30px -10px;
   }
 
   .glass-strong {
-    background: rgba(238, 234, 224, 0.08);
+    background: rgba(238, 234, 224, 0.12);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(238, 234, 224, 0.15);
+    border: 1px solid rgba(238, 234, 224, 0.18);
     box-shadow: rgba(159, 216, 189, 0.377) 0px 0px 0px 1.45954px,
                 rgba(238, 234, 224, 0.25) 0px 8px 30px -10px;
   }
@@ -112,15 +112,16 @@
       rgba(226, 163, 86, 0.06) 32%,
       rgba(0, 0, 0, 0) 64%
     );
-    border-radius: 9px;
-    padding: 1px;
+    border-radius: 0px;
+    padding: 0px;
   }
 
   .gradient-border-shell > .shell-inner {
-    background: rgba(238, 234, 224, 0.05);
+    background: rgba(238, 234, 224, 0.08);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
-    border-radius: 8px;
+    border-radius: 9px;
+    margin: 1px;
   }
 
   .text-display-lg {

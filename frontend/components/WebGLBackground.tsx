@@ -44,10 +44,9 @@ void main() {
   grid *= pulse;
 
   vec3 gridColor = vec3(0.624, 0.847, 0.741);
-  vec3 bgColor = vec3(0.027, 0.043, 0.035);
-  vec3 color = mix(bgColor, gridColor, grid);
+  float alpha = grid * 0.25;
 
-  gl_FragColor = vec4(color, 1.0);
+  gl_FragColor = vec4(gridColor, alpha);
 }
 `;
 
@@ -68,9 +67,13 @@ export default function WebGLBackground() {
     async function init() {
       const THREE = await import("three");
 
-      const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: false,
+      });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setClearColor(0x070b09, 1);
+      renderer.setClearColor(0x070B09, 1);
 
       const w = window.innerWidth;
       const h = window.innerHeight;
@@ -78,8 +81,28 @@ export default function WebGLBackground() {
 
       const scene: THREE.Scene = new THREE.Scene();
 
-      const camera: THREE.OrthographicCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 10);
-      camera.position.z = 1;
+      const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(
+        58, w / h, 0.1, 100
+      );
+      camera.position.set(0, 0, 5);
+      camera.lookAt(0, 0, 0);
+
+      const ambientLight: THREE.AmbientLight = new THREE.AmbientLight(
+        0x404040, 0.5
+      );
+      scene.add(ambientLight);
+
+      const keyLight: THREE.DirectionalLight = new THREE.DirectionalLight(
+        0x9fd8bd, 0.8
+      );
+      keyLight.position.set(5, 5, 5);
+      scene.add(keyLight);
+
+      const rimLight: THREE.DirectionalLight = new THREE.DirectionalLight(
+        0xa3d1df, 0.4
+      );
+      rimLight.position.set(-3, 2, -5);
+      scene.add(rimLight);
 
       const uniforms = {
         uTime: { value: 0 },
@@ -92,10 +115,11 @@ export default function WebGLBackground() {
         fragmentShader,
         uniforms,
         side: THREE.DoubleSide,
+        transparent: true,
         depthWrite: false,
       });
 
-      const geometry: THREE.PlaneGeometry = new THREE.PlaneGeometry(2, 2);
+      const geometry: THREE.PlaneGeometry = new THREE.PlaneGeometry(8, 6);
       const mesh: THREE.Mesh = new THREE.Mesh(geometry, material);
       scene.add(mesh);
 
@@ -113,12 +137,25 @@ export default function WebGLBackground() {
         const ww = window.innerWidth;
         const hh = window.innerHeight;
         renderer.setSize(ww, hh);
+        camera.aspect = ww / hh;
+        camera.updateProjectionMatrix();
       };
       window.addEventListener("resize", handleResize);
 
       function animate(time: number) {
-        uniforms.uTime.value = time * 0.001;
+        const t = time * 0.001;
+        uniforms.uTime.value = t;
         uniforms.uMouse.value.set(mouseX * 0.3, -mouseY * 0.2);
+
+        if (!reduceMotion) {
+          const orbitRadius = 0.3;
+          const orbitSpeed = 0.15;
+          camera.position.x = Math.sin(t * orbitSpeed) * orbitRadius;
+          camera.position.z =
+            5 + Math.cos(t * orbitSpeed) * orbitRadius - orbitRadius;
+          camera.lookAt(0, 0, 0);
+        }
+
         renderer.render(scene, camera);
         animationId = requestAnimationFrame(animate);
       }
