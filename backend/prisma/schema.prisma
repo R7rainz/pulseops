@@ -151,8 +151,12 @@ model ApiKey {
 model WebhookEndpoint {
   id          Int      @id @default(autoincrement())
   workspaceId Int
+  name        String   @default("")
   url         String
+  events      String   @default("[\"incident.opened\",\"incident.resolved\"]")
+  secret      String?
   isActive    Boolean  @default(true)
+  lastTestedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -3,9 +3,12 @@ import { requireAuth } from "../../middleware/auth.middleware";
 import { requireRole } from "../../middleware/rbac.middleware";
 import {
   createWebhookController,
+  updateWebhookController,
   deleteWebhookController,
   getWebhookDeliveryLogsController,
   getWorkspaceWebhooksController,
+  toggleWebhookController,
+  testWebhookController,
 } from "./webhook.controller";
 
 export async function webhookRoutes(app: FastifyInstance) {
@@ -24,10 +27,28 @@ export async function webhookRoutes(app: FastifyInstance) {
     getWorkspaceWebhooksController as any,
   );
 
+  app.patch(
+    "/webhooks/:webhookId",
+    { preHandler: write },
+    updateWebhookController as any,
+  );
+
   app.delete(
     "/webhooks/:webhookId",
     { preHandler: write },
     deleteWebhookController as any,
+  );
+
+  app.post(
+    "/webhooks/:webhookId/toggle",
+    { preHandler: write },
+    toggleWebhookController as any,
+  );
+
+  app.post(
+    "/webhooks/:webhookId/test",
+    { preHandler: write },
+    testWebhookController as any,
   );
 
   app.get(

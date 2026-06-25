@@ -12,11 +12,11 @@ import {
   TerminalSquare,
   Plus,
   UserPlus,
+  Zap,
 } from "lucide-react";
 import { createApiKey, revokeApiKey, updateWorkspaceName } from "./actions";
 import DeleteWorkspaceButton from "./delete-button";
 import CreateApiKeyForm from "./create-apikey-form";
-import WebhookManager from "./webhook-manager";
 
 interface Workspace {
   id: number;
@@ -46,20 +46,14 @@ export default async function WorkspaceSettingsPage({
 
   let workspace: Workspace | null = null;
   let apiKeys: ApiKey[] = [];
-  let webhooks: { id: number; url: string; isActive: boolean }[] = [];
-
   try {
-    const [wsRes, keysRes, hooksRes] = await Promise.all([
+    const [wsRes, keysRes] = await Promise.all([
       apiFetch(
         `${API_URL}/api/v1/workspaces/${workspaceId}`,
         { token, cookieStore, cache: "no-store" },
       ),
       apiFetch(
         `${API_URL}/api/v1/workspaces/${workspaceId}/api-keys`,
-        { token, cookieStore, cache: "no-store" },
-      ),
-      apiFetch(
-        `${API_URL}/api/v1/workspaces/${workspaceId}/webhooks`,
         { token, cookieStore, cache: "no-store" },
       ),
     ]);
@@ -71,10 +65,6 @@ export default async function WorkspaceSettingsPage({
     if (keysRes.ok) {
       const keysData = await keysRes.json();
       apiKeys = keysData.data || [];
-    }
-    if (hooksRes.ok) {
-      const hooksData = await hooksRes.json();
-      webhooks = hooksData.data || [];
     }
 
     if (wsRes.status === 401 || wsRes.status === 403) {
@@ -252,7 +242,27 @@ export default async function WorkspaceSettingsPage({
         )}
 
         {/* Webhooks */}
-        <WebhookManager workspaceId={workspaceId} webhooks={webhooks} canEdit={canEdit} />
+        <Link
+          href={`/workspaces/${workspaceId}/webhooks`}
+          className="flex items-center justify-between p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-colors group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-zinc-900 border-2 border-zinc-800 group-hover:border-cyan-500/50 transition-colors">
+              <Zap className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                Webhook Endpoints
+              </h3>
+              <p className="text-[10px] text-zinc-600 mt-1">
+                Configure broadcast endpoints for incident alerts
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+            Manage &rarr;
+          </span>
+        </Link>
 
         {/* Danger Zone */}
         {isOwner && (

@@ -139,7 +139,7 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
                         isActive={isStatus}
                       />
                       <NavItem
-                        href={`${wsBase}/settings`}
+                        href={`${wsBase}/webhooks`}
                         icon={<Zap className="w-3.5 h-3.5" />}
                         label="Webhooks"
                         isActive={isWebhooks}
