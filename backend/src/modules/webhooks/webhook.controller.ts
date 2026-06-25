@@ -11,8 +11,7 @@ import {
 import { createWebhookSchema, updateWebhookSchema } from "./webhook.schema";
 
 type WsParams = { workspaceId: string };
-type WhParams = { webhookId: string };
-type LogParams = { webhookId: string; skip?: string; take?: string };
+type WhParams = { workspaceId: string; webhookId: string };
 
 export async function createWebhookController(
   request: FastifyRequest<{ Params: WsParams }>,
@@ -120,7 +119,7 @@ export async function testWebhookController(
 }
 
 export async function getWebhookDeliveryLogsController(
-  request: FastifyRequest<{ Params: LogParams }>,
+  request: FastifyRequest<{ Params: WhParams }>,
   response: FastifyReply,
 ) {
   const webhookId = Number(request.params.webhookId);

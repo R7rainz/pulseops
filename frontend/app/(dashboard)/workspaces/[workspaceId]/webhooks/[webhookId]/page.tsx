@@ -47,7 +47,7 @@ export default async function WebhookDeliveryLogsPage({
   try {
     const [logsRes, hooksRes] = await Promise.all([
       apiFetch(
-        `${API_URL}/api/v1/webhooks/${webhookId}/delivery-logs?skip=${skip}&take=${PAGE_SIZE}`,
+        `${API_URL}/api/v1/workspaces/${workspaceId}/webhooks/${webhookId}/delivery-logs?skip=${skip}&take=${PAGE_SIZE}`,
         { token, cookieStore, cache: "no-store" },
       ),
       apiFetch(

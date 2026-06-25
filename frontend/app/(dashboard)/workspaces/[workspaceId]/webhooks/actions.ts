@@ -76,7 +76,7 @@ export async function updateWebhook(formData: FormData) {
   if (eventsRaw.length > 0) body.events = eventsRaw;
 
   try {
-    const res = await fetch(`${API_URL}/api/v1/webhooks/${webhookId}`, {
+    const res = await fetch(`${API_URL}/api/v1/workspaces/${workspaceId}/webhooks/${webhookId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -109,7 +109,7 @@ export async function deleteWebhook(formData: FormData) {
   if (!token) return { error: "Unauthenticated" };
 
   try {
-    const res = await fetch(`${API_URL}/api/v1/webhooks/${webhookId}`, {
+    const res = await fetch(`${API_URL}/api/v1/workspaces/${workspaceId}/webhooks/${webhookId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -138,7 +138,7 @@ export async function toggleWebhook(formData: FormData) {
   if (!token) return { error: "Unauthenticated" };
 
   try {
-    const res = await fetch(`${API_URL}/api/v1/webhooks/${webhookId}/toggle`, {
+    const res = await fetch(`${API_URL}/api/v1/workspaces/${workspaceId}/webhooks/${webhookId}/toggle`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -166,7 +166,7 @@ export async function testWebhook(formData: FormData) {
   if (!token) return { error: "Unauthenticated" };
 
   try {
-    const res = await fetch(`${API_URL}/api/v1/webhooks/${webhookId}/test`, {
+    const res = await fetch(`${API_URL}/api/v1/workspaces/${workspaceId}/webhooks/${webhookId}/test`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
