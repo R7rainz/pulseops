@@ -57,41 +57,41 @@ export default function WebhookManager({
   }
 
   return (
-    <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
+    <div className="p-6 bg-transparent border border-[rgba(238,234,224,0.06)]">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-          <Zap className="w-4 h-4 text-emerald-500" />
+        <h3 className="text-xs font-medium text-[#93A096] flex items-center gap-2">
+          <Zap className="w-4 h-4 text-[#9FD8BD]" />
           Broadcast Endpoints
         </h3>
-        <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">
+        <span className="text-[10px] text-[#93A096] font-medium">
           [{webhooks.length} Active]
         </span>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-950/50 border border-red-900 text-red-400 text-[10px] font-bold uppercase tracking-widest">
+        <div className="mb-4 p-3 bg-[rgba(194,118,107,0.1)] border border-[#C2766B] text-[#C2766B] text-[10px] font-medium">
           {error}
         </div>
       )}
 
       {/* Webhook List */}
       {webhooks.length > 0 ? (
-        <div className="divide-y-2 divide-zinc-900 mb-6 border-2 border-zinc-900 bg-zinc-950/50">
+        <div className="divide-y divide-[rgba(238,234,224,0.08)] mb-6 border border-[rgba(238,234,224,0.08)] bg-transparent">
           {webhooks.map((hook) => (
-            <div key={hook.id} className="flex items-center justify-between p-4 group hover:bg-zinc-900/50 transition-colors">
+            <div key={hook.id} className="flex items-center justify-between p-4 group hover:bg-[rgba(238,234,224,0.04)] transition-colors">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-zinc-200 truncate">
+                <p className="text-sm font-medium text-[#EEEAE0] truncate">
                   {hook.url}
                 </p>
-                <p className="text-[10px] text-zinc-500 mt-1 uppercase tracking-widest">
-                  Status: <span className={hook.isActive ? "text-emerald-400" : "text-zinc-600"}>{hook.isActive ? "LIVE" : "DISABLED"}</span>
+                <p className="text-[10px] text-[#93A096] mt-1">
+                  Status: <span className={hook.isActive ? "text-[#9FD8BD]" : "text-[#93A096]"}>{hook.isActive ? "LIVE" : "DISABLED"}</span>
                 </p>
               </div>
 
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Link
                   href={`/workspaces/${workspaceId}/webhooks/${hook.id}`}
-                  className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"
+                  className="p-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#A3D1DF] hover:border-[#A3D1DF]/40 transition-colors"
                   title="Delivery Logs"
                 >
                   <FileText className="w-4 h-4" />
@@ -99,7 +99,7 @@ export default function WebhookManager({
                 {canEdit && (
                   <button
                     onClick={() => handleDelete(hook.id)}
-                    className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"
+                    className="p-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#C2766B] hover:border-[#C2766B]/40 transition-colors"
                     title="Purge Endpoint"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -110,7 +110,7 @@ export default function WebhookManager({
           ))}
         </div>
       ) : (
-        <p className="text-zinc-600 text-xs uppercase tracking-widest font-bold mb-6 border-2 border-dashed border-zinc-800 p-4 text-center">
+        <p className="text-[#93A096] text-xs font-medium mb-6 border border-dashed border-[rgba(238,234,224,0.06)] p-4 text-center">
           No external delivery endpoints configured.
         </p>
       )}
@@ -119,32 +119,32 @@ export default function WebhookManager({
       {canEdit && !isCreating ? (
         <button
           onClick={() => setIsCreating(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-emerald-400 hover:bg-emerald-500/10 text-xs font-bold uppercase tracking-widest transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#9FD8BD] hover:bg-[rgba(159,216,189,0.1)] text-xs font-medium transition-colors"
         >
           <Plus className="w-4 h-4" /> Add Target URL
         </button>
       ) : null}
       {canEdit && isCreating ? (
-        <form onSubmit={handleCreate} className="space-y-4 border-2 border-emerald-900/30 bg-emerald-950/10 p-4">
+        <form onSubmit={handleCreate} className="space-y-4 border border-[#9FD8BD]/30 bg-[rgba(159,216,189,0.1)] p-4">
           <div className="space-y-2">
-            <label htmlFor="hook-url" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            <label htmlFor="hook-url" className="block text-[10px] font-medium text-[#93A096]">
               Destination URL
             </label>
             <input
               id="hook-url" name="url" type="url" placeholder="https://hooks.slack.com/services/..." required
-              className="w-full bg-zinc-900 border-2 border-zinc-800 px-3 py-2 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors text-sm"
+              className="w-full bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-3 py-2 text-[#EEEAE0] placeholder:text-[rgba(238,234,224,0.2)] focus:outline-none focus:border-[#9FD8BD] transition-colors text-sm"
             />
           </div>
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit" disabled={pending}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest text-xs border-2 border-transparent transition-all disabled:opacity-50"
+              className="px-4 py-2 bg-[#9FD8BD] hover:bg-[#9FD8BD] text-zinc-950 font-medium text-xs rounded-[999px] transition-all disabled:opacity-50"
             >
               {pending ? "Provisioning..." : "Provision Endpoint"}
             </button>
             <button
               type="button" onClick={() => setIsCreating(false)} disabled={pending}
-              className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-400 hover:text-zinc-100 text-xs font-bold uppercase tracking-widest transition-colors"
+              className="px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#EEEAE0] text-xs font-medium transition-colors"
             >
               Cancel
             </button>

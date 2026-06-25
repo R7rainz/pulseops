@@ -35,69 +35,69 @@ export default async function AccountPage() {
   return (
     <div className="p-8 max-w-3xl mx-auto">
       <div className="mb-10">
-        <h1 className="text-2xl font-black uppercase tracking-widest text-zinc-100 flex items-center gap-3">
-          <Terminal className="w-6 h-6 text-emerald-400" />
+        <h1 className="text-2xl font-medium text-[#EEEAE0] flex items-center gap-3">
+          <Terminal className="w-6 h-6 text-[#9FD8BD]" />
           My Account
         </h1>
-        <p className="text-zinc-600 text-xs uppercase tracking-widest font-bold mt-2">
+        <p className="text-[#93A096] text-body-md font-medium mt-2">
           Manage your profile and security settings
         </p>
       </div>
 
       {/* INFO CARD */}
-      <div className="border-2 border-zinc-900 bg-zinc-950 p-6 mb-8">
+      <div className="glass rounded-[9px] p-[18px] mb-8">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 bg-zinc-950 border-2 border-zinc-800 flex items-center justify-center text-cyan-400">
+          <div className="w-14 h-14 bg-[rgba(163,209,223,0.1)] border border-[rgba(163,209,223,0.2)] rounded-[4px] flex items-center justify-center text-[#A3D1DF]">
             <Terminal className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-lg font-bold text-zinc-100 uppercase tracking-widest">
+            <p className="text-lg font-medium text-[#EEEAE0]">
               {user.name || "Operator"}
             </p>
-            <p className="text-xs text-zinc-600 uppercase tracking-widest">
+            <p className="text-body-md text-[#93A096]">
               {user.email}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-zinc-600 uppercase tracking-widest font-bold">
+        <div className="flex items-center gap-2 text-body-md text-[#93A096] font-medium">
           <Calendar className="w-3.5 h-3.5" />
           Member since {memberSince}
         </div>
       </div>
 
       {/* EDIT PROFILE */}
-      <div className="border-2 border-zinc-900 bg-zinc-950 p-6 mb-8">
-        <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-widest mb-6 flex items-center gap-2">
-          <Mail className="w-4 h-4 text-emerald-400" />
+      <div className="glass rounded-[9px] p-[18px] mb-8">
+        <h2 className="text-sm font-medium text-[#EEEAE0] mb-6 flex items-center gap-2">
+          <Mail className="w-4 h-4 text-[#9FD8BD]" />
           Edit Profile
         </h2>
         <form action={updateProfile} className="space-y-5">
           <div>
-            <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
+            <label className="text-label-md text-[#93A096] block mb-1.5">
               Name
             </label>
             <input
               name="name"
               defaultValue={user.name}
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm uppercase tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-[rgba(238,234,224,0.03)] border border-[rgba(238,234,224,0.15)] rounded-[9px] px-[12px] py-[10px] text-sm text-[#EEEAE0] placeholder:text-[#93A096]/40 focus-visible:border-[#9FD8BD] focus-visible:ring-2 focus-visible:ring-[rgba(159,216,189,0.2)] outline-none transition-colors"
               placeholder="Your name"
             />
           </div>
           <div>
-            <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
+            <label className="text-label-md text-[#93A096] block mb-1.5">
               Email
             </label>
             <input
               name="email"
               type="email"
               defaultValue={user.email}
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm uppercase tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full bg-[rgba(238,234,224,0.03)] border border-[rgba(238,234,224,0.15)] rounded-[9px] px-[12px] py-[10px] text-sm text-[#EEEAE0] placeholder:text-[#93A096]/40 focus-visible:border-[#9FD8BD] focus-visible:ring-2 focus-visible:ring-[rgba(159,216,189,0.2)] outline-none transition-colors"
               placeholder="email@example.com"
             />
           </div>
           <button
             type="submit"
-            className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors"
+            className="px-6 py-2.5 bg-[#9FD8BD] hover:bg-[#9FD8BD]/90 text-[#0A0F0C] rounded-[999px] text-label-md font-medium transition-all border-0"
           >
             Save Changes
           </button>
@@ -108,9 +108,9 @@ export default async function AccountPage() {
       <ChangePasswordForm />
 
       {/* SECURITY NOTE */}
-      <div className="border-2 border-zinc-900/50 bg-zinc-950/50 p-4 flex items-start gap-3">
-        <ShieldCheck className="w-4 h-4 text-cyan-400 mt-0.5 shrink-0" />
-        <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold leading-relaxed">
+      <div className="glass rounded-[9px] p-[12px] flex items-start gap-3">
+        <ShieldCheck className="w-4 h-4 text-[#A3D1DF] mt-0.5 shrink-0" />
+        <p className="text-body-md text-[#93A096]/60 font-medium leading-relaxed">
           Your credentials are hashed and stored securely. We never store
           plain-text passwords. Session tokens expire after 15 minutes.
         </p>

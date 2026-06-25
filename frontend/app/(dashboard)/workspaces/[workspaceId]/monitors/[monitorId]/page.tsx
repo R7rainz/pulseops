@@ -113,7 +113,7 @@ export default async function MonitorDiagnosticsPage({
 
   if (!monitor) {
     return (
-      <div className="p-12 text-center text-zinc-500 font-mono text-xs uppercase tracking-widest">
+      <div className="p-12 text-center text-[#93A096] text-xs font-medium">
         Telemetry target not found or access denied.
       </div>
     );
@@ -126,25 +126,25 @@ export default async function MonitorDiagnosticsPage({
   const isSslExpiring = monitor.tlsDaysRemaining !== null && monitor.tlsDaysRemaining <= 7;
 
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
+    <main className="p-8 md:p-12 text-[#EEEAE0] min-h-screen">
       <div className="max-w-5xl mx-auto space-y-8">
 
         {/* Navigation */}
         <Link
           href={`/workspaces/${workspaceId}/monitors`}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-xs font-medium text-[#93A096] hover:text-[#A3D1DF] hover:border-[#A3D1DF] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Return to Matrix
         </Link>
 
         {/* Master Header */}
-        <div className="p-8 border-2 border-zinc-800 bg-zinc-950 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[8px_8px_0px_0px_rgba(34,211,238,0.05)]">
+        <div className="p-8 border border-[rgba(238,234,224,0.06)] bg-transparent flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className={`p-4 border-2 ${
-              isUp ? "bg-emerald-950 border-emerald-500 text-emerald-400" :
-              isDown ? "bg-red-950 border-red-500 text-red-400 animate-pulse" :
-              isDegraded ? "bg-amber-950 border-amber-500 text-amber-400" :
-              "bg-zinc-900 border-zinc-700 text-zinc-500"
+            <div className={`p-4 border ${
+              isUp ? "bg-[rgba(159,216,189,0.1)] border-[#9FD8BD] text-[#9FD8BD]" :
+              isDown ? "bg-[rgba(194,118,107,0.1)] border-[#C2766B] text-[#C2766B] animate-pulse" :
+              isDegraded ? "bg-[rgba(227,163,86,0.1)] border-[#E2A356] text-[#E2A356]" :
+              "bg-[rgba(238,234,224,0.04)] border-[rgba(238,234,224,0.06)] text-[#93A096]"
             }`}>
               {isUp && <Activity className="w-8 h-8" />}
               {isDown && <ServerCrash className="w-8 h-8" />}
@@ -153,20 +153,20 @@ export default async function MonitorDiagnosticsPage({
             </div>
 
             <div>
-              <h1 className="text-2xl font-black uppercase tracking-widest text-zinc-100 flex items-center gap-3">
+              <h1 className="text-2xl font-medium text-[#EEEAE0] flex items-center gap-3">
                 {monitor.name}
               </h1>
-              <p className="text-sm text-zinc-400 mt-1">{monitor.url}</p>
+              <p className="text-sm text-[#93A096] mt-1">{monitor.url}</p>
             </div>
           </div>
 
           <div className="text-right flex flex-col items-end">
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Current State</span>
-            <span className={`px-4 py-1.5 text-xs font-black uppercase tracking-widest border-2 ${
-              isUp ? "border-emerald-500 text-emerald-400" :
-              isDown ? "border-red-500 text-red-400" :
-              isDegraded ? "border-amber-500 text-amber-400" :
-              "border-zinc-700 text-zinc-400"
+            <span className="text-[10px] text-[#93A096] font-medium mb-1">Current State</span>
+            <span className={`px-4 py-1.5 text-xs font-medium border ${
+              isUp ? "border-[#9FD8BD] text-[#9FD8BD]" :
+              isDown ? "border-[#C2766B] text-[#C2766B]" :
+              isDegraded ? "border-[#E2A356] text-[#E2A356]" :
+              "border-[rgba(238,234,224,0.06)] text-[#93A096]"
             }`}>
               {monitor.status}
             </span>
@@ -176,27 +176,27 @@ export default async function MonitorDiagnosticsPage({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
           {/* Core Telemetry Config */}
-          <div className="p-6 border-2 border-zinc-900 bg-zinc-950 space-y-6">
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
-              <TerminalSquare className="w-4 h-4 text-cyan-500" /> Routing Configuration
+          <div className="p-6 border border-[rgba(238,234,224,0.08)] bg-transparent space-y-6">
+            <h2 className="text-sm font-medium text-[#93A096] flex items-center gap-2 border-b border-[rgba(238,234,224,0.08)] pb-2">
+              <TerminalSquare className="w-4 h-4 text-[#A3D1DF]" /> Routing Configuration
             </h2>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Protocol</p>
-                <p className="text-sm text-zinc-200 mt-1">{monitor.method}</p>
+                <p className="text-[10px] text-[#93A096] font-medium">Protocol</p>
+                <p className="text-sm text-[#EEEAE0] mt-1">{monitor.method}</p>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Interval</p>
-                <p className="text-sm text-zinc-200 mt-1">{monitor.intervalSeconds}s</p>
+                <p className="text-[10px] text-[#93A096] font-medium">Interval</p>
+                <p className="text-sm text-[#EEEAE0] mt-1">{monitor.intervalSeconds}s</p>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Threshold Drops</p>
-                <p className="text-sm text-zinc-200 mt-1">{monitor.consecutiveFailures} / {monitor.graceThreshold}</p>
+                <p className="text-[10px] text-[#93A096] font-medium">Threshold Drops</p>
+                <p className="text-sm text-[#EEEAE0] mt-1">{monitor.consecutiveFailures} / {monitor.graceThreshold}</p>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Last Contact</p>
-                <p className="text-sm text-zinc-200 mt-1">
+                <p className="text-[10px] text-[#93A096] font-medium">Last Contact</p>
+                <p className="text-sm text-[#EEEAE0] mt-1">
                   {monitor.lastCheckedAt ? new Date(monitor.lastCheckedAt).toLocaleTimeString() : "Pending..."}
                 </p>
               </div>
@@ -204,26 +204,26 @@ export default async function MonitorDiagnosticsPage({
           </div>
 
           {/* SSL Cryptographic Profile */}
-          <div className={`p-6 border-2 transition-colors ${
-            isSslExpiring ? "border-amber-900/50 bg-amber-950/10" : "border-zinc-900 bg-zinc-950"
+          <div className={`p-6 border transition-colors ${
+            isSslExpiring ? "border-[#E2A356]/50 bg-[rgba(227,163,86,0.1)]" : "border-[rgba(238,234,224,0.08)] bg-transparent"
           } space-y-6`}>
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
-              <Lock className={`w-4 h-4 ${isSslExpiring ? "text-amber-500" : "text-emerald-500"}`} />
+            <h2 className="text-sm font-medium text-[#93A096] flex items-center gap-2 border-b border-[rgba(238,234,224,0.08)] pb-2">
+              <Lock className={`w-4 h-4 ${isSslExpiring ? "text-[#E2A356]" : "text-[#9FD8BD]"}`} />
               Cryptographic Profile
             </h2>
 
             {planTier !== "PRO" && monitor.tlsIssuer ? (
               <div className="py-8 text-center space-y-3">
-                <ShieldAlert className="w-8 h-8 text-amber-500 mx-auto" />
-                <p className="text-xs text-amber-400 font-bold uppercase tracking-widest">
+                <ShieldAlert className="w-8 h-8 text-[#E2A356] mx-auto" />
+                <p className="text-xs text-[#E2A356] font-medium">
                   PRO Tier Required
                 </p>
-                <p className="text-[10px] text-zinc-600">
+                <p className="text-[10px] text-[#93A096]">
                   SSL/TLS Cryptographic telemetry is locked behind the PRO subscription.
                 </p>
                 <Link
                   href={`/workspaces/${workspaceId}/billing`}
-                  className="inline-block mt-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold uppercase tracking-widest text-xs border-2 border-transparent transition-all"
+                  className="inline-block mt-2 px-4 py-2 bg-[#E2A356] hover:bg-[#E2A356] text-zinc-950 font-medium text-xs rounded-[999px] transition-all"
                 >
                   Upgrade to PRO
                 </Link>
@@ -231,21 +231,21 @@ export default async function MonitorDiagnosticsPage({
             ) : monitor.tlsIssuer ? (
               <div className="space-y-4">
                 <div>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Certificate Authority</p>
-                  <p className="text-sm text-zinc-200 mt-1 truncate">{monitor.tlsIssuer}</p>
+                  <p className="text-[10px] text-[#93A096] font-medium">Certificate Authority</p>
+                  <p className="text-sm text-[#EEEAE0] mt-1 truncate">{monitor.tlsIssuer}</p>
                 </div>
 
-                <div className="flex justify-between items-end border-t-2 border-zinc-900 pt-4">
+                <div className="flex justify-between items-end border-t border-[rgba(238,234,224,0.08)] pt-4">
                   <div>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Expiration Epoch</p>
-                    <p className="text-sm text-zinc-200 mt-1">
+                    <p className="text-[10px] text-[#93A096] font-medium">Expiration Epoch</p>
+                    <p className="text-sm text-[#EEEAE0] mt-1">
                       {monitor.tlsValidTo ? new Date(monitor.tlsValidTo).toLocaleDateString() : "Unknown"}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Status</p>
+                    <p className="text-[10px] text-[#93A096] font-medium">Status</p>
                     <div className={`flex items-center gap-2 mt-1 ${
-                      isSslExpiring ? "text-amber-400 font-black" : "text-emerald-400"
+                      isSslExpiring ? "text-[#E2A356] font-medium" : "text-[#9FD8BD]"
                     }`}>
                       {isSslExpiring ? <ShieldAlert className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
                       {monitor.tlsDaysRemaining} Days Left
@@ -254,7 +254,7 @@ export default async function MonitorDiagnosticsPage({
                 </div>
               </div>
             ) : (
-              <div className="py-8 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold">
+              <div className="py-8 text-center text-[#93A096] text-[10px] font-medium">
                 No TLS Certificate Detected. Standard HTTP Routing.
               </div>
             )}
@@ -264,36 +264,36 @@ export default async function MonitorDiagnosticsPage({
 
         {/* SLA & Historical Analytics */}
         {analytics && (
-          <div className="p-6 border-2 border-zinc-900 bg-zinc-950">
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest border-b-2 border-zinc-900 pb-4 mb-6">
+          <div className="p-6 border border-[rgba(238,234,224,0.08)] bg-transparent">
+            <h2 className="text-sm font-medium text-[#93A096] border-b border-[rgba(238,234,224,0.08)] pb-4 mb-6">
               30-Day Service Level Agreement (SLA)
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 divide-x-0 md:divide-x-2 divide-zinc-900">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 divide-x-0 md:divide-x divide-[rgba(238,234,224,0.08)]">
               <div className="flex flex-col md:px-6 first:pl-0">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Rolling Uptime</span>
-                <span className={`text-3xl font-black tracking-widest ${
-                  (analytics.uptime30Day as number) >= 99.9 ? "text-emerald-400" :
-                  (analytics.uptime30Day as number) >= 99.0 ? "text-amber-400" : "text-red-400"
+                <span className="text-[10px] text-[#93A096] font-medium mb-2">Rolling Uptime</span>
+                <span className={`text-3xl font-medium ${
+                  (analytics.uptime30Day as number) >= 99.9 ? "text-[#9FD8BD]" :
+                  (analytics.uptime30Day as number) >= 99.0 ? "text-[#E2A356]" : "text-[#C2766B]"
                 }`}>
                   {analytics.uptime30Day as string}%
                 </span>
               </div>
               <div className="flex flex-col md:px-6">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Total Breaches</span>
-                <span className="text-2xl font-bold text-zinc-200">
-                  {analytics.totalOutages30Day as number} <span className="text-xs text-zinc-600">Events</span>
+                <span className="text-[10px] text-[#93A096] font-medium mb-2">Total Breaches</span>
+                <span className="text-2xl font-medium text-[#EEEAE0]">
+                  {analytics.totalOutages30Day as number} <span className="text-xs text-[#93A096]">Events</span>
                 </span>
               </div>
               <div className="flex flex-col md:px-6">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Total Downtime</span>
-                <span className="text-2xl font-bold text-zinc-200">
-                  {analytics.downtimeMinutes30Day as number} <span className="text-xs text-zinc-600">Mins</span>
+                <span className="text-[10px] text-[#93A096] font-medium mb-2">Total Downtime</span>
+                <span className="text-2xl font-medium text-[#EEEAE0]">
+                  {analytics.downtimeMinutes30Day as number} <span className="text-xs text-[#93A096]">Mins</span>
                 </span>
               </div>
               <div className="flex flex-col md:px-6">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Avg Latency (24h)</span>
-                <span className="text-2xl font-bold text-cyan-400">
-                  {analytics.avgLatency24h as number} <span className="text-xs text-cyan-900">ms</span>
+                <span className="text-[10px] text-[#93A096] font-medium mb-2">Avg Latency (24h)</span>
+                <span className="text-2xl font-medium text-[#A3D1DF]">
+                  {analytics.avgLatency24h as number} <span className="text-xs text-[#A3D1DF]">ms</span>
                 </span>
               </div>
             </div>
@@ -301,9 +301,9 @@ export default async function MonitorDiagnosticsPage({
         )}
 
         {/* Scheduled Maintenance */}
-        <div className="p-6 border-2 border-zinc-900 bg-zinc-950 space-y-6">
-          <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
-            <Wrench className="w-4 h-4 text-amber-500" /> Scheduled Maintenance
+        <div className="p-6 border border-[rgba(238,234,224,0.08)] bg-transparent space-y-6">
+          <h2 className="text-sm font-medium text-[#93A096] flex items-center gap-2 border-b border-[rgba(238,234,224,0.08)] pb-2">
+            <Wrench className="w-4 h-4 text-[#E2A356]" /> Scheduled Maintenance
           </h2>
 
           {canEdit ? (
@@ -313,7 +313,7 @@ export default async function MonitorDiagnosticsPage({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label htmlFor="maintenanceStartAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                  <label htmlFor="maintenanceStartAt" className="block text-[10px] font-medium text-[#93A096]">
                     Start Time
                   </label>
                   <input
@@ -321,11 +321,11 @@ export default async function MonitorDiagnosticsPage({
                     name="maintenanceStartAt"
                     type="datetime-local"
                     defaultValue={monitor.maintenanceStartAt ? new Date(monitor.maintenanceStartAt).toISOString().slice(0, 16) : ""}
-                    className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
+                    className="w-full bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-4 py-3 text-[#EEEAE0] text-sm focus:outline-none focus:border-[#E2A356] transition-colors [color-scheme:dark]"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="maintenanceEndAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+                  <label htmlFor="maintenanceEndAt" className="block text-[10px] font-medium text-[#93A096]">
                     End Time
                   </label>
                   <input
@@ -333,7 +333,7 @@ export default async function MonitorDiagnosticsPage({
                     name="maintenanceEndAt"
                     type="datetime-local"
                     defaultValue={monitor.maintenanceEndAt ? new Date(monitor.maintenanceEndAt).toISOString().slice(0, 16) : ""}
-                    className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
+                    className="w-full bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-4 py-3 text-[#EEEAE0] text-sm focus:outline-none focus:border-[#E2A356] transition-colors [color-scheme:dark]"
                   />
                 </div>
               </div>
@@ -341,7 +341,7 @@ export default async function MonitorDiagnosticsPage({
               <div className="flex items-center gap-3 pt-2">
                 <button
                   type="submit"
-                  className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold uppercase tracking-widest py-2 px-5 border-2 border-transparent transition-all text-xs"
+                  className="bg-[#E2A356] hover:bg-[#E2A356] text-zinc-950 font-medium py-2 px-5 rounded-[999px] transition-all text-xs"
                 >
                   Schedule Maintenance
                 </button>
@@ -350,7 +350,7 @@ export default async function MonitorDiagnosticsPage({
                     type="submit"
                     name="clear"
                     value="true"
-                    className="bg-zinc-900 hover:bg-red-950 text-zinc-400 hover:text-red-400 font-bold uppercase tracking-widest py-2 px-5 border-2 border-zinc-800 hover:border-red-500 transition-all text-xs"
+                    className="bg-[rgba(238,234,224,0.04)] hover:bg-[rgba(194,118,107,0.1)] text-[#93A096] hover:text-[#C2766B] font-medium py-2 px-5 border border-[rgba(238,234,224,0.06)] hover:border-[#C2766B]/40 transition-all text-xs"
                   >
                     Clear
                   </button>
@@ -358,13 +358,13 @@ export default async function MonitorDiagnosticsPage({
               </div>
 
               {monitor.maintenanceStartAt && (
-                <div className="text-[10px] text-zinc-500 font-mono pt-2 border-t-2 border-zinc-900">
+                <div className="text-[10px] text-[#93A096] pt-2 border-t border-[rgba(238,234,224,0.08)]">
                   Current window: {new Date(monitor.maintenanceStartAt).toLocaleString()} — {new Date(monitor.maintenanceEndAt!).toLocaleString()}
                 </div>
               )}
             </form>
           ) : (
-            <div className="py-4 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold border-2 border-dashed border-zinc-800">
+            <div className="py-4 text-center text-[#93A096] text-[10px] font-medium border border-dashed border-[rgba(238,234,224,0.06)]">
               Elevated privileges required to configure maintenance windows.
             </div>
           )}

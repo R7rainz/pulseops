@@ -45,7 +45,7 @@ export default async function PublicStatusPage({
 
   if (!statusData) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500 font-mono text-xs uppercase tracking-widest font-bold">
+      <div className="min-h-screen bg-transparent flex items-center justify-center text-[#93A096] text-body-md font-medium">
         Unable to establish telemetry uplink.
       </div>
     );
@@ -54,14 +54,14 @@ export default async function PublicStatusPage({
   const { workspaceName, systemState, monitors } = statusData;
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-50 font-mono selection:bg-emerald-500/30">
+    <main className="min-h-screen bg-transparent text-[#EEEAE0] selection:bg-[#9FD8BD]/20">
       <div className="max-w-4xl mx-auto px-6 py-16 space-y-12">
 
         {/* BACK LINK */}
         <div>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-4 py-2 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 border border-[rgba(238,234,224,0.1)] text-label-md font-medium text-[#93A096] hover:text-[#9FD8BD] hover:border-[#9FD8BD]/40 transition-colors rounded-[999px]"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Console
@@ -70,66 +70,68 @@ export default async function PublicStatusPage({
 
         {/* PUBLIC HEADER */}
         <div className="text-center space-y-4">
-          <h1 className="text-3xl md:text-5xl font-black tracking-widest uppercase text-zinc-100">
+          <h1 className="text-3xl md:text-5xl font-medium text-[#EEEAE0]">
             {workspaceName}
           </h1>
-          <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold">
+          <p className="text-body-md text-[#93A096]">
             Public Telemetry & System Status
           </p>
         </div>
 
         {/* MASTER STATUS BANNER */}
-        <div className={`p-8 border-2 flex flex-col items-center text-center gap-4 ${
-          systemState === "OPERATIONAL"
-            ? "bg-emerald-950/20 border-emerald-900/50"
-            : systemState === "PARTIAL_OUTAGE"
-              ? "bg-amber-950/20 border-amber-900/50"
-              : "bg-red-950/20 border-red-900/50"
-        }`}>
-          {systemState === "OPERATIONAL" && <ShieldCheck className="w-12 h-12 text-emerald-500" />}
-          {systemState === "PARTIAL_OUTAGE" && <AlertTriangle className="w-12 h-12 text-amber-500 animate-pulse" />}
-          {systemState === "MAJOR_OUTAGE" && <ServerCrash className="w-12 h-12 text-red-500 animate-pulse" />}
+        <div className="gradient-border-shell">
+          <div className={`shell-inner p-[29.6px] flex flex-col items-center text-center gap-4 ${
+            systemState === "OPERATIONAL"
+              ? ""
+              : systemState === "PARTIAL_OUTAGE"
+                ? ""
+                : ""
+          }`}>
+            {systemState === "OPERATIONAL" && <ShieldCheck className="w-12 h-12 text-[#9FD8BD]" />}
+            {systemState === "PARTIAL_OUTAGE" && <AlertTriangle className="w-12 h-12 text-[#E2A356] animate-pulse" />}
+            {systemState === "MAJOR_OUTAGE" && <ServerCrash className="w-12 h-12 text-[#C2766B] animate-pulse" />}
 
-          <div>
-            <h2 className={`text-xl font-black uppercase tracking-widest ${
-              systemState === "OPERATIONAL" ? "text-emerald-400" : systemState === "PARTIAL_OUTAGE" ? "text-amber-400" : "text-red-400"
-            }`}>
-              {systemState === "OPERATIONAL" ? "All Systems Operational" : systemState === "PARTIAL_OUTAGE" ? "Degraded Performance Detected" : "Critical Infrastructure Outage"}
-            </h2>
-            <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold mt-2">
-              Last updated: {new Date().toLocaleTimeString()}
-            </p>
+            <div>
+              <h2 className={`text-xl font-medium ${
+                systemState === "OPERATIONAL" ? "text-[#9FD8BD]" : systemState === "PARTIAL_OUTAGE" ? "text-[#E2A356]" : "text-[#C2766B]"
+              }`}>
+                {systemState === "OPERATIONAL" ? "All Systems Operational" : systemState === "PARTIAL_OUTAGE" ? "Degraded Performance Detected" : "Critical Infrastructure Outage"}
+              </h2>
+              <p className="text-body-md text-[#93A096] mt-2">
+                Last updated: {new Date().toLocaleTimeString()}
+              </p>
+            </div>
           </div>
         </div>
 
         {/* NODE MATRIX */}
         <div className="space-y-4">
-          <h3 className="text-xs font-bold text-zinc-600 uppercase tracking-widest border-b-2 border-zinc-900 pb-2">
+          <h3 className="text-label-md font-medium text-[#93A096] border-b border-[rgba(238,234,224,0.06)] pb-2">
             Infrastructure Nodes
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {monitors.length === 0 ? (
-              <div className="col-span-full p-8 border-2 border-dashed border-zinc-800 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">
+              <div className="col-span-full p-8 border border-dashed border-[rgba(238,234,224,0.1)] text-center text-[#93A096]/60 text-label-md font-medium rounded-[9px]">
                 No public nodes provisioned.
               </div>
             ) : (
               monitors.map((node) => (
-                <div key={node.id} className="p-4 bg-zinc-900/50 border-2 border-zinc-800">
+                <div key={node.id} className="glass rounded-[9px] p-[12px]">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-bold text-zinc-300 uppercase tracking-widest truncate pr-4">
+                    <span className="text-sm font-medium text-[#EEEAE0] truncate pr-4">
                       {node.name}
                     </span>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${
-                        node.status === "UP" ? "text-emerald-500" : node.status === "DOWN" ? "text-red-500" : "text-zinc-500"
+                      <span className={`text-[10px] font-medium ${
+                        node.status === "UP" ? "text-[#9FD8BD]" : node.status === "DOWN" ? "text-[#C2766B]" : "text-[#93A096]"
                       }`}>
                         {node.status}
                       </span>
-                      {node.status === "UP" && <Activity className="w-4 h-4 text-emerald-500" />}
-                      {node.status === "DOWN" && <ServerCrash className="w-4 h-4 text-red-500" />}
-                      {node.status === "PAUSED" && <PauseCircle className="w-4 h-4 text-zinc-600" />}
+                      {node.status === "UP" && <Activity className="w-4 h-4 text-[#9FD8BD]" />}
+                      {node.status === "DOWN" && <ServerCrash className="w-4 h-4 text-[#C2766B]" />}
+                      {node.status === "PAUSED" && <PauseCircle className="w-4 h-4 text-[#93A096]" />}
                     </div>
                   </div>
 
@@ -145,10 +147,10 @@ export default async function PublicStatusPage({
                             height: `${barHeight}px`,
                             backgroundColor:
                               ratio >= 0.98
-                                ? "rgb(52 211 153)"
+                                ? "#9FD8BD"
                                 : ratio >= 0.9
-                                  ? "rgb(251 191 36)"
-                                  : "rgb(239 68 68)",
+                                  ? "#E2A356"
+                                  : "#C2766B",
                             opacity: ratio > 0 ? 1 : 0.15,
                           }}
                           title={`Day ${i + 1}: ${Math.round(ratio * 100)}% uptime`}
@@ -163,8 +165,8 @@ export default async function PublicStatusPage({
         </div>
 
         {/* FOOTER */}
-        <div className="text-center pt-12 border-t-2 border-zinc-900">
-          <a href="/" className="text-[10px] text-zinc-600 hover:text-zinc-400 uppercase tracking-widest font-bold transition-colors">
+        <div className="text-center pt-12 border-t border-[rgba(238,234,224,0.06)]">
+          <a href="/" className="text-label-md text-[#93A096]/60 hover:text-[#93A096] font-medium transition-colors">
             Powered by PulseOps Telemetry
           </a>
         </div>

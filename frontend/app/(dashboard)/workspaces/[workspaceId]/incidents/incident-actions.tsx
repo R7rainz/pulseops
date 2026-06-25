@@ -28,18 +28,18 @@ function ToastMsg({
 
   return (
     <div
-      className={`fixed top-4 right-4 z-[100] flex items-center gap-3 border-2 px-5 py-3.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] max-w-sm ${
+      className={`fixed top-4 right-4 z-[100] flex items-center gap-3 border px-5 py-3.5 max-w-sm ${
         type === "success"
-          ? "bg-zinc-950 border-emerald-500/50"
-          : "bg-zinc-950 border-red-500/50"
+          ? "bg-transparent border-[#9FD8BD]/50"
+          : "bg-transparent border-[#C2766B]/50"
       }`}
     >
       {type === "success" ? (
-        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <CheckCircle2 className="w-4 h-4 text-[#9FD8BD]" />
       ) : (
-        <AlertCircle className="w-4 h-4 text-red-400" />
+        <AlertCircle className="w-4 h-4 text-[#C2766B]" />
       )}
-      <p className="text-sm text-zinc-200 font-mono flex-1">{message}</p>
+      <p className="text-sm text-[#EEEAE0] flex-1">{message}</p>
     </div>
   );
 }
@@ -108,21 +108,21 @@ export function IncidentActions({
             <button
               type="button"
               onClick={() => callAction("acknowledge")}
-              className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-800 hover:border-amber-500 text-zinc-400 hover:text-amber-400 text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
+              className="px-4 py-2 bg-[rgba(238,234,224,0.04)] hover:bg-[rgba(238,234,224,0.06)] border border-[rgba(238,234,224,0.06)] hover:border-[#E2A356] text-[#93A096] hover:text-[#E2A356] text-xs font-medium transition-colors rounded-[4px]"
             >
-              ACKNOWLEDGE
+              Acknowledge
             </button>
           )}
           <button
             type="button"
             onClick={() => callAction("resolve")}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 border-2 border-transparent text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
+            className="px-4 py-2 bg-[#9FD8BD] hover:bg-[#9FD8BD] text-zinc-950 text-xs font-medium transition-colors rounded-[999px]"
           >
-            MARK RESOLVED
+            Mark Resolved
           </button>
         </div>
       ) : (
-        <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold border-2 border-zinc-800 px-3 py-2">
+        <span className="text-[10px] text-[#93A096] font-medium border border-[rgba(238,234,224,0.06)] px-3 py-2">
           Read-Only Access
         </span>
       )}

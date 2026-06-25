@@ -97,15 +97,15 @@ export default async function IncidentDetailPage({
 
   if (!incident) {
     return (
-      <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
+      <main className="p-8 md:p-12 text-[#EEEAE0] min-h-screen">
         <div className="max-w-4xl mx-auto text-center space-y-4">
-          <XCircle className="w-12 h-12 text-red-500 mx-auto" />
-          <h1 className="text-2xl font-extrabold tracking-widest uppercase text-zinc-400">
+          <XCircle className="w-12 h-12 text-[#C2766B] mx-auto" />
+          <h1 className="text-2xl font-medium text-[#93A096]">
             Incident Not Found
           </h1>
           <Link
             href={`/workspaces/${workspaceId}/incidents`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-xs font-medium text-[#93A096] hover:text-[#9FD8BD] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Return to Incident Log
@@ -135,52 +135,52 @@ export default async function IncidentDetailPage({
 
   const StatusBadge = ({ status }: { status: string }) => {
     const styles: Record<string, string> = {
-      OPEN: "bg-red-950 text-red-400 border-red-800 animate-pulse",
-      ACKNOWLEDGED: "bg-amber-950 text-amber-400 border-amber-800",
-      RESOLVED: "bg-emerald-950 text-emerald-400 border-emerald-800",
+      OPEN: "bg-[rgba(194,118,107,0.1)] text-[#C2766B] border-[#C2766B]/50 animate-pulse",
+      ACKNOWLEDGED: "bg-[rgba(227,163,86,0.1)] text-[#E2A356] border-[#E2A356]/50",
+      RESOLVED: "bg-[rgba(159,216,189,0.1)] text-[#9FD8BD] border-[#9FD8BD]/50",
     };
     return (
-      <span className={`px-2 py-0.5 text-[9px] font-bold border uppercase tracking-widest ${styles[status] || styles.OPEN}`}>
+      <span className={`px-2 py-0.5 text-[9px] font-medium border ${styles[status] || styles.OPEN}`}>
         {status}
       </span>
     );
   };
 
   const CheckIcon = ({ status }: { status: string }) => {
-    if (status === "UP") return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
-    if (status === "DOWN") return <XCircle className="w-4 h-4 text-red-400" />;
-    return <Activity className="w-4 h-4 text-amber-400" />;
+    if (status === "UP") return <CheckCircle2 className="w-4 h-4 text-[#9FD8BD]" />;
+    if (status === "DOWN") return <XCircle className="w-4 h-4 text-[#C2766B]" />;
+    return <Activity className="w-4 h-4 text-[#E2A356]" />;
   };
 
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
+    <main className="p-8 md:p-12 text-[#EEEAE0] min-h-screen">
       <div className="max-w-7xl mx-auto space-y-10">
 
         {/* BACK LINK */}
         <Link
           href={`/workspaces/${workspaceId}/incidents`}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-xs font-medium text-[#93A096] hover:text-[#9FD8BD] hover:border-[#9FD8BD] transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back to Incident Log
         </Link>
 
         {/* HEADER */}
-        <div className="border-b-2 border-zinc-900 pb-6">
+        <div className="border-b border-[rgba(238,234,224,0.08)] pb-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <AlertOctagon className={`w-8 h-8 ${isResolved ? "text-zinc-500" : "text-red-500"}`} />
-                <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100">
-                  Incident <span className={isResolved ? "text-zinc-400" : "text-red-500"}>Report</span>
+                <AlertOctagon className={`w-8 h-8 ${isResolved ? "text-[#93A096]" : "text-[#C2766B]"}`} />
+                <h1 className="text-3xl font-medium text-[#EEEAE0]">
+                  Incident <span className={isResolved ? "text-[#93A096]" : "text-[#C2766B]"}>Report</span>
                 </h1>
               </div>
-              <p className="text-lg font-bold text-zinc-200 uppercase tracking-widest">
+              <p className="text-lg font-medium text-[#EEEAE0]">
                 {incident.title}
               </p>
               <div className="flex items-center gap-3">
                 <StatusBadge status={incident.status} />
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                <span className="text-[10px] text-[#93A096] font-medium flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   Duration: {duration}
                 </span>
@@ -202,9 +202,9 @@ export default async function IncidentDetailPage({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* TIMELINE */}
-          <div className="lg:col-span-2 p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-cyan-400" />
+          <div className="lg:col-span-2 p-6 bg-transparent border border-[rgba(238,234,224,0.06)]">
+            <h3 className="text-xs font-medium text-[#93A096] mb-6 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-[#A3D1DF]" />
               Event Timeline
             </h3>
 
@@ -212,13 +212,13 @@ export default async function IncidentDetailPage({
               {/* TRIAGED */}
               <div className="flex gap-4 pb-8 relative">
                 <div className="flex flex-col items-center">
-                  <div className="w-5 h-5 rounded-full bg-red-500 border-2 border-red-400 z-10" />
-                  <div className="w-0.5 flex-1 bg-zinc-800 mt-1" />
+                  <div className="w-5 h-5 rounded-full bg-[#C2766B] border-2 border-[#C2766B] z-10" />
+                  <div className="w-0.5 flex-1 bg-[rgba(238,234,224,0.06)] mt-1" />
                 </div>
                 <div className="pt-0.5">
-                  <p className="text-sm font-bold text-red-400 uppercase tracking-widest">Breach Triaged</p>
-                  <p className="text-xs text-zinc-500 mt-1">{new Date(incident.startedAt).toLocaleString()}</p>
-                  <p className="text-[10px] text-zinc-600 mt-0.5">Monitor auto-detected failure threshold breached</p>
+                  <p className="text-sm font-medium text-[#C2766B]">Breach Triaged</p>
+                  <p className="text-xs text-[#93A096] mt-1">{new Date(incident.startedAt).toLocaleString()}</p>
+                  <p className="text-[10px] text-[#93A096] mt-0.5">Monitor auto-detected failure threshold breached</p>
                 </div>
               </div>
 
@@ -227,23 +227,23 @@ export default async function IncidentDetailPage({
                 <div className="flex flex-col items-center">
                   <div className={`w-5 h-5 rounded-full border-2 z-10 ${
                     incident.status === "OPEN"
-                      ? "bg-zinc-800 border-zinc-700"
-                      : "bg-amber-500 border-amber-400"
+                      ? "bg-[rgba(238,234,224,0.04)] border-[rgba(238,234,224,0.06)]"
+                      : "bg-[#E2A356] border-[#E2A356]"
                   }`} />
-                  {incident.status !== "RESOLVED" && <div className="w-0.5 flex-1 bg-zinc-800 mt-1" />}
+                  {incident.status !== "RESOLVED" && <div className="w-0.5 flex-1 bg-[rgba(238,234,224,0.06)] mt-1" />}
                 </div>
                 <div className="pt-0.5">
-                  <p className={`text-sm font-bold uppercase tracking-widest ${
-                    incident.status === "OPEN" ? "text-zinc-600" : "text-amber-400"
+                  <p className={`text-sm font-medium ${
+                    incident.status === "OPEN" ? "text-[#93A096]" : "text-[#E2A356]"
                   }`}>
                     Acknowledged
                   </p>
                   {incident.status === "OPEN" ? (
-                    <p className="text-xs text-zinc-700 mt-1">Awaiting operator acknowledgment</p>
+                    <p className="text-xs text-[#93A096] mt-1">Awaiting operator acknowledgment</p>
                   ) : (
                     <>
-                      <p className="text-xs text-zinc-500 mt-1">{new Date(incident.startedAt).toLocaleString()}</p>
-                      <p className="text-[10px] text-zinc-600 mt-0.5">Operator acknowledged the breach</p>
+                      <p className="text-xs text-[#93A096] mt-1">{new Date(incident.startedAt).toLocaleString()}</p>
+                      <p className="text-[10px] text-[#93A096] mt-0.5">Operator acknowledged the breach</p>
                     </>
                   )}
                 </div>
@@ -254,23 +254,23 @@ export default async function IncidentDetailPage({
                 <div className="flex flex-col items-center">
                   <div className={`w-5 h-5 rounded-full border-2 z-10 ${
                     isResolved
-                      ? "bg-emerald-500 border-emerald-400"
-                      : "bg-zinc-800 border-zinc-700"
+                      ? "bg-[#9FD8BD] border-[#9FD8BD]"
+                      : "bg-[rgba(238,234,224,0.04)] border-[rgba(238,234,224,0.06)]"
                   }`} />
                 </div>
                 <div className="pt-0.5">
-                  <p className={`text-sm font-bold uppercase tracking-widest ${
-                    isResolved ? "text-emerald-400" : "text-zinc-600"
+                  <p className={`text-sm font-medium ${
+                    isResolved ? "text-[#9FD8BD]" : "text-[#93A096]"
                   }`}>
                     Resolved
                   </p>
                   {isResolved && incident.resolvedAt ? (
                     <>
-                      <p className="text-xs text-zinc-500 mt-1">{new Date(incident.resolvedAt).toLocaleString()}</p>
-                      <p className="text-[10px] text-zinc-600 mt-0.5">Services restored to normal operation</p>
+                      <p className="text-xs text-[#93A096] mt-1">{new Date(incident.resolvedAt).toLocaleString()}</p>
+                      <p className="text-[10px] text-[#93A096] mt-0.5">Services restored to normal operation</p>
                     </>
                   ) : (
-                    <p className="text-xs text-zinc-700 mt-1">Pending resolution</p>
+                    <p className="text-xs text-[#93A096] mt-1">Pending resolution</p>
                   )}
                 </div>
               </div>
@@ -278,51 +278,51 @@ export default async function IncidentDetailPage({
           </div>
 
           {/* MONITOR CONTEXT CARD */}
-          <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)] space-y-4">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Radio className="w-4 h-4 text-emerald-500" />
+          <div className="p-6 bg-transparent border border-[rgba(238,234,224,0.06)] space-y-4">
+            <h3 className="text-xs font-medium text-[#93A096] flex items-center gap-2">
+              <Radio className="w-4 h-4 text-[#9FD8BD]" />
               Monitor Context
             </h3>
 
             <div className="space-y-4">
               <div>
-                <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Target</p>
+                <p className="text-[10px] text-[#93A096] font-medium">Target</p>
                 <Link
                   href={`/workspaces/${workspaceId}/monitors/${incident.monitor.id}`}
-                  className="text-sm font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-wider truncate block mt-1"
+                  className="text-sm font-medium text-[#A3D1DF] hover:text-[#A3D1DF] truncate block mt-1"
                 >
                   {incident.monitor.name}
                 </Link>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Endpoint</p>
-                <p className="text-xs text-zinc-300 mt-1 truncate font-mono">{incident.monitor.url}</p>
+                <p className="text-[10px] text-[#93A096] font-medium">Endpoint</p>
+                <p className="text-xs text-[#EEEAE0] mt-1 truncate">{incident.monitor.url}</p>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Current Status</p>
-                <span className={`inline-flex items-center gap-1.5 mt-1 px-2 py-1 text-[10px] font-bold border uppercase tracking-widest ${
+                <p className="text-[10px] text-[#93A096] font-medium">Current Status</p>
+                <span className={`inline-flex items-center gap-1.5 mt-1 px-2 py-1 text-[10px] font-medium border ${
                   incident.monitor.status === "UP"
-                    ? "text-emerald-400 border-emerald-800 bg-emerald-950/20"
+                    ? "text-[#9FD8BD] border-[#9FD8BD]/50 bg-[rgba(159,216,189,0.1)]"
                     : incident.monitor.status === "DOWN"
-                    ? "text-red-400 border-red-800 bg-red-950/20"
-                    : "text-amber-400 border-amber-800 bg-amber-950/20"
+                    ? "text-[#C2766B] border-[#C2766B]/50 bg-[rgba(194,118,107,0.1)]"
+                    : "text-[#E2A356] border-[#E2A356]/50 bg-[rgba(227,163,86,0.1)]"
                 }`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${
-                    incident.monitor.status === "UP" ? "bg-emerald-400" :
-                    incident.monitor.status === "DOWN" ? "bg-red-400" : "bg-amber-400"
+                    incident.monitor.status === "UP" ? "bg-[#9FD8BD]" :
+                    incident.monitor.status === "DOWN" ? "bg-[#C2766B]" : "bg-[#E2A356]"
                   }`} />
                   {incident.monitor.status}
                 </span>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Incident ID</p>
-                <p className="text-xs text-zinc-500 mt-1 font-mono">#{incident.id}</p>
+                <p className="text-[10px] text-[#93A096] font-medium">Incident ID</p>
+                <p className="text-xs text-[#93A096] mt-1">#{incident.id}</p>
               </div>
             </div>
 
             <Link
               href={`/workspaces/${workspaceId}/monitors/${incident.monitor.id}`}
-              className="flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
+              className="flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-xs font-medium text-[#93A096] hover:text-[#9FD8BD] hover:border-[#9FD8BD] transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
               View Monitor Diagnostics
@@ -332,18 +332,18 @@ export default async function IncidentDetailPage({
 
         {/* RECENT CHECKS DURING INCIDENT */}
         <div className="space-y-4">
-          <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-            <Activity className="w-4 h-4 text-zinc-500" />
+          <h2 className="text-xs font-medium text-[#93A096] flex items-center gap-2">
+            <Activity className="w-4 h-4 text-[#93A096]" />
             Recent Probe Results
           </h2>
 
           {checks.length === 0 ? (
-            <div className="p-8 border-2 border-dashed border-zinc-800 bg-zinc-950 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">
+            <div className="p-8 border border-dashed border-[rgba(238,234,224,0.06)] bg-transparent text-center text-[#93A096] text-xs font-medium">
               No probe data available for this period.
             </div>
           ) : (
-            <div className="border-2 border-zinc-800 bg-zinc-950 overflow-x-auto">
-              <div className="min-w-[600px] grid grid-cols-12 gap-4 px-6 py-4 border-b-2 border-zinc-800 bg-zinc-900 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+            <div className="border border-[rgba(238,234,224,0.06)] bg-transparent overflow-x-auto">
+              <div className="min-w-[600px] grid grid-cols-12 gap-4 px-6 py-4 border-b border-[rgba(238,234,224,0.06)] bg-[rgba(238,234,224,0.04)] text-[10px] font-medium text-[#93A096]">
                 <div className="col-span-1">Status</div>
                 <div className="col-span-3">Timestamp</div>
                 <div className="col-span-2">Code</div>
@@ -351,7 +351,7 @@ export default async function IncidentDetailPage({
                 <div className="col-span-4">Message</div>
               </div>
 
-              <div className="min-w-[600px] divide-y-2 divide-zinc-900">
+              <div className="min-w-[600px] divide-y divide-[rgba(238,234,224,0.08)]">
                 {checks.map((check) => {
                   const checkedAt = new Date(check.checkedAt).getTime();
                   const startedAt = new Date(incident.startedAt).getTime();
@@ -365,30 +365,30 @@ export default async function IncidentDetailPage({
                       key={check.id}
                       className={`grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors ${
                         duringIncident
-                          ? "bg-red-950/10 hover:bg-red-950/20"
-                          : "hover:bg-zinc-900/50"
+                          ? "bg-[rgba(194,118,107,0.1)] hover:bg-[rgba(194,118,107,0.1)]"
+                          : "hover:bg-[rgba(238,234,224,0.04)]"
                       }`}
                     >
                       <div className="col-span-1">
                         <CheckIcon status={check.status} />
                       </div>
-                      <div className="col-span-3 text-xs text-zinc-400 font-bold">
+                      <div className="col-span-3 text-xs text-[#93A096] font-medium">
                         {new Date(check.checkedAt).toLocaleString()}
                       </div>
                       <div className="col-span-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 border ${
+                        <span className={`text-[10px] font-medium px-2 py-0.5 border ${
                           check.status === "UP"
-                            ? "text-emerald-400 border-emerald-800 bg-emerald-950/20"
-                            : "text-red-400 border-red-800 bg-red-950/20"
+                            ? "text-[#9FD8BD] border-[#9FD8BD]/50 bg-[rgba(159,216,189,0.1)]"
+                            : "text-[#C2766B] border-[#C2766B]/50 bg-[rgba(194,118,107,0.1)]"
                         }`}>
                           {check.statusCode ?? "N/A"}
                         </span>
                       </div>
-                      <div className="col-span-2 text-xs text-zinc-500 font-bold">
-                        {check.responseTimeMs != null ? `${check.responseTimeMs}ms` : "—"}
+                      <div className="col-span-2 text-xs text-[#93A096] font-medium">
+                        {check.responseTimeMs != null ? `${check.responseTimeMs}ms` : "\u2014"}
                       </div>
-                      <div className="col-span-4 text-xs text-zinc-500 truncate">
-                        {check.errorMessage || "—"}
+                      <div className="col-span-4 text-xs text-[#93A096] truncate">
+                        {check.errorMessage || "\u2014"}
                       </div>
                     </div>
                   );
