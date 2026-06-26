@@ -288,4 +288,3 @@ Reconstruct the Three.js layer as a full-bleed background field with layered spa
       renderer.setClearColor(0x070B09, 1);
       …
       ```
-
