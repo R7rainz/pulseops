@@ -44,10 +44,10 @@ export function WebhookActions({
     <>
       <button
         onClick={handleToggle}
-        className={`p-2 border transition-colors ${
+        className={`p-2 border-2 transition-colors ${
           isActive
-            ? "bg-transparent border-[rgba(238,234,224,0.06)] text-[#9FD8BD] hover:border-[rgba(238,234,224,0.1)]"
-            : "bg-transparent border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#9FD8BD] hover:border-[#9FD8BD]/40"
+            ? "bg-zinc-950 border-zinc-800 text-emerald-500 hover:border-zinc-600"
+            : "bg-zinc-950 border-zinc-800 text-zinc-600 hover:text-emerald-400 hover:border-emerald-500"
         }`}
         title={isActive ? "Disable" : "Enable"}
       >
@@ -56,7 +56,7 @@ export function WebhookActions({
 
       <button
         onClick={handleTest}
-        className="p-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#E2A356] hover:border-[#E2A356]/40 transition-colors"
+        className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-amber-400 hover:border-amber-500 transition-colors"
         title="Send Test Ping"
       >
         <Play className="w-4 h-4" />
@@ -64,7 +64,7 @@ export function WebhookActions({
 
       <button
         onClick={handleDelete}
-        className="p-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#C2766B] hover:border-[#C2766B]/40 transition-colors"
+        className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"
         title="Delete Webhook"
       >
         <Trash2 className="w-4 h-4" />

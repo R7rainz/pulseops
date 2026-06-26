@@ -45,20 +45,20 @@ export default function Toast() {
 
   const icon =
     toast.type === "success" ? (
-      <CheckCircle2 className="w-4 h-4 text-[#9FD8BD]" />
+      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
     ) : toast.type === "error" ? (
-      <AlertCircle className="w-4 h-4 text-[#C2766B]" />
+      <AlertCircle className="w-4 h-4 text-red-400" />
     ) : (
-      <Info className="w-4 h-4 text-[#A3D1DF]" />
+      <Info className="w-4 h-4 text-cyan-400" />
     );
 
   return (
-    <div className={`fixed top-4 right-4 z-[100] flex items-start gap-3 glass rounded-[9px] px-5 py-3.5 max-w-sm transition-all duration-[300ms] ${leaving ? "opacity-0 translate-y-[-8px]" : "opacity-100 translate-y-0"}`}>
+    <div className="fixed top-4 right-4 z-[100] flex items-start gap-3 bg-zinc-950 border-2 border-zinc-800 px-5 py-3.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] max-w-sm">
       {icon}
-      <p className="text-sm text-[#EEEAE0] flex-1">{toast.message}</p>
+      <p className="text-sm text-zinc-200 font-mono flex-1">{toast.message}</p>
       <button
         onClick={dismiss}
-        className="p-0.5 text-[#93A096] hover:text-[#EEEAE0] transition-colors"
+        className="p-0.5 text-zinc-500 hover:text-zinc-300 transition-colors"
       >
         <X className="w-3.5 h-3.5" />
       </button>

@@ -24,26 +24,26 @@ export default function ChangePasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   return (
-    <div className="glass rounded-[9px] p-[18px] mb-8">
-      <h2 className="text-sm font-medium text-[#EEEAE0] mb-6 flex items-center gap-2">
-        <Key className="w-4 h-4 text-[#E2A356]" />
+    <div className="border-2 border-zinc-900 bg-zinc-950 p-6 mb-8">
+      <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-widest mb-6 flex items-center gap-2">
+        <Key className="w-4 h-4 text-amber-400" />
         Change Password
       </h2>
       <form action={formAction} className="space-y-5">
         {state?.error && (
-          <div className="p-4 bg-[rgba(194,118,107,0.1)] border border-[rgba(194,118,107,0.3)] rounded-[4px] flex items-start gap-3 text-sm text-[#C2766B]">
+          <div className="p-4 bg-red-950/30 border-2 border-red-500/50 flex items-start gap-3 text-sm text-red-400">
             <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <p>{state.error}</p>
           </div>
         )}
         {state?.success && (
-          <div className="p-4 bg-[rgba(159,216,189,0.1)] border border-[rgba(159,216,189,0.3)] rounded-[4px] flex items-start gap-3 text-sm text-[#9FD8BD]">
+          <div className="p-4 bg-emerald-950/30 border-2 border-emerald-500/50 flex items-start gap-3 text-sm text-emerald-400">
             <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <p>{state.success}</p>
           </div>
         )}
         <div>
-          <label className="text-label-md text-[#93A096] block mb-1.5">
+          <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
             Current Password
           </label>
           <div className="relative">
@@ -51,14 +51,14 @@ export default function ChangePasswordForm() {
               name="currentPassword"
               type={showCurrent ? "text" : "password"}
               autoComplete="off"
-              className="w-full bg-[rgba(238,234,224,0.03)] border border-[rgba(238,234,224,0.15)] rounded-[9px] px-[12px] py-[10px] pr-12 text-sm text-[#EEEAE0] placeholder:text-[#93A096]/40 focus-visible:border-[#9FD8BD] focus-visible:ring-2 focus-visible:ring-[rgba(159,216,189,0.2)] outline-none transition-colors"
+              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors pr-10"
               placeholder="Current password"
               required
             />
             <button
               type="button"
               onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#93A096] hover:text-[#EEEAE0] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-600 hover:text-zinc-300 transition-colors"
               tabIndex={-1}
             >
               {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -66,7 +66,7 @@ export default function ChangePasswordForm() {
           </div>
         </div>
         <div>
-          <label className="text-label-md text-[#93A096] block mb-1.5">
+          <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
             New Password
           </label>
           <div className="relative">
@@ -75,14 +75,14 @@ export default function ChangePasswordForm() {
               type={showNew ? "text" : "password"}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full bg-[rgba(238,234,224,0.03)] border border-[rgba(238,234,224,0.15)] rounded-[9px] px-[12px] py-[10px] pr-12 text-sm text-[#EEEAE0] placeholder:text-[#93A096]/40 focus-visible:border-[#9FD8BD] focus-visible:ring-2 focus-visible:ring-[rgba(159,216,189,0.2)] outline-none transition-colors"
+              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors pr-10"
               placeholder="New password"
               required
             />
             <button
               type="button"
               onClick={() => setShowNew(!showNew)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#93A096] hover:text-[#EEEAE0] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-600 hover:text-zinc-300 transition-colors"
               tabIndex={-1}
             >
               {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -95,8 +95,8 @@ export default function ChangePasswordForm() {
                 return (
                   <li
                     key={rule.label}
-                    className={`flex items-center gap-2 text-body-md font-medium ${
-                      ok ? "text-[#9FD8BD]" : "text-[#93A096]"
+                    className={`flex items-center gap-2 text-[11px] font-bold tracking-wider ${
+                      ok ? "text-emerald-400" : "text-zinc-600"
                     }`}
                   >
                     {ok ? <Check className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
@@ -108,7 +108,7 @@ export default function ChangePasswordForm() {
           )}
         </div>
         <div>
-          <label className="text-label-md text-[#93A096] block mb-1.5">
+          <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
             Confirm New Password
           </label>
           <div className="relative">
@@ -117,21 +117,21 @@ export default function ChangePasswordForm() {
               type={showConfirm ? "text" : "password"}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full bg-[rgba(238,234,224,0.03)] border border-[rgba(238,234,224,0.15)] rounded-[9px] px-[12px] py-[10px] pr-12 text-sm text-[#EEEAE0] placeholder:text-[#93A096]/40 focus-visible:border-[#9FD8BD] focus-visible:ring-2 focus-visible:ring-[rgba(159,216,189,0.2)] outline-none transition-colors"
+              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors pr-10"
               placeholder="Confirm new password"
               required
             />
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#93A096] hover:text-[#EEEAE0] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-600 hover:text-zinc-300 transition-colors"
               tabIndex={-1}
             >
               {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
           {confirmPassword && newPassword !== confirmPassword && (
-            <p className="mt-1.5 text-body-md text-[#C2766B] font-medium flex items-center gap-1.5">
+            <p className="mt-1.5 text-[11px] text-red-400 font-bold tracking-wider flex items-center gap-1.5">
               <XCircle className="w-3 h-3" />
               Passwords do not match
             </p>
@@ -140,7 +140,7 @@ export default function ChangePasswordForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="px-6 py-2.5 bg-[#E2A356] hover:bg-[#E2A356]/90 text-[#0A0F0C] rounded-[999px] text-label-md font-medium border-0 transition-all disabled:opacity-50"
+          className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
         >
           {isPending ? "Updating..." : "Update Password"}
         </button>

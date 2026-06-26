@@ -63,28 +63,28 @@ export default function MonitorCheckLog({ workspaceId, monitorId, token }: Props
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   return (
-    <div className="glass rounded-[9px] p-[12px] space-y-4">
-      <h2 className="text-sm font-medium text-[#93A096] flex items-center gap-2 border-b border-[rgba(238,234,224,0.06)] pb-2">
+    <div className="p-6 border-2 border-zinc-900 bg-zinc-950 space-y-4">
+      <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
         Probe Log
         {!loading && (
-          <span className="text-body-md text-[#93A096]/60 font-normal ml-auto">{total} entries</span>
+          <span className="text-[10px] text-zinc-600 font-normal ml-auto">{total} entries</span>
         )}
       </h2>
 
       {error && (
-        <div className="py-4 text-center text-[#C2766B] text-body-md font-medium">
+        <div className="py-4 text-center text-red-400 text-[10px] uppercase tracking-widest font-bold">
           {error}
         </div>
       )}
 
       {loading && !error && (
-        <div className="py-8 text-center text-[#93A096]/60 text-body-md font-medium">
+        <div className="py-8 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold">
           Loading probe data...
         </div>
       )}
 
       {!loading && !error && checks.length === 0 && (
-        <div className="py-8 text-center text-[#93A096]/60 text-body-md font-medium">
+        <div className="py-8 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold">
           No probe data recorded yet.
         </div>
       )}
@@ -92,38 +92,38 @@ export default function MonitorCheckLog({ workspaceId, monitorId, token }: Props
       {checks.length > 0 && (
         <>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full text-xs font-mono">
               <thead>
-                <tr className="border-b border-[rgba(238,234,224,0.06)] text-[#93A096] text-body-md">
-                  <th className="text-left py-2 pr-4 font-medium">Time</th>
-                  <th className="text-left py-2 pr-4 font-medium">Status</th>
-                  <th className="text-left py-2 pr-4 font-medium">Code</th>
-                  <th className="text-left py-2 pr-4 font-medium">Latency</th>
-                  <th className="text-left py-2 font-medium">Error</th>
+                <tr className="border-b-2 border-zinc-900 text-zinc-500 uppercase tracking-widest text-[10px]">
+                  <th className="text-left py-2 pr-4 font-bold">Time</th>
+                  <th className="text-left py-2 pr-4 font-bold">Status</th>
+                  <th className="text-left py-2 pr-4 font-bold">Code</th>
+                  <th className="text-left py-2 pr-4 font-bold">Latency</th>
+                  <th className="text-left py-2 font-bold">Error</th>
                 </tr>
               </thead>
               <tbody>
                 {checks.map((check) => (
-                  <tr key={check.id} className="border-b border-[rgba(238,234,224,0.04)] hover:bg-[rgba(238,234,224,0.02)] transition-colors">
-                    <td className="py-2 pr-4 text-[#93A096] whitespace-nowrap">
+                  <tr key={check.id} className="border-b border-zinc-900/50 hover:bg-zinc-900/30 transition-colors">
+                    <td className="py-2 pr-4 text-zinc-400 whitespace-nowrap">
                       {new Date(check.checkedAt).toLocaleString()}
                     </td>
                     <td className="py-2 pr-4">
-                      <span className={`font-medium ${
-                        check.status === "UP" ? "text-[#9FD8BD]" :
-                        check.status === "DEGRADED" ? "text-[#E2A356]" :
-                        "text-[#C2766B]"
+                      <span className={`font-bold ${
+                        check.status === "UP" ? "text-emerald-400" :
+                        check.status === "DEGRADED" ? "text-amber-400" :
+                        "text-red-400"
                       }`}>
                         {check.status}
                       </span>
                     </td>
-                    <td className="py-2 pr-4 text-[#EEEAE0]">
+                    <td className="py-2 pr-4 text-zinc-300">
                       {check.statusCode ?? "—"}
                     </td>
-                    <td className="py-2 pr-4 text-[#EEEAE0]">
+                    <td className="py-2 pr-4 text-zinc-300">
                       {check.responseTimeMs != null ? `${check.responseTimeMs}ms` : "—"}
                     </td>
-                    <td className="py-2 text-[#93A096] max-w-[200px] truncate">
+                    <td className="py-2 text-zinc-500 max-w-[200px] truncate">
                       {check.errorMessage ?? "—"}
                     </td>
                   </tr>
@@ -133,22 +133,22 @@ export default function MonitorCheckLog({ workspaceId, monitorId, token }: Props
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2 border-t border-[rgba(238,234,224,0.06)]">
-              <span className="text-body-md text-[#93A096]/60 font-medium">
+            <div className="flex items-center justify-between pt-2 border-t-2 border-zinc-900">
+              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
                 Page {currentPage} of {totalPages}
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
                   disabled={offset === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(238,234,224,0.1)] rounded-[999px] text-body-md font-medium text-[#93A096] hover:text-[#EEEAE0] hover:border-[rgba(238,234,224,0.2)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1 px-3 py-1.5 border-2 border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <ChevronLeft className="w-3 h-3" /> Previous
                 </button>
                 <button
                   onClick={() => setOffset(offset + PAGE_SIZE)}
                   disabled={offset + PAGE_SIZE >= total}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-[rgba(238,234,224,0.1)] rounded-[999px] text-body-md font-medium text-[#93A096] hover:text-[#EEEAE0] hover:border-[rgba(238,234,224,0.2)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1 px-3 py-1.5 border-2 border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Next <ChevronRight className="w-3 h-3" />
                 </button>

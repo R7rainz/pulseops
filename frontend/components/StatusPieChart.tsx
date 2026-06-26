@@ -13,11 +13,11 @@ export default function StatusPieChart({ stats }: Props) {
     { name: "DOWN", value: stats.downChecks },
   ];
 
-  const COLORS = ["#9FD8BD", "#C2766B"];
+  const COLORS = ["#34d399", "#ef4444"];
 
   if (stats.totalChecks === 0) {
     return (
-      <div className="flex items-center justify-center h-32 text-[#93A096]/60 text-body-md font-medium">
+      <div className="flex items-center justify-center h-32 text-zinc-600 text-xs font-bold uppercase tracking-widest">
         No data
       </div>
     );

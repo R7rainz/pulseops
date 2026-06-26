@@ -41,81 +41,81 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 selection:bg-[#9FD8BD]/20 selection:text-[#9FD8BD]">
+    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-mono flex items-center justify-center p-6 selection:bg-emerald-500/30 selection:text-emerald-400">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500 opacity-[0.05] blur-[150px] pointer-events-none animate-pulse" />
+
       <div className="w-full max-w-md relative z-10">
         <div className="mb-10 text-center">
-          <div className="inline-flex p-3 bg-[rgba(159,216,189,0.1)] border border-[rgba(159,216,189,0.2)] rounded-[4px] mb-6">
-            <Activity className="w-6 h-6 text-[#9FD8BD]" />
+          <div className="inline-flex p-3 bg-zinc-900 border-2 border-zinc-800 mb-6">
+            <Activity className="w-6 h-6 text-emerald-400" />
           </div>
-          <h1 className="text-3xl font-medium text-[#EEEAE0]">
-            Reset<span className="text-[#9FD8BD]">Access</span>
+          <h1 className="text-3xl font-extrabold uppercase tracking-widest text-zinc-100">
+            Reset<span className="text-emerald-400">Access</span>
           </h1>
-          <p className="text-[#93A096] text-body-md mt-2">
+          <p className="text-zinc-500 text-sm mt-2 uppercase tracking-wide">
             Recover your account credentials
           </p>
         </div>
 
-        <div className="gradient-border-shell">
-          <div className="shell-inner p-[29.6px]">
-            {status === "success" ? (
-              <div className="text-center">
-                <div className="p-4 bg-[rgba(159,216,189,0.1)] border border-[rgba(159,216,189,0.2)] rounded-[4px] flex items-start gap-3 text-sm text-[#9FD8BD] mb-6">
-                  <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+        <div className="bg-zinc-950 border-2 border-zinc-800 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.1)]">
+          {status === "success" ? (
+            <div className="text-center">
+              <div className="p-4 bg-emerald-950/30 border-2 border-emerald-500/50 flex items-start gap-3 text-sm text-emerald-400 mb-6">
+                <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p>{message}</p>
+              </div>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 font-bold uppercase tracking-widest"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Login
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {status === "error" && (
+                <div className="p-4 bg-red-950/30 border-2 border-red-500/50 flex items-start gap-3 text-sm text-red-400">
+                  <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                   <p>{message}</p>
                 </div>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-2 text-sm text-[#9FD8BD] hover:text-[#9FD8BD]/80 font-medium"
+              )}
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="email"
+                  className="block text-xs font-bold text-zinc-400 uppercase tracking-widest"
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back to Login
-                </Link>
+                  Email Identity
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="admin@pulseops.dev"
+                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
+                />
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {status === "error" && (
-                  <div className="p-4 bg-[rgba(194,118,107,0.1)] border border-[rgba(194,118,107,0.3)] rounded-[4px] flex items-start gap-3 text-sm text-[#C2766B]">
-                    <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <p>{message}</p>
-                  </div>
-                )}
 
-                <div className="space-y-2">
-                  <label
-                    htmlFor="email"
-                    className="text-label-md text-[#93A096]"
-                  >
-                    Email Identity
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="admin@pulseops.dev"
-                    className="w-full bg-[rgba(238,234,224,0.03)] border border-[rgba(238,234,224,0.15)] rounded-[9px] px-[12px] py-[10px] text-sm text-[#EEEAE0] placeholder:text-[#93A096]/40 focus-visible:border-[#9FD8BD] focus-visible:ring-2 focus-visible:ring-[rgba(159,216,189,0.2)] outline-none transition-colors"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={status === "loading"}
-                  className="w-full bg-[#EEEAE0] hover:bg-[#EEEAE0]/90 text-[#0A0F0C] rounded-[999px] px-[15.2px] py-[11px] text-label-md font-medium border-0 transition-all disabled:opacity-50 cursor-pointer"
-                >
-                  {status === "loading" ? "Sending..." : "Send Reset Link"}
-                </button>
-              </form>
-            )}
-          </div>
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-4 border-2 border-transparent transition-all disabled:opacity-50 rounded-none"
+              >
+                {status === "loading" ? "Sending..." : "Send Reset Link"}
+              </button>
+            </form>
+          )}
         </div>
 
         <div className="mt-8 text-center">
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 text-sm text-[#9FD8BD] hover:text-[#9FD8BD]/80 font-medium"
+            className="text-cyan-400 hover:text-cyan-300 hover:underline font-bold uppercase tracking-wide text-sm"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 inline mr-1" />
             Back to Login
           </Link>
         </div>
