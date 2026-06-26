@@ -19,7 +19,7 @@ function Card({
     >
       <div
         className={cn(
-          "shell-inner flex flex-col gap-8 py-8 text-sm text-[#EEEAE0] data-[size=sm]:gap-5 data-[size=sm]:py-5",
+          "shell-inner flex flex-col text-sm text-[#EEEAE0] p-card data-[size=sm]:gap-md",
           !className?.includes("rounded") && ""
         )}
         data-size={size}
