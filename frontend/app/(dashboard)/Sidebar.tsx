@@ -25,8 +25,8 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
   return (
     <aside className="w-72 glass border-r border-[rgba(238,234,224,0.08)] flex flex-col justify-between h-screen sticky top-0 z-50">
       {/* LOGO */}
-      <div className="px-5 pt-5 pb-4 border-b border-[rgba(238,234,224,0.06)]">
-        <div className="flex items-center gap-3">
+      <div className="px-gap pt-gap pb-sm border-b border-[rgba(238,234,224,0.06)]">
+        <div className="flex items-center gap-gap">
           <div className="p-1.5 bg-[rgba(159,216,189,0.1)] border border-[rgba(159,216,189,0.2)] rounded-[4px]">
             <Activity className="w-5 h-5 text-[#9FD8BD]" />
           </div>
@@ -37,10 +37,10 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
       </div>
 
       {/* SCROLLABLE NAV AREA */}
-      <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-5 space-y-8">
+      <nav className="flex-1 overflow-y-auto custom-scrollbar px-sm py-gap space-y-section">
         {/* WORKSPACES */}
         <section>
-          <div className="flex items-center justify-between mb-4 px-2">
+          <div className="flex items-center justify-between mb-gap px-sm">
             <h2 className="text-label-md text-[#93A096]">
               Workspaces
             </h2>
@@ -53,9 +53,9 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
             </Link>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-sm">
             {workspaces.length === 0 ? (
-              <p className="text-body-md text-[#93A096]/60 px-2 py-3 italic font-medium">
+              <p className="text-body-md text-[#93A096]/60 px-sm py-gap italic font-medium">
                 No workspaces yet.
               </p>
             ) : (
@@ -83,7 +83,7 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
                     {/* WORKSPACE HEADER */}
                     <Link
                       href={`${wsBase}/monitors`}
-                      className={`flex items-center gap-3 px-3 py-3 text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-gap px-sm py-gap text-sm font-medium transition-colors ${
                         isActive
                           ? "text-[#9FD8BD]"
                           : "text-[#93A096] hover:text-[#EEEAE0]"
@@ -155,8 +155,8 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
       </nav>
 
       {/* PROFILE & LOGOUT */}
-      <div className="px-3 py-4 border-t border-[rgba(238,234,224,0.06)] space-y-3">
-        <div className="flex items-center gap-3 px-2">
+      <div className="px-sm py-gap border-t border-[rgba(238,234,224,0.06)] space-y-sm">
+        <div className="flex items-center gap-gap px-sm">
           <div className="w-8 h-8 bg-[rgba(238,234,224,0.05)] border border-[rgba(238,234,224,0.1)] rounded-[4px] flex items-center justify-center text-[#9FD8BD]">
             <TerminalSquare className="w-4 h-4" />
           </div>
@@ -172,7 +172,7 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
 
         <Link
           href="/account"
-          className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium transition-colors rounded-[4px] border ${
+          className={`flex items-center gap-gap px-sm py-gap text-sm font-medium transition-colors rounded-[4px] border ${
             pathname === "/account"
               ? "border-[#9FD8BD]/30 bg-[rgba(159,216,189,0.06)] text-[#9FD8BD]"
               : "border-transparent text-[#93A096] hover:text-[#EEEAE0] hover:bg-[rgba(238,234,224,0.03)] hover:border-[rgba(238,234,224,0.1)]"
@@ -185,7 +185,7 @@ export default function Sidebar({ workspaces, user }: { workspaces: any[]; user:
         <form action={logoutUser}>
           <button
             type="submit"
-            className="flex items-center justify-between w-full px-3 py-2.5 text-sm font-medium text-[#93A096] hover:text-[#C2766B] rounded-[4px] border border-transparent hover:border-[rgba(194,118,107,0.2)] hover:bg-[rgba(194,118,107,0.05)] transition-all cursor-pointer"
+            className="flex items-center justify-between w-full px-sm py-gap text-sm font-medium text-[#93A096] hover:text-[#C2766B] rounded-[4px] border border-transparent hover:border-[rgba(194,118,107,0.2)] hover:bg-[rgba(194,118,107,0.05)] transition-all cursor-pointer"
           >
             <span>Terminate Session</span>
             <LogOut className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
