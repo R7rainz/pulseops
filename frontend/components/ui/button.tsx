@@ -10,16 +10,16 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-[#EEEAE0] text-[#0A0F0C] rounded-[999px] px-[15.2px] py-[11px] border-0 hover:bg-[#EEEAE0]/90",
+          "bg-[#EEEAE0] text-[#0A0F0C] rounded-[999px] px-15_2 py-11 border-0 hover:bg-[#EEEAE0]/90",
         secondary:
-          "bg-transparent text-[#93A096] rounded-[999px] px-[8.8px] py-[6px] border border-[rgba(238,234,224,0.1)] hover:bg-[rgba(238,234,224,0.04)] hover:text-[#EEEAE0]",
+          "bg-transparent text-[#93A096] rounded-[999px] px-8_8 py-6 border border-[rgba(238,234,224,0.1)] hover:bg-[rgba(238,234,224,0.04)] hover:text-[#EEEAE0]",
         outline:
-          "bg-transparent text-[#93A096] rounded-[999px] px-[8.8px] py-[6px] border border-[rgba(238,234,224,0.1)] hover:bg-[rgba(238,234,224,0.04)] hover:text-[#EEEAE0]",
+          "bg-transparent text-[#93A096] rounded-[999px] px-8_8 py-6 border border-[rgba(238,234,224,0.1)] hover:bg-[rgba(238,234,224,0.04)] hover:text-[#EEEAE0]",
         ghost:
-          "bg-transparent text-[#93A096] rounded-[999px] px-[8.8px] py-[6px] border-transparent hover:bg-[rgba(238,234,224,0.04)] hover:text-[#EEEAE0]",
+          "bg-transparent text-[#93A096] rounded-[999px] px-8_8 py-6 border-transparent hover:bg-[rgba(238,234,224,0.04)] hover:text-[#EEEAE0]",
         destructive:
-          "bg-transparent text-[#C2766B] rounded-[999px] px-[8.8px] py-[6px] border border-[rgba(194,118,107,0.2)] hover:bg-[rgba(194,118,107,0.08)] hover:text-[#C2766B]",
-        link: "bg-transparent text-[#93A096] rounded-none px-[4px] py-[2px] border-0 underline-offset-4 hover:text-[#EEEAE0] hover:underline",
+          "bg-transparent text-[#C2766B] rounded-[999px] px-8_8 py-6 border border-[rgba(194,118,107,0.2)] hover:bg-[rgba(194,118,107,0.08)] hover:text-[#C2766B]",
+        link: "bg-transparent text-[#93A096] rounded-none px-4 py-2 border-0 underline-offset-4 hover:text-[#EEEAE0] hover:underline",
       },
       size: {
         default: "h-10 gap-1.5 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
