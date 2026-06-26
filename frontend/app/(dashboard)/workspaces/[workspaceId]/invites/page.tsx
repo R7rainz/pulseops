@@ -162,30 +162,30 @@ export default function InvitesPage({
   const inviteLink = (token: string) => `${window.location.origin}/invite/${token}`;
 
   return (
-    <main className="p-8 md:p-12 text-[#EEEAE0] min-h-screen">
+    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
       <div className="max-w-4xl mx-auto space-y-10">
 
         {/* Header */}
         <div>
           <Link
             href={`/workspaces/${workspaceId}/monitors`}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-8 border border-[rgba(238,234,224,0.1)] text-label-md font-medium text-[#93A096] hover:text-[#A3D1DF] hover:border-[rgba(163,209,223,0.3)] transition-colors rounded-[999px]"
+            className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Return to Command Center
           </Link>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[rgba(238,234,224,0.06)] pb-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-900 pb-6">
             <div>
-              <h1 className="text-3xl font-medium text-[#EEEAE0] flex items-center gap-3">
-                <UserPlus className="w-8 h-8 text-[#A3D1DF]" />
-                Access <span className="text-[#A3D1DF]">Invites</span>
+              <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100 flex items-center gap-3">
+                <UserPlus className="w-8 h-8 text-cyan-400" />
+                Access <span className="text-cyan-400">Invites</span>
               </h1>
-              <p className="text-body-md text-[#93A096] mt-2 font-medium">
+              <p className="text-sm text-zinc-500 mt-2 uppercase tracking-widest font-bold">
                 Provision secure entry tokens for new operators
               </p>
             </div>
-            <div className="px-4 py-2 border border-[rgba(163,209,223,0.2)] text-label-md font-medium text-[#A3D1DF] rounded-[4px] flex items-center gap-2">
+            <div className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2">
               <Shield className="w-4 h-4" />
               {invites.active.length} Active
             </div>
@@ -193,47 +193,47 @@ export default function InvitesPage({
         </div>
 
         {/* Generate Invite Form */}
-        <div className="glass rounded-[9px] p-[18px]">
-          <h3 className="text-label-md font-medium text-[#93A096] mb-6 flex items-center gap-2 border-b border-[rgba(238,234,224,0.06)] pb-4">
-            <TerminalSquare className="w-4 h-4 text-[#A3D1DF]" />
+        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(34,211,238,0.05)]">
+          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2 border-b-2 border-zinc-900 pb-4">
+            <TerminalSquare className="w-4 h-4 text-cyan-400" />
             Issue New Invite
           </h3>
 
           {error && (
-            <div className="mb-4 p-3 bg-[rgba(194,118,107,0.1)] border border-[rgba(194,118,107,0.3)] rounded-[4px] text-[#C2766B] text-label-md font-medium">
+            <div className="mb-4 p-3 bg-red-950/50 border border-red-900 text-red-400 text-[10px] font-bold uppercase tracking-widest">
               {error}
             </div>
           )}
 
           <form onSubmit={handleGenerate} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
             <div className="md:col-span-5 space-y-2">
-              <label className="block text-label-md font-medium text-[#93A096] flex items-center gap-1.5">
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
                 <Mail className="w-3 h-3" />
-                Operator Emails <span className="text-[#93A096]/60 font-normal">(one per line, comma or semicolon)</span>
+                Operator Emails <span className="text-zinc-700 font-normal">(one per line, comma or semicolon)</span>
               </label>
               <textarea
                 value={emailsText}
                 onChange={(e) => setEmailsText(e.target.value)}
                 placeholder={"alice@pulseops.dev\nbob@acme.com, carol@example.com"}
                 rows={3}
-                className="w-full bg-[rgba(238,234,224,0.03)] border border-[rgba(238,234,224,0.15)] rounded-[9px] px-[12px] py-[10px] text-sm text-[#EEEAE0] placeholder:text-[#93A096]/40 focus-visible:border-[#A3D1DF] focus-visible:ring-2 focus-visible:ring-[rgba(163,209,223,0.2)] outline-none transition-colors resize-none"
+                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-cyan-500 transition-colors text-sm font-mono resize-none"
               />
               {emailsText && (
-                <p className="text-body-md text-[#93A096]/60">
+                <p className="text-[10px] text-zinc-600">
                   {parseEmails(emailsText).length} recipient(s) detected
                 </p>
               )}
             </div>
 
             <div className="md:col-span-3 space-y-2">
-              <label className="block text-label-md font-medium text-[#93A096] flex items-center gap-1.5">
+              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
                 <Shield className="w-3 h-3" />
                 Role Assignment
               </label>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="w-full bg-[rgba(238,234,224,0.03)] border border-[rgba(238,234,224,0.15)] rounded-[9px] px-[12px] py-[10px] text-sm text-[#EEEAE0] focus-visible:border-[#A3D1DF] focus-visible:ring-2 focus-visible:ring-[rgba(163,209,223,0.2)] outline-none transition-colors appearance-none"
+                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-cyan-500 transition-colors appearance-none"
               >
                 <option value="VIEWER">Viewer</option>
                 <option value="MEMBER">Member</option>
@@ -245,7 +245,7 @@ export default function InvitesPage({
               <button
                 type="submit"
                 disabled={generating}
-                className="w-full h-[52px] bg-[#A3D1DF] hover:bg-[#A3D1DF]/90 text-[#0A0F0C] rounded-[999px] border-0 transition-all text-label-md font-medium disabled:opacity-50 flex items-center justify-center gap-3"
+                className="w-full h-[52px] bg-cyan-600 hover:bg-cyan-500 text-zinc-950 font-bold uppercase tracking-widest border-2 border-transparent transition-all text-xs disabled:opacity-50 flex items-center justify-center gap-3"
               >
                 <UserPlus className="w-5 h-5" />
                 {generating ? "Generating Secure Tokens..." : "Generate Invite Links"}
@@ -256,46 +256,46 @@ export default function InvitesPage({
 
         {/* Generation Results */}
         {results && results.length > 0 && (
-          <div className="glass rounded-[9px] p-[18px]">
-            <h3 className="text-label-md font-medium text-[#93A096] mb-6 flex items-center gap-2 border-b border-[rgba(238,234,224,0.06)] pb-4">
-              <CheckCircle2 className="w-4 h-4 text-[#9FD8BD]" />
+          <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
+            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2 border-b-2 border-zinc-900 pb-4">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               Delivery Results
             </h3>
             <div className="space-y-2">
               {results.map((r) => (
                 <div
                   key={r.email}
-                  className="flex items-center justify-between px-3 py-2 bg-[rgba(238,234,224,0.02)] border border-[rgba(238,234,224,0.06)] rounded-[4px]"
+                  className="flex items-center justify-between px-3 py-2 bg-zinc-900/50 border border-zinc-800"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     {r.sent ? (
-                      <CheckCircle2 className="w-4 h-4 text-[#9FD8BD] shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                     ) : (
-                      <AlertTriangle className="w-4 h-4 text-[#E2A356] shrink-0" />
+                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                     )}
-                    <span className="text-body-md text-[#EEEAE0] truncate">{r.email}</span>
-                    <span className={`text-[10px] font-medium border rounded-[4px] px-1.5 py-0.5 ${
+                    <span className="text-sm text-zinc-300 truncate">{r.email}</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest border px-1.5 py-0.5 ${
                       r.role === "ADMIN"
-                        ? "text-[#A3D1DF] border-[rgba(163,209,223,0.3)]"
+                        ? "text-purple-400 border-purple-800"
                         : r.role === "MEMBER"
-                          ? "text-[#9FD8BD] border-[rgba(159,216,189,0.3)]"
-                          : "text-[#93A096] border-[rgba(238,234,224,0.1)]"
+                          ? "text-cyan-400 border-cyan-800"
+                          : "text-zinc-400 border-zinc-700"
                     }`}>
                       {r.role}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-4">
                     {r.sent ? (
-                      <span className="text-label-md text-[#9FD8BD] font-medium">Delivered</span>
+                      <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Delivered</span>
                     ) : (
-                      <span className="text-label-md text-[#E2A356] font-medium">{r.error || "Failed"}</span>
+                      <span className="text-[10px] text-amber-600 font-bold uppercase tracking-widest">{r.error || "Failed"}</span>
                     )}
                     {r.token && (
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(`${window.location.origin}/invite/${r.token}`);
                         }}
-                        className="p-1.5 border border-[rgba(238,234,224,0.1)] text-[#93A096] hover:text-[#A3D1DF] hover:border-[rgba(163,209,223,0.3)] rounded-[4px] transition-colors"
+                        className="p-1.5 bg-zinc-950 border border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"
                         title="Copy invite link"
                       >
                         <Copy className="w-3 h-3" />
@@ -307,7 +307,7 @@ export default function InvitesPage({
             </div>
             <button
               onClick={() => setResults(null)}
-              className="mt-4 px-4 py-2 border border-[rgba(238,234,224,0.1)] text-label-md font-medium text-[#93A096] hover:text-[#EEEAE0] rounded-[999px] transition-colors"
+              className="mt-4 px-4 py-2 bg-zinc-900 border-2 border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
             >
               Dismiss Results
             </button>
@@ -315,51 +315,51 @@ export default function InvitesPage({
         )}
 
         {/* Active Invites */}
-        <div className="glass rounded-[9px] p-[18px]">
-          <h3 className="text-label-md font-medium text-[#93A096] mb-6 flex items-center gap-2 border-b border-[rgba(238,234,224,0.06)] pb-4">
-            <LinkIcon className="w-4 h-4 text-[#9FD8BD]" />
+        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
+          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2 border-b-2 border-zinc-900 pb-4">
+            <LinkIcon className="w-4 h-4 text-emerald-400" />
             Active Invites
-            <span className="text-label-md text-[#93A096]/60 font-medium ml-auto">
+            <span className="text-[10px] text-zinc-600 font-bold ml-auto">
               {loading ? "LOADING..." : `[${invites.active.length} Tokens]`}
             </span>
           </h3>
 
           {loading ? (
-            <div className="p-8 text-center text-[#93A096]/60 text-label-md font-medium border border-dashed border-[rgba(238,234,224,0.1)] rounded-[9px]">
+            <div className="p-8 text-center text-zinc-600 text-xs uppercase tracking-widest font-bold border-2 border-dashed border-zinc-800">
               Scanning active tokens...
             </div>
           ) : invites.active.length === 0 ? (
-            <div className="p-8 text-center text-[#93A096]/60 text-label-md font-medium border border-dashed border-[rgba(238,234,224,0.1)] rounded-[9px]">
+            <div className="p-8 text-center text-zinc-600 text-xs uppercase tracking-widest font-bold border-2 border-dashed border-zinc-800">
               No active invite tokens. Issue one above.
             </div>
           ) : (
-            <div className="divide-y divide-[rgba(238,234,224,0.04)]">
+            <div className="divide-y-2 divide-zinc-900">
               {invites.active.map((invite) => (
-                <div key={invite.id} className="flex items-center justify-between py-4 group hover:bg-[rgba(238,234,224,0.02)] transition-colors px-2 -mx-2">
+                <div key={invite.id} className="flex items-center justify-between py-4 group hover:bg-zinc-900/30 transition-colors px-2 -mx-2">
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-center gap-3">
-                      <span className={`text-[10px] font-medium border rounded-[4px] px-2 py-0.5 ${
+                      <span className={`text-[10px] font-bold uppercase tracking-widest border px-2 py-0.5 ${
                         invite.role === "ADMIN"
-                          ? "text-[#A3D1DF] border-[rgba(163,209,223,0.3)] bg-[rgba(163,209,223,0.05)]"
+                          ? "text-purple-400 border-purple-800 bg-purple-950/20"
                           : invite.role === "MEMBER"
-                            ? "text-[#9FD8BD] border-[rgba(159,216,189,0.3)] bg-[rgba(159,216,189,0.05)]"
-                            : "text-[#93A096] border-[rgba(238,234,224,0.1)] bg-[rgba(238,234,224,0.03)]"
+                            ? "text-cyan-400 border-cyan-800 bg-cyan-950/20"
+                            : "text-zinc-400 border-zinc-700 bg-zinc-900"
                       }`}>
                         {invite.role}
                       </span>
                       {invite.email && (
-                        <span className="text-body-md text-[#93A096] flex items-center gap-1.5">
-                          <Mail className="w-3 h-3 text-[#93A096]/60" />
+                        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
+                          <Mail className="w-3 h-3 text-zinc-600" />
                           {invite.email}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-body-md text-[#93A096]/60">
+                    <div className="flex items-center gap-4 text-[10px] text-zinc-600">
                       <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         Expires {new Date(invite.expiresAt).toLocaleDateString()}
                       </span>
-                      <span className="truncate max-w-xs">
+                      <span className="font-mono truncate max-w-xs">
                         /invite/{invite.token.slice(0, 16)}...
                       </span>
                     </div>
@@ -368,11 +368,11 @@ export default function InvitesPage({
                   <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
                     <button
                       onClick={() => handleCopy(invite)}
-                      className="p-2.5 border border-[rgba(238,234,224,0.1)] text-[#93A096] hover:text-[#9FD8BD] hover:border-[rgba(159,216,189,0.3)] rounded-[4px] transition-colors"
+                      className="p-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors"
                       title="Copy Invite Link"
                     >
                       {copiedId === invite.id ? (
-                        <Check className="w-4 h-4 text-[#9FD8BD]" />
+                        <Check className="w-4 h-4 text-emerald-400" />
                       ) : (
                         <Copy className="w-4 h-4" />
                       )}
@@ -381,14 +381,14 @@ export default function InvitesPage({
                       href={inviteLink(invite.token)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-2.5 border border-[rgba(238,234,224,0.1)] text-[#93A096] hover:text-[#A3D1DF] hover:border-[rgba(163,209,223,0.3)] rounded-[4px] transition-colors"
+                      className="p-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"
                       title="Open Invite Link"
                     >
                       <ExternalLink className="w-4 h-4" />
                     </a>
                     <button
                       onClick={() => handleRevoke(invite.id)}
-                      className="p-2.5 border border-[rgba(238,234,224,0.1)] text-[#93A096] hover:text-[#C2766B] hover:border-[rgba(194,118,107,0.3)] rounded-[4px] transition-colors"
+                      className="p-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"
                       title="Revoke Invite"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -402,25 +402,25 @@ export default function InvitesPage({
 
         {/* Expired invites */}
         {invites.expired.length > 0 && (
-          <div className="glass rounded-[9px] p-[18px]">
+          <div className="p-6 bg-zinc-950 border-2 border-zinc-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
             <details className="group">
-              <summary className="text-label-md font-medium text-[#93A096]/60 cursor-pointer list-none flex items-center gap-2 hover:text-[#93A096] transition-colors">
+              <summary className="text-xs font-bold text-zinc-600 uppercase tracking-widest cursor-pointer list-none flex items-center gap-2 hover:text-zinc-400 transition-colors">
                 <X className="w-4 h-4 group-open:hidden" />
                 <span className="group-open:hidden">Show Expired Tokens ({invites.expired.length})</span>
                 <span className="hidden group-open:inline">Hide Expired Tokens</span>
               </summary>
-              <div className="mt-4 divide-y divide-[rgba(238,234,224,0.04)]">
+              <div className="mt-4 divide-y-2 divide-zinc-900">
                 {invites.expired.map((invite) => (
-                  <div key={invite.id} className="flex items-center justify-between py-3 text-[#93A096]/60">
+                  <div key={invite.id} className="flex items-center justify-between py-3 text-zinc-600">
                     <div className="flex items-center gap-3">
-                      <span className="text-[9px] font-medium border border-[rgba(238,234,224,0.06)] rounded-[4px] px-1.5 py-0.5">
+                      <span className="text-[9px] font-bold uppercase tracking-widest border border-zinc-800 px-1.5 py-0.5">
                         {invite.role}
                       </span>
                       {invite.email && (
-                        <span className="text-body-md text-[#93A096]/60">{invite.email}</span>
+                        <span className="text-[10px] text-zinc-600">{invite.email}</span>
                       )}
                     </div>
-                    <span className="text-body-md">
+                    <span className="text-[10px]">
                       Expired {new Date(invite.expiresAt).toLocaleDateString()}
                     </span>
                   </div>

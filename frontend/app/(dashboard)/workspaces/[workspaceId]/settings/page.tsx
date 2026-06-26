@@ -78,38 +78,38 @@ export default async function WorkspaceSettingsPage({
   const canEdit = workspace?.role === "OWNER" || workspace?.role === "ADMIN";
 
   return (
-    <main className="p-8 md:p-12 text-[#EEEAE0] min-h-screen">
+    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
       <div className="max-w-4xl mx-auto space-y-10">
         {/* Header */}
         <div>
           <Link
             href={`/workspaces/${workspaceId}/monitors`}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-transparent border border-[rgba(238,234,224,0.06)] text-xs font-medium text-[#93A096] hover:text-[#9FD8BD] hover:border-[#9FD8BD] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Return to Grid
           </Link>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[rgba(238,234,224,0.08)] pb-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-900 pb-6">
             <div>
-              <h1 className="text-3xl font-medium text-[#EEEAE0] flex items-center gap-3">
-                <TerminalSquare className="w-8 h-8 text-[#9FD8BD]" />
-                Workspace <span className="text-[#9FD8BD]">Config</span>
+              <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100 flex items-center gap-3">
+                <TerminalSquare className="w-8 h-8 text-emerald-400" />
+                Workspace <span className="text-emerald-400">Config</span>
               </h1>
-              <p className="text-sm text-[#93A096] mt-2">
+              <p className="text-sm text-zinc-500 mt-2 uppercase tracking-widest font-bold">
                 {workspace?.name ?? `Workspace #${workspaceId}`}
               </p>
             </div>
-            <div className="px-4 py-2 bg-[rgba(159,216,189,0.1)] border border-[#9FD8BD]/50 text-xs font-medium text-[#9FD8BD]">
+            <div className="px-4 py-2 bg-emerald-500/10 border-2 border-emerald-500/50 text-xs font-bold text-emerald-400 uppercase tracking-widest">
               {workspace?.role ?? "LOADING"} ACCESS
             </div>
           </div>
         </div>
 
         {/* General Settings */}
-        <div className="p-6 bg-transparent border border-[rgba(238,234,224,0.06)]">
-          <h3 className="text-xs font-medium text-[#93A096] mb-4 flex items-center gap-2">
-            <Settings className="w-4 h-4 text-[#93A096]" />
+        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
+          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <Settings className="w-4 h-4 text-zinc-500" />
             General
           </h3>
 
@@ -120,7 +120,7 @@ export default async function WorkspaceSettingsPage({
               <div className="space-y-2">
                 <label
                   htmlFor="name"
-                  className="block text-[10px] font-medium text-[#93A096]"
+                  className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
                 >
                   Workspace Name
                 </label>
@@ -131,14 +131,14 @@ export default async function WorkspaceSettingsPage({
                   defaultValue={workspace.name}
                   required
                   disabled={!canEdit}
-                  className="w-full bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-4 py-3 text-[#EEEAE0] placeholder:text-[rgba(238,234,224,0.2)] focus:outline-none focus:border-[#9FD8BD] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
               {canEdit && (
                 <button
                   type="submit"
-                  className="bg-[#9FD8BD] hover:bg-[#9FD8BD] text-zinc-950 font-medium py-2 px-5 rounded-[999px] transition-all text-xs"
+                  className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-2 px-5 border-2 border-transparent transition-all text-xs"
                 >
                   Save Changes
                 </button>
@@ -148,41 +148,41 @@ export default async function WorkspaceSettingsPage({
         </div>
 
         {/* API Keys */}
-        <div className="p-6 bg-transparent border border-[rgba(238,234,224,0.06)]">
+        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-medium text-[#93A096] flex items-center gap-2">
-              <Key className="w-4 h-4 text-[#93A096]" />
+            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+              <Key className="w-4 h-4 text-zinc-500" />
               API Keys
             </h3>
-            <span className="text-[10px] text-[#93A096]">
+            <span className="text-[10px] text-zinc-600">
               [{apiKeys.length} keys]
             </span>
           </div>
 
           {apiKeys.length > 0 ? (
-            <div className="divide-y divide-[rgba(238,234,224,0.08)] mb-6">
+            <div className="divide-y-2 divide-zinc-900 mb-6">
               {apiKeys.map((key) => (
                 <div
                   key={key.id}
                   className="flex items-center justify-between py-3"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[#EEEAE0] truncate">
+                    <p className="text-sm font-bold text-zinc-200 uppercase tracking-wider truncate">
                       {key.name}
                     </p>
-                    <p className="text-[10px] text-[#93A096] mt-0.5">
+                    <p className="text-[10px] text-zinc-500 mt-0.5">
                       {key.isActive ? (
                         <>
                           Created {new Date(key.createdAt).toLocaleDateString()}
                           {key.lastUsedAt && (
-                            <span className="ml-2 text-[#9FD8BD]">
+                            <span className="ml-2 text-emerald-400">
                               &middot; Last used{" "}
                               {new Date(key.lastUsedAt).toLocaleDateString()}
                             </span>
                           )}
                         </>
                       ) : (
-                        <span className="text-[#C2766B]">Revoked</span>
+                        <span className="text-red-400">Revoked</span>
                       )}
                     </p>
                   </div>
@@ -197,7 +197,7 @@ export default async function WorkspaceSettingsPage({
                       <input type="hidden" name="keyId" value={key.id} />
                       <button
                         type="submit"
-                        className="p-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#C2766B] hover:border-[#C2766B]/40 transition-colors"
+                        className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"
                         title="Revoke Key"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -208,7 +208,7 @@ export default async function WorkspaceSettingsPage({
               ))}
             </div>
           ) : (
-            <p className="text-[#93A096] text-xs font-medium mb-6 border border-dashed border-[rgba(238,234,224,0.06)] p-4 text-center">
+            <p className="text-zinc-600 text-xs uppercase tracking-widest font-bold mb-6 border-2 border-dashed border-zinc-800 p-4 text-center">
               No API keys configured
             </p>
           )}
@@ -220,22 +220,22 @@ export default async function WorkspaceSettingsPage({
         {canEdit && (
           <Link
             href={`/workspaces/${workspaceId}/invites`}
-            className="flex items-center justify-between p-6 bg-transparent border border-[rgba(238,234,224,0.06)] hover:border-[#A3D1DF]/40 transition-colors group"
+            className="flex items-center justify-between p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-colors group"
           >
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] group-hover:border-[#A3D1DF]/40 transition-colors">
-                <UserPlus className="w-5 h-5 text-[#A3D1DF]" />
+              <div className="p-3 bg-zinc-900 border-2 border-zinc-800 group-hover:border-cyan-500/50 transition-colors">
+                <UserPlus className="w-5 h-5 text-cyan-400" />
               </div>
               <div>
-                <h3 className="text-xs font-medium text-[#93A096]">
+                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
                   Access Invites
                 </h3>
-                <p className="text-[10px] text-[#93A096] mt-1">
+                <p className="text-[10px] text-zinc-600 mt-1">
                   Generate and manage secure invite tokens
                 </p>
               </div>
             </div>
-            <span className="text-[10px] text-[#A3D1DF] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
               Manage &rarr;
             </span>
           </Link>
@@ -244,35 +244,35 @@ export default async function WorkspaceSettingsPage({
         {/* Webhooks */}
         <Link
           href={`/workspaces/${workspaceId}/webhooks`}
-          className="flex items-center justify-between p-6 bg-transparent border border-[rgba(238,234,224,0.06)] hover:border-[#A3D1DF]/40 transition-colors group"
+          className="flex items-center justify-between p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-colors group"
         >
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] group-hover:border-[#A3D1DF]/40 transition-colors">
-              <Zap className="w-5 h-5 text-[#A3D1DF]" />
+            <div className="p-3 bg-zinc-900 border-2 border-zinc-800 group-hover:border-cyan-500/50 transition-colors">
+              <Zap className="w-5 h-5 text-cyan-400" />
             </div>
             <div>
-              <h3 className="text-xs font-medium text-[#93A096]">
+              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
                 Webhook Endpoints
               </h3>
-              <p className="text-[10px] text-[#93A096] mt-1">
+              <p className="text-[10px] text-zinc-600 mt-1">
                 Configure broadcast endpoints for incident alerts
               </p>
             </div>
           </div>
-          <span className="text-[10px] text-[#A3D1DF] font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
             Manage &rarr;
           </span>
         </Link>
 
         {/* Danger Zone */}
         {isOwner && (
-          <div className="p-6 bg-transparent border border-[rgba(194,118,107,0.5)]">
-            <h3 className="text-xs font-medium text-[#C2766B] mb-4 flex items-center gap-2">
+          <div className="p-6 bg-zinc-950 border-2 border-red-900/50 shadow-[4px_4px_0px_0px_rgba(248,113,113,0.05)]">
+            <h3 className="text-xs font-bold text-red-400 uppercase tracking-widest mb-4 flex items-center gap-2">
               <ShieldAlert className="w-4 h-4" />
               Danger Zone
             </h3>
 
-            <p className="text-xs text-[#93A096] mb-4">
+            <p className="text-xs text-zinc-500 mb-4">
               Deleting this workspace will permanently remove all monitors,
               checks, incidents, webhooks, and API keys. This action cannot be
               undone.

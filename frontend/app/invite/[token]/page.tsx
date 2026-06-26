@@ -42,22 +42,20 @@ export default async function InvitePage({
 
     if (invite && invite.expired) {
         return (
-            <div className="min-h-screen bg-transparent text-[#EEEAE0] flex items-center justify-center p-6">
-                <div className="w-full max-w-md gradient-border-shell text-center space-y-6">
-                    <div className="shell-inner p-[29.6px] space-y-6">
-                        <div className="inline-flex p-4 bg-[rgba(194,118,107,0.1)] border border-[rgba(194,118,107,0.3)] rounded-[4px]">
-                            <Clock className="w-8 h-8 text-[#C2766B]" />
-                        </div>
-                        <h1 className="text-xl font-medium text-[#C2766B]">
-                            Invite Expired
-                        </h1>
-                        <p className="text-sm text-[#93A096]">
-                            This invite to <span className="text-[#EEEAE0] font-medium">{invite.workspace.name}</span> is no longer valid. Contact the workspace admin for a new one.
-                        </p>
-                        <Link href="/login" className="inline-block px-6 py-3 border border-[rgba(238,234,224,0.1)] text-[#93A096] hover:text-[#EEEAE0] rounded-[999px] text-label-md font-medium transition-colors">
-                            Return to Gateway
-                        </Link>
+            <div className="min-h-screen bg-zinc-950 text-zinc-50 font-mono flex items-center justify-center p-6">
+                <div className="w-full max-w-md border-2 border-red-900/50 bg-zinc-950 p-8 shadow-[8px_8px_0px_0px_rgba(239,68,68,0.05)] text-center space-y-6">
+                    <div className="inline-flex p-4 bg-red-950/30 border-2 border-red-800">
+                        <Clock className="w-8 h-8 text-red-400" />
                     </div>
+                    <h1 className="text-xl font-black uppercase tracking-widest text-red-400">
+                        Invite Expired
+                    </h1>
+                    <p className="text-sm text-zinc-500">
+                        This invite to <span className="text-zinc-300 font-bold">{invite.workspace.name}</span> is no longer valid. Contact the workspace admin for a new one.
+                    </p>
+                    <Link href="/login" className="inline-block px-6 py-3 bg-zinc-900 border-2 border-zinc-800 text-zinc-400 hover:text-zinc-100 text-xs font-bold uppercase tracking-widest transition-colors">
+                        Return to Gateway
+                    </Link>
                 </div>
             </div>
         );
@@ -65,20 +63,18 @@ export default async function InvitePage({
 
     if (error || !invite) {
         return (
-            <div className="min-h-screen bg-transparent text-[#EEEAE0] flex items-center justify-center p-6">
-                <div className="w-full max-w-md gradient-border-shell text-center space-y-6">
-                    <div className="shell-inner p-[29.6px] space-y-6">
-                        <div className="inline-flex p-4 bg-[rgba(194,118,107,0.1)] border border-[rgba(194,118,107,0.3)] rounded-[4px]">
-                            <AlertTriangle className="w-8 h-8 text-[#C2766B]" />
-                        </div>
-                        <h1 className="text-xl font-medium text-[#C2766B]">
-                            Invalid Signature
-                        </h1>
-                        <p className="text-sm text-[#93A096]">{error}</p>
-                        <Link href="/login" className="inline-block px-6 py-3 border border-[rgba(238,234,224,0.1)] text-[#93A096] hover:text-[#EEEAE0] rounded-[999px] text-label-md font-medium transition-colors">
-                            Return to Gateway
-                        </Link>
+            <div className="min-h-screen bg-zinc-950 text-zinc-50 font-mono flex items-center justify-center p-6">
+                <div className="w-full max-w-md border-2 border-red-900/50 bg-zinc-950 p-8 shadow-[8px_8px_0px_0px_rgba(239,68,68,0.05)] text-center space-y-6">
+                    <div className="inline-flex p-4 bg-red-950/30 border-2 border-red-800">
+                        <AlertTriangle className="w-8 h-8 text-red-400" />
                     </div>
+                    <h1 className="text-xl font-black uppercase tracking-widest text-red-400">
+                        Invalid Signature
+                    </h1>
+                    <p className="text-sm text-zinc-500">{error}</p>
+                    <Link href="/login" className="inline-block px-6 py-3 bg-zinc-900 border-2 border-zinc-800 text-zinc-400 hover:text-zinc-100 text-xs font-bold uppercase tracking-widest transition-colors">
+                        Return to Gateway
+                    </Link>
                 </div>
             </div>
         );
@@ -86,45 +82,43 @@ export default async function InvitePage({
 
     if (!userToken) {
         return (
-            <div className="min-h-screen bg-transparent text-[#EEEAE0] flex items-center justify-center p-6">
-                <div className="w-full max-w-md gradient-border-shell text-center space-y-6">
-                    <div className="shell-inner p-[29.6px] space-y-6">
-                        <div className="inline-flex p-4 bg-[rgba(159,216,189,0.1)] border border-[rgba(159,216,189,0.2)] rounded-[4px]">
-                            <ShieldCheck className="w-8 h-8 text-[#9FD8BD]" />
+            <div className="min-h-screen bg-zinc-950 text-zinc-50 font-mono flex items-center justify-center p-6">
+                <div className="w-full max-w-md border-2 border-zinc-800 bg-zinc-950 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.05)] text-center space-y-6">
+                    <div className="inline-flex p-4 bg-zinc-900 border-2 border-zinc-800">
+                        <ShieldCheck className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <div className="space-y-2">
+                        <h1 className="text-xl font-black uppercase tracking-widest text-zinc-100">
+                            Workspace Invite
+                        </h1>
+                        <p className="text-sm text-zinc-500">
+                            You have been invited to join
+                        </p>
+                        <p className="text-lg font-bold text-emerald-400 uppercase tracking-widest">
+                            {invite.workspace.name}
+                        </p>
+                    </div>
+                    <div className="border-2 border-zinc-900 bg-zinc-950/50 p-4 space-y-2">
+                        <div className="flex justify-between text-xs">
+                            <span className="text-zinc-500 uppercase tracking-widest">Role</span>
+                            <span className="text-cyan-400 font-bold uppercase tracking-widest">{invite.role}</span>
                         </div>
-                        <div className="space-y-2">
-                            <h1 className="text-xl font-medium text-[#EEEAE0]">
-                                Workspace Invite
-                            </h1>
-                            <p className="text-sm text-[#93A096]">
-                                You have been invited to join
-                            </p>
-                            <p className="text-lg font-medium text-[#9FD8BD]">
-                                {invite.workspace.name}
-                            </p>
-                        </div>
-                        <div className="border border-[rgba(238,234,224,0.06)] bg-[rgba(238,234,224,0.02)] p-4 space-y-2 rounded-[4px]">
-                            <div className="flex justify-between text-label-md">
-                                <span className="text-[#93A096]">Role</span>
-                                <span className="text-[#A3D1DF] font-medium">{invite.role}</span>
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <Link
-                                href={`/login?callbackUrl=/invite/${token}`}
-                                className="w-full bg-[#EEEAE0] hover:bg-[#EEEAE0]/90 text-[#0A0F0C] rounded-[999px] py-3 border-0 transition-all text-label-md font-medium flex items-center justify-center gap-2"
-                            >
-                                <LogIn className="w-4 h-4" />
-                                Login to Accept Invite
-                            </Link>
-                            <Link
-                                href={`/signup?invite_token=${token}`}
-                                className="w-full border border-[rgba(238,234,224,0.1)] text-[#93A096] hover:text-[#EEEAE0] hover:border-[rgba(238,234,224,0.2)] rounded-[999px] py-3 transition-all text-label-md font-medium flex items-center justify-center gap-2"
-                            >
-                                <UserPlus className="w-4 h-4" />
-                                Create Account
-                            </Link>
-                        </div>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        <Link
+                            href={`/login?callbackUrl=/invite/${token}`}
+                            className="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-3 border-2 border-transparent transition-all text-xs flex items-center justify-center gap-2"
+                        >
+                            <LogIn className="w-4 h-4" />
+                            Login to Accept Invite
+                        </Link>
+                        <Link
+                            href={`/signup?invite_token=${token}`}
+                            className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-bold uppercase tracking-widest py-3 border-2 border-zinc-800 transition-all text-xs flex items-center justify-center gap-2"
+                        >
+                            <UserPlus className="w-4 h-4" />
+                            Create Account
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -132,38 +126,36 @@ export default async function InvitePage({
     }
 
     return (
-        <div className="min-h-screen bg-transparent text-[#EEEAE0] flex items-center justify-center p-6 selection:bg-[#9FD8BD]/20 selection:text-[#9FD8BD]">
-            <div className="w-full max-w-md gradient-border-shell text-center space-y-6">
-                <div className="shell-inner p-[29.6px] space-y-6">
-                    <div className="inline-flex p-4 bg-[rgba(159,216,189,0.1)] border border-[rgba(159,216,189,0.2)] rounded-[4px]">
-                        <ShieldCheck className="w-8 h-8 text-[#9FD8BD]" />
-                    </div>
-
-                    <div className="space-y-2">
-                        <h1 className="text-xl font-medium text-[#EEEAE0]">
-                            Workspace Invite
-                        </h1>
-                        <p className="text-sm text-[#93A096]">
-                            You have been invited to join
-                        </p>
-                        <p className="text-lg font-medium text-[#9FD8BD]">
-                            {invite.workspace.name}
-                        </p>
-                    </div>
-
-                    <div className="border border-[rgba(238,234,224,0.06)] bg-[rgba(238,234,224,0.02)] p-4 space-y-2 rounded-[4px]">
-                        <div className="flex justify-between text-label-md">
-                            <span className="text-[#93A096]">Role</span>
-                            <span className="text-[#A3D1DF] font-medium">{invite.role}</span>
-                        </div>
-                        <div className="flex justify-between text-label-md">
-                            <span className="text-[#93A096]">Expires</span>
-                            <span className="text-[#93A096]">{new Date(invite.expiresAt).toLocaleDateString()}</span>
-                        </div>
-                    </div>
-
-                    <AcceptInviteButton token={token} workspaceName={invite.workspace.name} />
+        <div className="min-h-screen bg-zinc-950 text-zinc-50 font-mono flex items-center justify-center p-6 selection:bg-emerald-500/30 selection:text-emerald-400">
+            <div className="w-full max-w-md border-2 border-zinc-800 bg-zinc-950 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.05)] text-center space-y-6">
+                <div className="inline-flex p-4 bg-zinc-900 border-2 border-zinc-800">
+                    <ShieldCheck className="w-8 h-8 text-emerald-400" />
                 </div>
+
+                <div className="space-y-2">
+                    <h1 className="text-xl font-black uppercase tracking-widest text-zinc-100">
+                        Workspace Invite
+                    </h1>
+                    <p className="text-sm text-zinc-500">
+                        You have been invited to join
+                    </p>
+                    <p className="text-lg font-bold text-emerald-400 uppercase tracking-widest">
+                        {invite.workspace.name}
+                    </p>
+                </div>
+
+                <div className="border-2 border-zinc-900 bg-zinc-950/50 p-4 space-y-2">
+                    <div className="flex justify-between text-xs">
+                        <span className="text-zinc-500 uppercase tracking-widest">Role</span>
+                        <span className="text-cyan-400 font-bold uppercase tracking-widest">{invite.role}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                        <span className="text-zinc-500 uppercase tracking-widest">Expires</span>
+                        <span className="text-zinc-400">{new Date(invite.expiresAt).toLocaleDateString()}</span>
+                    </div>
+                </div>
+
+                <AcceptInviteButton token={token} workspaceName={invite.workspace.name} />
             </div>
         </div>
     );

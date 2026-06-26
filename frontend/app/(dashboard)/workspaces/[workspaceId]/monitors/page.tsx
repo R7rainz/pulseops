@@ -61,31 +61,31 @@ export default async function MonitorsPage({
   const canEdit = role === "OWNER" || role === "ADMIN";
 
   return (
-    <main className="p-8 md:p-12 text-[#EEEAE0] min-h-screen">
+    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
       <div className="max-w-7xl mx-auto space-y-12">
 
         {/* STRICT HEADER */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[rgba(238,234,224,0.08)] pb-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-900 pb-6">
           <div>
-            <h1 className="text-3xl font-medium text-[#EEEAE0] flex items-center gap-3">
-              <TerminalSquare className="w-8 h-8 text-[#9FD8BD]" />
-              Engine <span className="text-[#9FD8BD]">Core</span>
+            <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100 flex items-center gap-3">
+              <TerminalSquare className="w-8 h-8 text-emerald-400" />
+              Engine <span className="text-emerald-400">Core</span>
             </h1>
-            <p className="text-sm text-[#93A096] mt-2">
-              Active Routing &amp; Telemetry
+            <p className="text-sm text-zinc-500 mt-2 uppercase tracking-widest font-bold">
+              Active Routing & Telemetry
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className={`px-4 py-2 border text-xs font-medium flex items-center gap-2 ${
+            <div className={`px-4 py-2 border-2 text-xs font-bold uppercase tracking-widest flex items-center gap-2 ${
               planTier === "PRO"
-                ? "bg-[rgba(227,163,86,0.1)] border-[#E2A356]/50 text-[#E2A356]"
-                : "bg-transparent border-[rgba(238,234,224,0.06)] text-[#93A096]"
+                ? "bg-amber-950/20 border-amber-800 text-amber-400"
+                : "bg-zinc-950 border-zinc-800 text-zinc-500"
             }`}>
               {planTier === "PRO" ? <Crown className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
               {planTier || "FREE"}
             </div>
-            <div className="px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-xs font-medium text-[#A3D1DF] flex items-center gap-2">
-              <span className="w-2 h-2 bg-[#A3D1DF] animate-pulse" />
+            <div className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 bg-cyan-400 animate-pulse" />
               Workspace ID: {workspaceId}
             </div>
           </div>
@@ -93,10 +93,10 @@ export default async function MonitorsPage({
 
         {/* BRUTALIST CREATION FORM */}
         {canEdit && (
-          <div className="bg-transparent border border-[rgba(238,234,224,0.06)] p-8">
-            <div className="mb-6 border-b border-[rgba(238,234,224,0.08)] pb-4">
-              <h2 className="text-sm font-medium text-[#EEEAE0] flex items-center gap-2">
-                <PlusSquare className="w-4 h-4 text-[#9FD8BD]" />
+          <div className="bg-zinc-950 border-2 border-zinc-800 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.05)]">
+            <div className="mb-6 border-b-2 border-zinc-900 pb-4">
+              <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-widest flex items-center gap-2">
+                <PlusSquare className="w-4 h-4 text-emerald-400" />
                 Provision Target
               </h2>
             </div>
@@ -108,7 +108,7 @@ export default async function MonitorsPage({
               <input type="hidden" name="workspaceId" value={workspaceId} />
 
               <div className="md:col-span-4 space-y-2">
-                <label htmlFor="name" className="block text-xs font-medium text-[#93A096]">
+                <label htmlFor="name" className="block text-xs font-bold text-zinc-500 uppercase tracking-widest">
                   Designation
                 </label>
                 <input
@@ -117,12 +117,12 @@ export default async function MonitorsPage({
                   type="text"
                   placeholder="e.g., API Gateway"
                   required
-                  className="w-full bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-4 py-3 text-[#EEEAE0] placeholder:text-[rgba(238,234,224,0.2)] focus:outline-none focus:border-[#9FD8BD] transition-colors rounded-[4px]"
+                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
                 />
               </div>
 
               <div className="md:col-span-5 space-y-2">
-                <label htmlFor="url" className="block text-xs font-medium text-[#93A096]">
+                <label htmlFor="url" className="block text-xs font-bold text-zinc-500 uppercase tracking-widest">
                   Target URL
                 </label>
                 <input
@@ -131,14 +131,14 @@ export default async function MonitorsPage({
                   type="url"
                   placeholder="https://api.pulseops.dev"
                   required
-                  className="w-full bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-4 py-3 text-[#EEEAE0] placeholder:text-[rgba(238,234,224,0.2)] focus:outline-none focus:border-[#9FD8BD] transition-colors rounded-[4px]"
+                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
                 />
               </div>
 
               <div className="md:col-span-3">
                 <button
                   type="submit"
-                  className="w-full h-[52px] bg-[#9FD8BD] hover:bg-[#9FD8BD] text-zinc-950 font-medium rounded-[999px] transition-all"
+                  className="w-full h-[52px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest border-2 border-transparent transition-all rounded-none"
                 >
                   Deploy
                 </button>
@@ -148,7 +148,7 @@ export default async function MonitorsPage({
         )}
 
         {!canEdit && (
-          <div className="bg-transparent border border-dashed border-[rgba(238,234,224,0.06)] p-8 text-center text-[#93A096] text-xs font-medium">
+          <div className="bg-zinc-950 border-2 border-dashed border-zinc-800 p-8 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">
             Elevated privileges required to provision new targets.
           </div>
         )}

@@ -50,7 +50,7 @@ export function CreateWebhookForm({
     return (
       <button
         onClick={() => setIsCreating(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#9FD8BD] hover:bg-[rgba(159,216,189,0.1)] text-xs font-medium transition-colors"
+        className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-emerald-400 hover:bg-emerald-500/10 text-xs font-bold uppercase tracking-widest transition-colors"
       >
         <Plus className="w-4 h-4" /> Add Webhook Endpoint
       </button>
@@ -58,42 +58,42 @@ export function CreateWebhookForm({
   }
 
   return (
-    <div className="border border-[#9FD8BD]/30 bg-[rgba(159,216,189,0.1)] p-6">
+    <div className="border-2 border-emerald-900/30 bg-emerald-950/10 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-medium text-[#93A096] flex items-center gap-2">
-          <Plus className="w-4 h-4 text-[#9FD8BD]" />
+        <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+          <Plus className="w-4 h-4 text-emerald-400" />
           New Webhook Endpoint
         </h3>
         <button
           type="button"
           onClick={() => setIsCreating(false)}
-          className="p-1 text-[#93A096] hover:text-[#EEEAE0] transition-colors"
+          className="p-1 text-zinc-500 hover:text-zinc-300 transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-[rgba(194,118,107,0.1)] border border-[#C2766B] text-[#C2766B] text-[10px] font-medium">
+        <div className="mb-4 p-3 bg-red-950/50 border border-red-900 text-red-400 text-[10px] font-bold uppercase tracking-widest">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label className="block text-[10px] font-medium text-[#93A096]">
+          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
             Label (optional)
           </label>
           <input
             name="name"
             type="text"
             placeholder="e.g. Slack Alerts"
-            className="w-full bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-3 py-2 text-[#EEEAE0] placeholder:text-[rgba(238,234,224,0.2)] focus:outline-none focus:border-[#9FD8BD] transition-colors text-sm"
+            className="w-full bg-zinc-900 border-2 border-zinc-800 px-3 py-2 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors text-sm"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-[10px] font-medium text-[#93A096]">
+          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
             Destination URL
           </label>
           <input
@@ -101,12 +101,12 @@ export function CreateWebhookForm({
             type="url"
             required
             placeholder="https://hooks.slack.com/services/..."
-            className="w-full bg-[rgba(238,234,224,0.04)] border border-[rgba(238,234,224,0.06)] px-3 py-2 text-[#EEEAE0] placeholder:text-[rgba(238,234,224,0.2)] focus:outline-none focus:border-[#9FD8BD] transition-colors text-sm"
+            className="w-full bg-zinc-900 border-2 border-zinc-800 px-3 py-2 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors text-sm"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="block text-[10px] font-medium text-[#93A096]">
+          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
             Trigger Events
           </label>
           <div className="flex flex-wrap gap-2">
@@ -115,10 +115,10 @@ export function CreateWebhookForm({
                 key={evt}
                 type="button"
                 onClick={() => toggleEvent(evt)}
-                className={`text-[10px] font-medium px-2.5 py-1.5 border transition-colors ${
+                className={`text-[10px] font-bold px-2.5 py-1.5 border-2 uppercase tracking-widest transition-colors ${
                   selectedEvents.includes(evt)
-                    ? "bg-[rgba(159,216,189,0.1)] border-[#9FD8BD]/50 text-[#9FD8BD]"
-                    : "bg-transparent border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#EEEAE0]"
+                    ? "bg-emerald-950/20 border-emerald-500/50 text-emerald-400"
+                    : "bg-zinc-950 border-zinc-800 text-zinc-600 hover:text-zinc-400"
                 }`}
               >
                 {evt}
@@ -126,7 +126,7 @@ export function CreateWebhookForm({
             ))}
           </div>
           {selectedEvents.length === 0 && (
-            <p className="text-[10px] text-[#C2766B] font-medium">
+            <p className="text-[10px] text-red-400 font-bold">
               Select at least one event
             </p>
           )}
@@ -136,7 +136,7 @@ export function CreateWebhookForm({
           <button
             type="submit"
             disabled={pending || selectedEvents.length === 0}
-            className="px-4 py-2 bg-[#9FD8BD] hover:bg-[#9FD8BD] text-zinc-950 font-medium text-xs rounded-[999px] transition-all disabled:opacity-50"
+            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest text-xs border-2 border-transparent transition-all disabled:opacity-50"
           >
             {pending ? "Provisioning..." : "Provision Endpoint"}
           </button>
@@ -144,7 +144,7 @@ export function CreateWebhookForm({
             type="button"
             onClick={() => setIsCreating(false)}
             disabled={pending}
-            className="px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#EEEAE0] text-xs font-medium transition-colors"
+            className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-400 hover:text-zinc-100 text-xs font-bold uppercase tracking-widest transition-colors"
           >
             Cancel
           </button>

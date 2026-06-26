@@ -37,7 +37,7 @@ export default function DeleteWorkspaceButton({
     return (
       <button
         onClick={() => setConfirm(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-transparent border border-[#C2766B]/50 text-[#C2766B] hover:bg-[rgba(194,118,107,0.1)] text-xs font-medium transition-colors"
+        className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-red-500/50 text-red-400 hover:bg-red-500/10 text-xs font-bold uppercase tracking-widest transition-colors"
       >
         <Trash2 className="w-4 h-4" />
         Delete Workspace
@@ -47,20 +47,20 @@ export default function DeleteWorkspaceButton({
 
   return (
     <div className="flex items-center gap-3">
-      <p className="text-xs text-[#C2766B] font-medium">
+      <p className="text-xs text-red-400 uppercase tracking-widest font-bold">
         Are you sure?
       </p>
       <button
         onClick={handleDelete}
         disabled={pending}
-        className="px-4 py-2 bg-[#C2766B] hover:bg-[#C2766B] text-zinc-950 font-medium text-xs rounded-[999px] transition-all disabled:opacity-50"
+        className="px-4 py-2 bg-red-500 hover:bg-red-400 text-zinc-950 font-bold uppercase tracking-widest text-xs border-2 border-transparent transition-all disabled:opacity-50"
       >
         {pending ? "Deleting..." : "Confirm"}
       </button>
       <button
         onClick={() => setConfirm(false)}
         disabled={pending}
-        className="px-4 py-2 bg-transparent border border-[rgba(238,234,224,0.06)] text-[#93A096] hover:text-[#EEEAE0] text-xs font-medium transition-colors disabled:opacity-50"
+        className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-400 hover:text-zinc-100 text-xs font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
       >
         Cancel
       </button>

@@ -3,7 +3,7 @@
 import { useLiveMonitors } from "../hooks/use-live-monitors";
 import Link from "next/link";
 import {
-  Trash2, Play, Pause, ExternalLink, Activity,
+  Trash2, Play, Pause, ExternalLink, Activity, ServerCrash,
   ArrowUpCircle, ArrowDownCircle,
 } from "lucide-react";
 import { pauseMonitor, resumeMonitor, triggerCheck, deleteMonitor } from "@/app/(dashboard)/workspaces/[workspaceId]/monitors/actions";
@@ -42,101 +42,99 @@ export default function MonitorGrid({ workspaceId, initialMonitors, canEdit }: M
         return (
           <div
             key={monitor.id}
-            className={`gradient-border-shell group ${
-              isDown ? "" : ""
+            className={`flex flex-col justify-between h-44 p-6 border-2 transition-colors group ${
+              isDown
+                ? "border-red-900 bg-red-950/10 hover:border-red-500"
+                : isDegraded
+                  ? "border-amber-900 bg-amber-950/10 hover:border-amber-500"
+                  : "bg-zinc-950 border-zinc-800 hover:border-emerald-500/50"
             }`}
           >
-            <div className={`shell-inner flex flex-col justify-between h-44 p-[12px] ${
-              isDown ? "border border-[rgba(194,118,107,0.2)]" :
-              isDegraded ? "border border-[rgba(226,163,86,0.2)]" :
-              "border border-transparent"
-            }`}>
-              <Link
-                href={`/workspaces/${workspaceId}/monitors/${monitor.id}`}
-                className="flex items-start gap-4"
-              >
-                <div className="flex-shrink-0 mt-1">
-                  {isUp && <ArrowUpCircle className="w-5 h-5 text-[#9FD8BD]" />}
-                  {isDown && <ArrowDownCircle className="w-5 h-5 text-[#C2766B] animate-breathe" />}
-                  {isDegraded && <Activity className="w-5 h-5 text-[#E2A356]" />}
-                  {isPaused && <Pause className="w-5 h-5 text-[#93A096]" />}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-medium text-[#EEEAE0] truncate">
-                    {monitor.name}
-                  </h3>
-                  <p className="text-body-md text-[#93A096] truncate mt-1">
-                    {monitor.url}
-                  </p>
-                </div>
-              </Link>
-
-              <div className="flex items-center gap-4 mt-2 pt-3 border-t border-[rgba(238,234,224,0.06)]">
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-[#93A096] font-medium">Latency</span>
-                  <span className={`text-sm font-medium ${
-                    isDown ? "text-[#C2766B]" : isDegraded ? "text-[#E2A356]" : "text-[#9FD8BD]"
-                  }`}>
-                    {live ? `${live.latency}ms` : "---"}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-[#93A096] font-medium">HTTP</span>
-                  <span className={`text-sm font-medium ${
-                    isDown ? "text-[#C2766B]" : "text-[#EEEAE0]"
-                  }`}>
-                    {live?.statusCode ?? "---"}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-[#93A096] font-medium">Last Ping</span>
-                  <span className="text-xs text-[#EEEAE0]/70">
-                    {live?.lastChecked
-                      ? new Date(live.lastChecked).toLocaleTimeString()
-                      : monitor.lastCheckedAt
-                        ? new Date(monitor.lastCheckedAt).toLocaleTimeString()
-                        : "Awaiting..."}
-                  </span>
-                </div>
+            <Link
+              href={`/workspaces/${workspaceId}/monitors/${monitor.id}`}
+              className="flex items-start gap-4"
+            >
+              <div className="flex-shrink-0 mt-1">
+                {isUp && <ArrowUpCircle className="w-5 h-5 text-emerald-500" />}
+                {isDown && <ArrowDownCircle className="w-5 h-5 text-red-500 animate-pulse" />}
+                {isDegraded && <Activity className="w-5 h-5 text-amber-500" />}
+                {isPaused && <Pause className="w-5 h-5 text-zinc-600" />}
               </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-zinc-100 uppercase tracking-widest truncate">
+                  {monitor.name}
+                </h3>
+                <p className="text-xs text-zinc-500 truncate mt-1">
+                  {monitor.url}
+                </p>
+              </div>
+            </Link>
 
-              <div className="flex items-center justify-end gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                {canEdit && (
-                  <>
-                    {!isPaused ? (
-                      <form action={pauseMonitor}>
-                        <input type="hidden" name="workspaceId" value={workspaceId} />
-                        <input type="hidden" name="monitorId" value={monitor.id} />
-                        <button type="submit" className="p-1.5 border border-[rgba(238,234,224,0.1)] rounded-[999px] text-[#93A096] hover:text-[#E2A356] hover:border-[rgba(226,163,86,0.3)] transition-colors" title="Pause Target">
-                          <Pause className="w-3.5 h-3.5" />
-                        </button>
-                      </form>
-                    ) : (
-                      <form action={resumeMonitor}>
-                        <input type="hidden" name="workspaceId" value={workspaceId} />
-                        <input type="hidden" name="monitorId" value={monitor.id} />
-                        <button type="submit" className="p-1.5 border border-[rgba(238,234,224,0.1)] rounded-[999px] text-[#93A096] hover:text-[#9FD8BD] hover:border-[rgba(159,216,189,0.3)] transition-colors" title="Resume Target">
-                          <Play className="w-3.5 h-3.5" />
-                        </button>
-                      </form>
-                    )}
-                    <form action={triggerCheck}>
+            <div className="flex items-center gap-4 mt-2 pt-3 border-t-2 border-zinc-900">
+              <div className="flex flex-col">
+                <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest">Latency</span>
+                <span className={`text-base font-black ${
+                  isDown ? "text-red-400" : isDegraded ? "text-amber-400" : "text-emerald-400"
+                }`}>
+                  {live ? `${live.latency}ms` : "---"}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest">HTTP</span>
+                <span className={`text-base font-black ${
+                  isDown ? "text-red-400" : "text-zinc-300"
+                }`}>
+                  {live?.statusCode ?? "---"}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-zinc-600 uppercase font-bold tracking-widest">Last Ping</span>
+                <span className="text-xs text-zinc-400">
+                  {live?.lastChecked
+                    ? new Date(live.lastChecked).toLocaleTimeString()
+                    : monitor.lastCheckedAt
+                      ? new Date(monitor.lastCheckedAt).toLocaleTimeString()
+                      : "Awaiting..."}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              {canEdit && (
+                <>
+                  {!isPaused ? (
+                    <form action={pauseMonitor}>
                       <input type="hidden" name="workspaceId" value={workspaceId} />
                       <input type="hidden" name="monitorId" value={monitor.id} />
-                      <button type="submit" className="p-1.5 border border-[rgba(238,234,224,0.1)] rounded-[999px] text-[#93A096] hover:text-[#A3D1DF] hover:border-[rgba(163,209,223,0.3)] transition-colors" title="Trigger Check">
-                        <ExternalLink className="w-3.5 h-3.5" />
+                      <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-amber-400 hover:border-amber-500 transition-colors" title="Pause Target">
+                        <Pause className="w-4 h-4" />
                       </button>
                     </form>
-                    <form action={deleteMonitor}>
+                  ) : (
+                    <form action={resumeMonitor}>
                       <input type="hidden" name="workspaceId" value={workspaceId} />
                       <input type="hidden" name="monitorId" value={monitor.id} />
-                      <button type="submit" className="p-1.5 border border-[rgba(238,234,224,0.1)] rounded-[999px] text-[#93A096] hover:text-[#C2766B] hover:border-[rgba(194,118,107,0.3)] transition-colors" title="Purge Target">
-                        <Trash2 className="w-3.5 h-3.5" />
+                      <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors" title="Resume Target">
+                        <Play className="w-4 h-4" />
                       </button>
                     </form>
-                  </>
-                )}
-              </div>
+                  )}
+                  <form action={triggerCheck}>
+                    <input type="hidden" name="workspaceId" value={workspaceId} />
+                    <input type="hidden" name="monitorId" value={monitor.id} />
+                    <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors" title="Trigger Check">
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+                  </form>
+                  <form action={deleteMonitor}>
+                    <input type="hidden" name="workspaceId" value={workspaceId} />
+                    <input type="hidden" name="monitorId" value={monitor.id} />
+                    <button type="submit" className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors" title="Purge Target">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </form>
+                </>
+              )}
             </div>
           </div>
         );

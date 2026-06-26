@@ -14,90 +14,91 @@ function LoginForm() {
   const inviteToken = searchParams.get("invite_token");
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 selection:bg-[#9FD8BD]/20 selection:text-[#9FD8BD]">
+    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-mono flex items-center justify-center p-6 selection:bg-emerald-500/30 selection:text-emerald-400">
+      {/* Background Pulse matching the Core Theme */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500 opacity-[0.05] blur-[150px] pointer-events-none animate-pulse" />
+
       <div className="w-full max-w-md relative z-10">
         {/* Header */}
         <div className="mb-10 text-center">
-          <div className="inline-flex p-3 bg-[rgba(159,216,189,0.1)] border border-[rgba(159,216,189,0.2)] rounded-[4px] mb-6">
-            <Activity className="w-6 h-6 text-[#9FD8BD]" />
+          <div className="inline-flex p-3 bg-zinc-900 border-2 border-zinc-800 mb-6">
+            <Activity className="w-6 h-6 text-emerald-400" />
           </div>
-          <h1 className="text-3xl font-medium text-[#EEEAE0]">
-            Auth<span className="text-[#9FD8BD]">Gateway</span>
+          <h1 className="text-3xl font-extrabold uppercase tracking-widest text-zinc-100">
+            Auth<span className="text-emerald-400">Gateway</span>
           </h1>
-          <p className="text-[#93A096] text-body-md mt-2">
+          <p className="text-zinc-500 text-sm mt-2 uppercase tracking-wide">
             Establish Secure Session
           </p>
         </div>
 
-        {/* Glass Form Card */}
-        <div className="gradient-border-shell">
-          <div className="shell-inner p-[29.6px]">
-            <form action={formAction} className="space-y-6">
-              {callbackUrl && (
-                <input type="hidden" name="callbackUrl" value={callbackUrl} />
-              )}
-              {inviteToken && (
-                <input type="hidden" name="invite_token" value={inviteToken} />
-              )}
-              {state?.error && (
-                <div className="p-4 bg-[rgba(194,118,107,0.1)] border border-[rgba(194,118,107,0.3)] rounded-[4px] flex items-start gap-3 text-sm text-[#C2766B]">
-                  <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                  <p className="pt-0.5">{state.error}</p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="email"
-                  className="text-label-md text-[#93A096]"
-                >
-                  Email Identity
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="admin@pulseops.dev"
-                  className="w-full bg-[rgba(238,234,224,0.03)] border border-[rgba(238,234,224,0.15)] rounded-[9px] px-[12px] py-[10px] text-sm text-[#EEEAE0] placeholder:text-[#93A096]/40 focus-visible:border-[#9FD8BD] focus-visible:ring-2 focus-visible:ring-[rgba(159,216,189,0.2)] outline-none transition-colors"
-                />
+        {/* Sharp Materialistic Form Box with Offset Shadow */}
+        <div className="bg-zinc-950 border-2 border-zinc-800 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.1)]">
+          <form action={formAction} className="space-y-6">
+            {callbackUrl && (
+              <input type="hidden" name="callbackUrl" value={callbackUrl} />
+            )}
+            {inviteToken && (
+              <input type="hidden" name="invite_token" value={inviteToken} />
+            )}
+            {state?.error && (
+              <div className="p-4 bg-red-950/30 border-2 border-red-500/50 flex items-start gap-3 text-sm text-red-400">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                <p className="pt-0.5">{state.error}</p>
               </div>
+            )}
 
-              <PasswordInput
-                id="password"
-                name="password"
-                label="Access Token"
-                required
-                placeholder="••••••••"
-              />
-
-              <div className="flex justify-end">
-                <Link
-                  href="/forgot-password"
-                  className="text-label-md text-[#93A096] hover:text-[#EEEAE0] transition-colors"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isPending}
-                className="w-full bg-[#EEEAE0] hover:bg-[#EEEAE0]/90 text-[#0A0F0C] rounded-[999px] px-[15.2px] py-[11px] text-label-md font-medium border-0 transition-all disabled:opacity-50 cursor-pointer"
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="block text-xs font-bold text-zinc-400 uppercase tracking-widest"
               >
-                {isPending ? "Authenticating..." : "Initialize Session"}
-              </button>
-            </form>
-          </div>
+                Email Identity
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                placeholder="admin@pulseops.dev"
+                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
+              />
+            </div>
+
+            <PasswordInput
+              id="password"
+              name="password"
+              label="Access Token"
+              required
+              placeholder="••••••••"
+            />
+
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-[11px] text-zinc-500 hover:text-cyan-400 font-bold uppercase tracking-widest transition-colors"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-4 border-2 border-transparent transition-all disabled:opacity-50 rounded-none"
+            >
+              {isPending ? "Authenticating..." : "Initialize Session"}
+            </button>
+          </form>
         </div>
 
         {/* Footer Link */}
         <div className="mt-8 text-center">
-          <p className="text-body-md text-[#93A096]">
+          <p className="text-zinc-500 text-sm">
             No active profile?{" "}
             <Link
               href={`/signup${inviteToken ? `?invite_token=${inviteToken}` : ""}`}
-              className="text-[#9FD8BD] hover:text-[#9FD8BD]/80 hover:underline font-medium"
+              className="text-cyan-400 hover:text-cyan-300 hover:underline font-bold uppercase tracking-wide"
             >
               Provision one
             </Link>

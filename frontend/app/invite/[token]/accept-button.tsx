@@ -15,7 +15,7 @@ export function AcceptInviteButton({
       <input type="hidden" name="token" value={token} />
       <button
         type="submit"
-        className="w-full bg-[#EEEAE0] hover:bg-[#EEEAE0]/90 text-[#0A0F0C] rounded-[999px] py-4 border-0 transition-all text-label-md font-medium flex items-center justify-center gap-3"
+        className="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-4 border-2 border-transparent transition-all text-sm flex items-center justify-center gap-3"
       >
         <UserPlus className="w-5 h-5" />
         Accept Invite to {workspaceName}
