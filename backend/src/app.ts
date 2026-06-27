@@ -11,6 +11,7 @@ import { billingRoutes } from "./modules/billing/billing.routes";
 import { connectKafka, kafkaProducer, kafkaConsumer } from "./lib/kafka";
 import { startMetricsConsumer } from "./modules/telemetry/metrics.consumer";
 import { startScheduler, stopScheduler } from "./modules/monitors/monitor.scheduler";
+import { startPingEngine } from "./modules/monitors/monitor.engine";
 
 export async function buildApp() {
     const app = Fastify({
@@ -69,6 +70,7 @@ export async function start(app: FastifyInstance) {
         await connectKafka();
         await startMetricsConsumer();
         startScheduler(60000);
+        startPingEngine();
 
         const port = Number(process.env.PORT) || 4000;
         const host = process.env.HOST || "0.0.0.0";
