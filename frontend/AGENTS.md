@@ -32,33 +32,44 @@
 ## Backend API (at `http://127.0.0.1:4000/api/v1`)
 
 ### Auth
-- `POST /auth/signup` — create user {name, email, password}
+- `POST /auth/signup` — create user {name, email, password}, returns {user, accessToken}
 - `POST /auth/login` — returns {user, accessToken}
 - `POST /auth/refresh` — re-signs token ignoring expiry
 - `GET /auth/me` — current user
+- `PATCH /auth/me` — update name, email, or password
+- `POST /auth/forgot-password` — sends reset link via SMTP
+- `POST /auth/reset-password` — reset password with token
 
 ### Workspaces
 - `POST /workspaces` — create
 - `GET /workspaces` — list user's
-- `GET /workspaces/:id` — get one
+- `GET /workspaces/:id` — get one (includes role, planTier)
 - `PATCH /workspaces/:id` — update
 - `DELETE /workspaces/:id` — delete
+- `GET /workspaces/:id/members` — list members with roles
+- `PATCH /workspaces/:id/members/:userId` — update member role (ADMIN, MEMBER, VIEWER)
+- `DELETE /workspaces/:id/members/:userId` — remove member
 - `POST /workspaces/:id/api-keys` — create API key
 - `GET /workspaces/:id/api-keys` — list
-- `DELETE /api-keys/:keyId` — revoke
+- `DELETE /workspaces/api-keys/:keyId` — revoke
+- `GET /workspaces/:id/invites` — list pending invites
+- `POST /workspaces/:id/invites` — create invite
+- `DELETE /workspaces/:id/invites/:inviteId` — revoke invite
 
 ### Monitors
 - `POST /workspaces/:wsId/monitors` — create
 - `GET /workspaces/:wsId/monitors` — list
+- `GET /workspaces/:wsId/monitors/live` — live state from Redis cache (polled every 5s by frontend)
 - `GET /workspaces/:wsId/monitors/:monitorId` — get one (includes TLS fields)
-- `POST /monitors/:monitorId/check` — on-demand ping
-- `GET /monitors/:monitorId/checks` — ping history (array of MonitorCheck)
-- `GET /monitors/:monitorId/stats` — {totalChecks, upChecks, downChecks, uptimePercentage, averageResponseTimeMs, latestStatus}
-- `POST /monitors/:monitorId/pause`
-- `POST /monitors/:monitorId/resume`
-- `PATCH /monitors/:monitorId` — update config
-- `DELETE /monitors/:monitorId`
-- `POST /monitors/:monitorId/heartbeat` — external push (API key auth)
+- `POST /workspaces/:wsId/monitors/:monitorId/check` — on-demand ping (enqueues BullMQ job)
+- `GET /workspaces/:wsId/monitors/:monitorId/checks` — ping history
+- `GET /workspaces/:wsId/monitors/:monitorId/stats` — {totalChecks, upChecks, downChecks, uptimePercentage, averageResponseTimeMs, latestStatus}
+- `GET /workspaces/:wsId/monitors/:monitorId/analytics` — uptime heatmap + daily aggregates
+- `POST /workspaces/:wsId/monitors/:monitorId/pause`
+- `POST /workspaces/:wsId/monitors/:monitorId/resume`
+- `PATCH /workspaces/:wsId/monitors/:monitorId` — update config
+- `DELETE /workspaces/:wsId/monitors/:monitorId`
+- `POST /monitors/:monitorId/heartbeat` — external push (API key auth, no workspace prefix)
 
 ### Incidents
 - `GET /workspaces/:wsId/incidents` — list
@@ -67,17 +78,30 @@
 - `POST /incidents/:incidentId/resolve`
 
 ### Webhooks
-- `POST /workspaces/:wsId/webhooks` — register
+- `POST /workspaces/:wsId/webhooks` — register (name, url, events[])
 - `GET /workspaces/:wsId/webhooks` — list
-- `DELETE /webhooks/:webhookId` — remove
-- `GET /webhooks/:webhookId/delivery-logs` — delivery history
+- `PATCH /workspaces/:wsId/webhooks/:whId` — update (name, url, events)
+- `DELETE /workspaces/:wsId/webhooks/:whId` — remove
+- `POST /workspaces/:wsId/webhooks/:whId/toggle` — enable/disable
+- `POST /workspaces/:wsId/webhooks/:whId/test` — send test ping
+- `GET /workspaces/:wsId/webhooks/:whId/delivery-logs` — paginated delivery history
+
+### Invites
+- `GET /invites/:token` — get invite details
+- `POST /invites/:token/accept` — accept invite
+
+### Billing
+- `POST /workspaces/:wsId/subscription` — create Razorpay subscription
+- `POST /workspaces/:wsId/subscription/verify` — verify Razorpay payment
 
 ### Status (public, no auth)
 - `GET /status/:slug` — public status page data (monitors, systemState, 90-day uptime heatmap)
 
 ## Shared Types (`lib/types.ts`)
 - `MonitorStatus: "UP" | "DOWN" | "DEGRADED" | "PAUSED"`
-- `Monitor`, `MonitorCheck`, `MonitorStats`, `ApiResponse<T>`, `CreateMonitorInput`, `UpdateMonitorInput`
+- `WorkspaceRole: "OWNER" | "ADMIN" | "MEMBER" | "VIEWER"`
+- `Monitor`, `MonitorCheck`, `MonitorStats`, `MonitorLive`, `Incident`, `WebhookEndpoint`, `WebhookDeliveryLog`
+- `ApiResponse<T>`, `CreateMonitorInput`, `UpdateMonitorInput`
 
 ## Project Structure
 - `app/(auth)/` — login/signup (no sidebar)
