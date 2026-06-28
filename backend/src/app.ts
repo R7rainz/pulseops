@@ -88,8 +88,8 @@ export function setupShutdownHandlers(app: FastifyInstance) {
         process.on(signal, async () => {
             app.log.info(`[SHUTDOWN] Intercepted ${signal}. Powering down tracking engines...`);
             stopScheduler();
-            await kafkaProducer.disconnect();
-            await kafkaConsumer.disconnect();
+            try { await kafkaProducer.disconnect(); } catch {}
+            try { await kafkaConsumer.disconnect(); } catch {}
             await app.close();
             process.exit(0);
         });

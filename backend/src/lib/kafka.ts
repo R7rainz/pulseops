@@ -15,7 +15,11 @@ export const kafkaProducer = kafka.producer()
 export const kafkaConsumer = kafka.consumer({ groupId: "pulseops-backend-consumers" })
 
 export async function connectKafka() {
-    await kafkaProducer.connect()
-    await kafkaConsumer.connect()
-    console.log("[KAFKA] Producer and Consumer engines are securely connected to broker cluster")
+    try {
+        await kafkaProducer.connect()
+        await kafkaConsumer.connect()
+        console.log("[KAFKA] Producer and Consumer engines are securely connected to broker cluster")
+    } catch (err) {
+        console.error("[KAFKA] Failed to connect — continuing without Kafka:", (err as Error).message)
+    }
 }
