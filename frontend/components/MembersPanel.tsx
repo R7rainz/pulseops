@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { API_URL } from "@/lib/constants";
 import { apiFetch } from "@/lib/apiFetch";
-import { Crown, Shield, User, Mail } from "lucide-react";
+import Link from "next/link";
+import { Crown, Shield, User, Settings } from "lucide-react";
 
 interface Member {
   id: number;
@@ -90,6 +91,13 @@ export default async function MembersPanel({ workspaceId }: { workspaceId: strin
           );
         })}
       </div>
+      <Link
+        href={`/workspaces/${workspaceId}/settings`}
+        className="flex items-center gap-2 px-5 py-3 border-t-2 border-zinc-900 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-emerald-400 hover:bg-zinc-900/30 transition-colors"
+      >
+        <Settings className="w-3 h-3" />
+        Manage in Settings
+      </Link>
     </div>
   );
 }
