@@ -30,8 +30,6 @@ export async function signupService(input: SignupInput) {
       email: input.email,
       passwordHash,
     },
-    // Only these fields come back from Prisma.
-    // passwordHash will not be returned.
     select: {
       id: true,
       name: true,
@@ -40,7 +38,12 @@ export async function signupService(input: SignupInput) {
     },
   });
 
-  return user;
+  const accessToken = signAccessToken({ userId: user.id });
+
+  return {
+    user,
+    accessToken,
+  };
 }
 
 export async function loginService(input: LoginInput) {

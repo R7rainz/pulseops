@@ -141,7 +141,7 @@ export async function deleteWebhook(formData: FormData) {
 
   try {
     const res = await fetch(
-      `${API_URL}/api/v1/webhooks/${webhookId}`,
+      `${API_URL}/api/v1/workspaces/${workspaceId}/webhooks/${webhookId}`,
       {
         method: "DELETE",
         headers: {

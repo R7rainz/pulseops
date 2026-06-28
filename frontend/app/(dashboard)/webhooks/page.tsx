@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { API_URL } from "@/lib/constants";
 import { apiFetch } from "@/lib/apiFetch";
 
 export default async function WebhooksPage() {
@@ -8,7 +9,7 @@ export default async function WebhooksPage() {
   if (!token) redirect("/login");
 
   const res = await apiFetch(
-    "http://127.0.0.1:4000/api/v1/workspaces",
+    `${API_URL}/api/v1/workspaces`,
     { token, cookieStore, cache: "no-store" },
   );
 
