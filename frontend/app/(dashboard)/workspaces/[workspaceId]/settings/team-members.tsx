@@ -61,6 +61,7 @@ export default function TeamMembers({
                   <input type="hidden" name="workspaceId" value={workspaceId} />
                   <input type="hidden" name="userId" value={m.userId} />
                   <select
+                    key={m.role + m.userId}
                     name="role"
                     defaultValue={m.role}
                     onChange={(e) => e.target.form?.requestSubmit()}
