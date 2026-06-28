@@ -17,7 +17,7 @@ Routes → Controller → Service → Prisma
 - Each module self-contained in `src/modules/<name>/`
 
 ## Project Structure
-- `prisma/schema.prisma` — database schema (8 models)
+- `prisma/schema.prisma` — database schema (User, Workspace, WorkspaceMember, Monitor, MonitorCheck, Incident, ApiKey, WebhookEndpoint, WebhookDeliveryLog, WorkspaceInvite, Subscription)
 - `prisma.config.ts` — Prisma v7 config (loads dotenv, exports datasource URL)
 - `src/server.ts` — entry point (loads dotenv, calls buildApp, listens)
 - `src/app.ts` — Fastify bootstrap: CORS, register all routes, start ping engine
@@ -48,28 +48,43 @@ Routes → Controller → Service → Prisma
 
 ### Auth
 - `POST /auth/signup`, `POST /auth/login`, `POST /auth/refresh`, `GET /auth/me`
+- `PATCH /auth/me` — update name, email, or password
+- `POST /auth/forgot-password` — sends reset link via SMTP (Gmail App Password)
+- `POST /auth/reset-password` — reset with crypto token (SHA256, 1hr expiry)
 
 ### Workspaces
-- CRUD at `/workspaces/:id`, API key management at `/:id/api-keys`
+- CRUD at `/workspaces/:id`
+- `GET /workspaces/:id/members` — list members with roles
+- `PATCH /workspaces/:id/members/:userId` — update role
+- `DELETE /workspaces/:id/members/:userId` — remove member
+- API key management at `/:id/api-keys` + `DELETE /workspaces/api-keys/:keyId`
+- Invites: `GET /workspaces/:id/invites`, `POST /workspaces/:id/invites`, `DELETE /workspaces/:id/invites/:inviteId`
+- Billing: `POST /subscription`, `POST /subscription/verify`
 
 ### Monitors
-- `POST /workspaces/:wsId/monitors`, `GET /workspaces/:wsId/monitors`
+- `POST /workspaces/:wsId/monitors`, `GET /workspaces/:wsId/monitors`, `GET /workspaces/:wsId/monitors/live`
 - `GET /workspaces/:wsId/monitors/:monitorId` — includes TLS fields
-- `GET /monitors/:monitorId/checks` — ping history
-- `GET /monitors/:monitorId/stats` — aggregate stats
-- `POST /monitors/:monitorId/{pause,resume,check}`
+- `GET /workspaces/:wsId/monitors/:monitorId/checks` — ping history
+- `GET /workspaces/:wsId/monitors/:monitorId/stats` — aggregate stats
+- `GET /workspaces/:wsId/monitors/:monitorId/analytics` — uptime heatmap
+- `POST /workspaces/:wsId/monitors/:monitorId/{pause,resume,check}`
+- `PATCH /workspaces/:wsId/monitors/:monitorId`, `DELETE /workspaces/:wsId/monitors/:monitorId`
+- `POST /monitors/:monitorId/heartbeat` — external push (API key auth, no workspace prefix)
 
 ### Incidents
 - `GET /workspaces/:wsId/incidents`, `POST /incidents/:id/{acknowledge,resolve}`
 
 ### Webhooks
-- `POST /workspaces/:wsId/webhooks`, `GET /webhooks/:id/delivery-logs`
+- `POST /workspaces/:wsId/webhooks`, `GET /workspaces/:wsId/webhooks`
+- `PATCH /workspaces/:wsId/webhooks/:whId`, `DELETE /workspaces/:wsId/webhooks/:whId`
+- `POST /workspaces/:wsId/webhooks/:whId/{toggle,test}`
+- `GET /workspaces/:wsId/webhooks/:whId/delivery-logs` — paginated delivery history
 
 ### Status (no auth)
 - `GET /status/:slug` — public page data + 90-day uptime heatmap
 
 ## Prisma Models
-- `User`, `Workspace`, `WorkspaceMember`, `Monitor`, `MonitorCheck`, `Incident`, `ApiKey`, `WebhookEndpoint`, `WebhookDeliveryLog`
+- `User`, `Workspace`, `WorkspaceMember`, `Monitor`, `MonitorCheck`, `Incident`, `ApiKey`, `WebhookEndpoint`, `WebhookDeliveryLog`, `WorkspaceInvite`, `Subscription`
 - All foreign keys cascade on delete
 
 ## Environment Variables
@@ -81,6 +96,14 @@ Routes → Controller → Service → Prisma
 | `HOST` | 0.0.0.0 |
 | `REDIS_HOST` | localhost |
 | `REDIS_PORT` | 6379 |
+| `SMTP_HOST` | smtp.gmail.com |
+| `SMTP_PORT` | 587 |
+| `SMTP_USER` | Gmail address |
+| `SMTP_PASS` | Gmail App Password |
+| `KAFKA_BROKER` | localhost:29092 |
+| `RAZORPAY_KEY_ID` | — |
+| `RAZORPAY_KEY_SECRET` | — |
+| `FRONTEND_URL` | http://localhost:3000 |
 
 ## Scripts
 - `pnpm dev` — `tsx watch src/server.ts` (hot-reload)
