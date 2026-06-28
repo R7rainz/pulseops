@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { prisma } from "../../lib/db";
+import { redis } from "../../lib/redis";
 import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 import { inspectSslCertificate } from "./tls.inspector";
 
@@ -162,6 +163,17 @@ export function startPingEngine() {
           }
 
           const txResults = await prisma.$transaction(transactionQueries);
+
+          // 4.5. Write live state to Redis for the live-monitors endpoint
+          const liveState = {
+            status: targetStatus,
+            latency: latencyMs,
+            statusCode,
+            lastChecked: new Date().toISOString(),
+          };
+          redis
+            .set(`monitor:${monitor.id}:live`, JSON.stringify(liveState), "EX", 300)
+            .catch((err: any) => console.error("[ENGINE] Redis live write failed:", err));
 
           // 5. Blast Webhooks
           if (newlyTriggeredIncident) {
