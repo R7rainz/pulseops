@@ -19,11 +19,11 @@ export async function removeMember(formData: FormData) {
   const workspaceId = formData.get("workspaceId") as string;
   const userId = formData.get("userId") as string;
 
-  if (!workspaceId || !userId) return { error: "Missing parameters" };
+  if (!workspaceId || !userId) return;
 
   const cookieStore = await cookies();
   const token = cookieStore.get("pulseops_token")?.value;
-  if (!token) return { error: "Unauthenticated" };
+  if (!token) return;
 
   try {
     const res = await fetch(
@@ -36,14 +36,14 @@ export async function removeMember(formData: FormData) {
 
     if (!res.ok) {
       const err = await res.json();
-      return { error: err.message || "Failed to remove member" };
+      setToast(cookieStore, err.message || "Failed to remove member", "error");
+      return;
     }
 
     setToast(cookieStore, "Member removed");
     revalidatePath(`/workspaces/${workspaceId}/settings`);
-    return { success: true };
   } catch {
-    return { error: "Network error removing member" };
+    setToast(cookieStore, "Network error removing member", "error");
   }
 }
 
@@ -52,11 +52,11 @@ export async function updateMemberRole(formData: FormData) {
   const userId = formData.get("userId") as string;
   const role = formData.get("role") as string;
 
-  if (!workspaceId || !userId || !role) return { error: "Missing parameters" };
+  if (!workspaceId || !userId || !role) return;
 
   const cookieStore = await cookies();
   const token = cookieStore.get("pulseops_token")?.value;
-  if (!token) return { error: "Unauthenticated" };
+  if (!token) return;
 
   try {
     const res = await fetch(
@@ -73,13 +73,13 @@ export async function updateMemberRole(formData: FormData) {
 
     if (!res.ok) {
       const err = await res.json();
-      return { error: err.message || "Failed to update role" };
+      setToast(cookieStore, err.message || "Failed to update role", "error");
+      return;
     }
 
     setToast(cookieStore, "Member role updated");
     revalidatePath(`/workspaces/${workspaceId}/settings`);
-    return { success: true };
   } catch {
-    return { error: "Network error updating role" };
+    setToast(cookieStore, "Network error updating role", "error");
   }
 }
