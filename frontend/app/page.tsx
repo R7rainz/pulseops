@@ -2,7 +2,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/lib/constants";
-import Aurora from "@/components/Aurora";
+import Reactor from "@/components/Reactor";
+import ThemeToggle from "@/components/ThemeToggle";
 import { Brand } from "@/components/Brand";
 import {
   ArrowRight,
@@ -51,21 +52,19 @@ export default async function RootPage() {
   }
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-background text-foreground selection:bg-up/30">
-      {/* AURORA BACKGROUND */}
-      <div className="fixed inset-0 -z-20 pointer-events-none">
-        {/* soft colour wash (always visible, even before canvas paints) */}
-        <div className="absolute inset-0 bg-[radial-gradient(55%_45%_at_22%_25%,rgba(159,216,189,0.16),transparent_60%),radial-gradient(50%_45%_at_82%_32%,rgba(163,209,223,0.13),transparent_60%),radial-gradient(60%_50%_at_55%_98%,rgba(86,196,160,0.12),transparent_60%)]" />
-        <Aurora className="absolute inset-0 h-full w-full" />
-        {/* vignette for depth + readability */}
-        <div className="absolute inset-0 bg-[radial-gradient(125%_95%_at_50%_28%,transparent_42%,rgba(7,11,9,0.66)_100%)]" />
+    <div className="relative min-h-dvh overflow-hidden text-foreground selection:bg-primary/20">
+      {/* PAGE BACKGROUND — clean light base with soft blue glows */}
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <div className="absolute inset-0 bg-background" />
+        <div className="absolute inset-0 bg-[radial-gradient(90%_60%_at_50%_-5%,rgba(37,99,235,0.10),transparent_60%),radial-gradient(70%_55%_at_85%_105%,rgba(14,165,233,0.08),transparent_60%)]" />
       </div>
 
       {/* NAV */}
       <nav className="sticky top-0 z-50 border-b border-border bg-background/70 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
           <Brand href="/" />
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <ThemeToggle className="h-9 w-9" />
             <Link
               href="/login"
               className="px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -80,39 +79,49 @@ export default async function RootPage() {
       </nav>
 
       {/* HERO */}
-      <section className="mx-auto flex max-w-6xl flex-col items-center px-6 pb-24 pt-24 text-center sm:pt-32">
-        <div className="mb-8 inline-flex max-w-full items-center gap-2.5 rounded-full border border-border bg-surface/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-up opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-up" />
-          </span>
-          <span className="truncate">Real-time monitoring &amp; incident alerts</span>
+      <section className="relative mx-auto max-w-6xl px-6 pb-24 pt-24 sm:pt-32">
+        {/* reactor render behind the hero */}
+        <div className="pointer-events-none absolute inset-x-0 -top-16 bottom-0 overflow-hidden">
+          <div className="absolute left-1/2 top-1/2 h-[140%] w-[140%] -translate-x-1/2 -translate-y-1/2">
+            <Reactor className="absolute inset-0 h-full w-full" />
+          </div>
+          <div className="absolute left-1/2 top-[42%] h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.16),transparent_62%)] blur-2xl" />
         </div>
 
-        <h1 className="mx-auto max-w-3xl text-balance font-display text-[2.25rem] font-semibold leading-[1.08] tracking-tight sm:text-5xl md:text-6xl">
-          Know the moment <span className="text-up">something breaks.</span>
-        </h1>
+        <div className="relative z-10 flex flex-col items-center text-center">
+          <div className="mb-8 inline-flex max-w-full items-center gap-2.5 rounded-full border border-border bg-surface/70 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+            </span>
+            <span className="truncate">Real-time monitoring &amp; incident alerts</span>
+          </div>
 
-        <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
-          PulseOps watches your endpoints around the clock — latency, uptime, SSL, and incidents —
-          and tells your team before your customers do.
-        </p>
+          <h1 className="mx-auto max-w-3xl text-balance font-display font-semibold leading-[1.06] tracking-tight text-[clamp(2.25rem,6vw,4.25rem)]">
+            Know the moment <span className="text-primary">something breaks.</span>
+          </h1>
 
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/signup" className="btn btn-primary group px-7 py-3.5 text-base">
-            Start monitoring
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-          <a href="#features" className="btn btn-ghost px-7 py-3.5 text-base">
-            See features
-          </a>
-        </div>
+          <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+            PulseOps watches your endpoints around the clock — latency, uptime, SSL, and incidents —
+            and tells your team before your customers do.
+          </p>
 
-        {/* METRICS BAR */}
-        <div className="mx-auto mt-20 grid max-w-3xl grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3">
-          <Stat icon={<Timer className="h-4 w-4" />} label="Median check latency" value="<12ms" />
-          <Stat icon={<Gauge className="h-4 w-4" />} label="Tracked uptime SLA" value="99.97%" />
-          <Stat icon={<Activity className="h-4 w-4" />} label="Monitors per workspace" value="Unlimited" />
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link href="/signup" className="btn btn-primary group px-7 py-3.5 text-base">
+              Start monitoring
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <a href="#features" className="btn btn-ghost bg-surface/60 px-7 py-3.5 text-base backdrop-blur">
+              See features
+            </a>
+          </div>
+
+          {/* METRICS BAR */}
+          <div className="mx-auto mt-20 grid max-w-3xl grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border shadow-sm sm:grid-cols-3">
+            <Stat icon={<Timer className="h-4 w-4" />} label="Median check latency" value="<12ms" />
+            <Stat icon={<Gauge className="h-4 w-4" />} label="Tracked uptime SLA" value="99.97%" />
+            <Stat icon={<Activity className="h-4 w-4" />} label="Monitors per workspace" value="Unlimited" />
+          </div>
         </div>
       </section>
 
@@ -239,7 +248,7 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   return (
     <div className="bg-surface px-6 py-5">
       <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
-      <p className="mt-1.5 flex items-center justify-center gap-2 font-display text-xl font-semibold text-up sm:justify-start">
+      <p className="mt-1.5 flex items-center justify-center gap-2 font-display text-xl font-semibold text-primary sm:justify-start">
         {icon}
         {value}
       </p>
@@ -259,7 +268,7 @@ function Feature({
   body: string;
 }) {
   return (
-    <div className="glass group rounded-lg p-6 transition-colors duration-200 hover:border-up/25">
+    <div className="glass group rounded-lg p-6 transition-colors duration-200 hover:border-primary/25">
       <div className={`mb-5 grid h-11 w-11 place-items-center rounded-lg border ${accent}`}>{icon}</div>
       <h3 className="font-display text-base font-semibold tracking-tight">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
@@ -281,10 +290,10 @@ function RoadmapItem({
   return (
     <li className="relative">
       <span
-        className={`absolute -left-[31px] top-1 h-2.5 w-2.5 rounded-full ${active ? "bg-up" : "bg-border"}`}
+        className={`absolute -left-[31px] top-1 h-2.5 w-2.5 rounded-full ${active ? "bg-primary" : "bg-border"}`}
         aria-hidden="true"
       />
-      <p className={`font-mono text-xs font-medium uppercase tracking-wider ${active ? "text-up" : "text-muted-foreground"}`}>
+      <p className={`font-mono text-xs font-medium uppercase tracking-wider ${active ? "text-primary" : "text-muted-foreground"}`}>
         {when}
       </p>
       <p className="mt-1 font-display text-sm font-medium text-foreground">{title}</p>

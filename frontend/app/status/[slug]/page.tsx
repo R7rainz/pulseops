@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { API_URL } from "@/lib/constants";
 import Link from "next/link";
 import { ShieldCheck, ServerCrash, AlertTriangle } from "lucide-react";
-import Aurora from "@/components/Aurora";
+import ParticleField from "@/components/ParticleField";
 import { Brand } from "@/components/Brand";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
@@ -82,11 +82,12 @@ export default async function PublicStatusPage({
   const updated = new Date();
 
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-background text-foreground">
+    <main className="relative min-h-dvh overflow-hidden text-foreground">
       {/* ambient background */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
-        <Aurora className="absolute inset-0 h-full w-full" />
-        <div className="absolute inset-0 bg-[radial-gradient(110%_80%_at_50%_30%,transparent_45%,rgba(7,11,9,0.7)_100%)]" />
+        <div className="absolute inset-0 bg-background" />
+        <div className="absolute inset-0 bg-[radial-gradient(90%_60%_at_50%_-5%,rgba(37,99,235,0.09),transparent_60%)]" />
+        <ParticleField className="absolute inset-0 h-full w-full" />
       </div>
 
       <div className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
