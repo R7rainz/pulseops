@@ -3,19 +3,9 @@ import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Crown,
-  Trash2,
-  Key,
-  Settings,
-  ShieldAlert,
-  TerminalSquare,
-  Plus,
-  UserPlus,
-  Zap,
-} from "lucide-react";
-import { createApiKey, revokeApiKey, updateWorkspaceName } from "./actions";
+import { ArrowLeft, Trash2, Key, Settings, ShieldAlert, UserPlus, Zap, ChevronRight } from "lucide-react";
+import { revokeApiKey, updateWorkspaceName } from "./actions";
+import { ConfirmSubmit } from "@/components/ui/confirm-submit";
 import DeleteWorkspaceButton from "./delete-button";
 import CreateApiKeyForm from "./create-apikey-form";
 import TeamMembers from "./team-members";
@@ -106,231 +96,131 @@ export default async function WorkspaceSettingsPage({
   const canEdit = workspace?.role === "OWNER" || workspace?.role === "ADMIN";
 
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
-      <div className="max-w-4xl mx-auto space-y-10">
-        {/* Header */}
-        <div>
-          <Link
-            href={`/workspaces/${workspaceId}/monitors`}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Return to Grid
-          </Link>
+    <main className="min-h-dvh p-6 md:p-10">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <Link
+          href={`/workspaces/${workspaceId}/monitors`}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to monitors
+        </Link>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-900 pb-6">
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100 flex items-center gap-3">
-                <TerminalSquare className="w-8 h-8 text-emerald-400" />
-                Workspace <span className="text-emerald-400">Config</span>
-              </h1>
-              <p className="text-sm text-zinc-500 mt-2 uppercase tracking-widest font-bold">
-                {workspace?.name ?? `Workspace #${workspaceId}`}
-              </p>
-            </div>
-            <div className="px-4 py-2 bg-emerald-500/10 border-2 border-emerald-500/50 text-xs font-bold text-emerald-400 uppercase tracking-widest">
-              {workspace?.role ?? "LOADING"} ACCESS
-            </div>
+        <div className="flex flex-col justify-between gap-4 border-b border-border pb-5 md:flex-row md:items-center">
+          <div>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{workspace?.name ?? `Workspace #${workspaceId}`}</p>
           </div>
+          <span className="self-start rounded-full border border-up/30 bg-up/10 px-3 py-1.5 text-xs font-medium text-up">
+            {(workspace?.role ?? "—").toLowerCase()} access
+          </span>
         </div>
 
-        {/* General Settings */}
-        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <Settings className="w-4 h-4 text-zinc-500" />
-            General
+        {/* General */}
+        <section className="glass rounded-lg p-6">
+          <h3 className="mb-4 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+            <Settings className="h-4 w-4 text-muted-foreground" /> General
           </h3>
-
           {workspace && (
             <form action={updateWorkspaceName} className="space-y-4">
               <input type="hidden" name="workspaceId" value={workspaceId} />
-
-              <div className="space-y-2">
-                <label
-                  htmlFor="name"
-                  className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
-                >
-                  Workspace Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  defaultValue={workspace.name}
-                  required
-                  disabled={!canEdit}
-                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                />
+              <div className="space-y-1.5">
+                <label htmlFor="name" className="block text-sm font-medium text-foreground">Workspace name</label>
+                <input id="name" name="name" type="text" defaultValue={workspace.name} required disabled={!canEdit} className="field disabled:cursor-not-allowed disabled:opacity-50" />
               </div>
-
-              {canEdit && (
-                <button
-                  type="submit"
-                  className="bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-2 px-5 border-2 border-transparent transition-all text-xs"
-                >
-                  Save Changes
-                </button>
-              )}
+              {canEdit && <button type="submit" className="btn btn-primary">Save changes</button>}
             </form>
           )}
-        </div>
+        </section>
 
-        {/* API Keys */}
-        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Key className="w-4 h-4 text-zinc-500" />
-              API Keys
+        {/* API keys */}
+        <section className="glass rounded-lg p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+              <Key className="h-4 w-4 text-muted-foreground" /> API keys
             </h3>
-            <span className="text-[10px] text-zinc-600">
-              [{apiKeys.length} keys]
-            </span>
+            <span className="font-mono text-[11px] text-muted-foreground">{apiKeys.length}</span>
           </div>
 
           {apiKeys.length > 0 ? (
-            <div className="divide-y-2 divide-zinc-900 mb-6">
+            <div className="mb-5 divide-y divide-border">
               {apiKeys.map((key) => (
-                <div
-                  key={key.id}
-                  className="flex items-center justify-between py-3"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-zinc-200 uppercase tracking-wider truncate">
-                      {key.name}
-                    </p>
-                    <p className="text-[10px] text-zinc-500 mt-0.5">
+                <div key={key.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{key.name}</p>
+                    <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                       {key.isActive ? (
                         <>
                           Created {new Date(key.createdAt).toLocaleDateString()}
-                          {key.lastUsedAt && (
-                            <span className="ml-2 text-emerald-400">
-                              &middot; Last used{" "}
-                              {new Date(key.lastUsedAt).toLocaleDateString()}
-                            </span>
-                          )}
+                          {key.lastUsedAt && <span className="text-up"> · last used {new Date(key.lastUsedAt).toLocaleDateString()}</span>}
                         </>
                       ) : (
-                        <span className="text-red-400">Revoked</span>
+                        <span className="text-down">Revoked</span>
                       )}
                     </p>
                   </div>
-
                   {key.isActive && canEdit && (
                     <form action={revokeApiKey}>
-                      <input
-                        type="hidden"
-                        name="workspaceId"
-                        value={workspaceId}
-                      />
+                      <input type="hidden" name="workspaceId" value={workspaceId} />
                       <input type="hidden" name="keyId" value={key.id} />
-                      <button
-                        type="submit"
-                        className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"
-                        title="Revoke Key"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <ConfirmSubmit message={`Revoke API key “${key.name}”? Apps using it will stop working.`} className="icon-btn hover:border-down/40 hover:text-down" title="Revoke key" aria-label="Revoke key">
+                        <Trash2 className="h-4 w-4" />
+                      </ConfirmSubmit>
                     </form>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-zinc-600 text-xs uppercase tracking-widest font-bold mb-6 border-2 border-dashed border-zinc-800 p-4 text-center">
-              No API keys configured
-            </p>
+            <p className="mb-5 rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">No API keys yet.</p>
           )}
 
           {canEdit && <CreateApiKeyForm workspaceId={workspaceId} />}
-        </div>
+        </section>
 
-        {/* Team Members */}
-        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-            <UserPlus className="w-4 h-4 text-zinc-500" />
-            Team Members
+        {/* Team */}
+        <section className="glass rounded-lg p-6">
+          <h3 className="mb-4 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+            <UserPlus className="h-4 w-4 text-muted-foreground" /> Team members
           </h3>
-
           {members.length > 0 ? (
-            <TeamMembers
-              members={members}
-              workspaceId={workspaceId}
-              canEdit={canEdit}
-              currentUserId={currentUserId}
-            />
+            <TeamMembers members={members} workspaceId={workspaceId} canEdit={canEdit} currentUserId={currentUserId} />
           ) : (
-            <p className="text-zinc-600 text-xs uppercase tracking-widest font-bold border-2 border-dashed border-zinc-800 p-4 text-center">
-              No members found
-            </p>
+            <p className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">No members found.</p>
           )}
-        </div>
+        </section>
 
-        {/* Invites */}
-        {canEdit && (
-          <Link
-            href={`/workspaces/${workspaceId}/invites`}
-            className="flex items-center justify-between p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-colors group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-zinc-900 border-2 border-zinc-800 group-hover:border-cyan-500/50 transition-colors">
-                <UserPlus className="w-5 h-5 text-cyan-400" />
-              </div>
-              <div>
-                <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                  Access Invites
-                </h3>
-                <p className="text-[10px] text-zinc-600 mt-1">
-                  Generate and manage secure invite tokens
-                </p>
-              </div>
-            </div>
-            <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-              Manage &rarr;
-            </span>
-          </Link>
-        )}
+        {/* Links */}
+        {canEdit && <SettingsLink href={`/workspaces/${workspaceId}/invites`} icon={<UserPlus className="h-5 w-5 text-info" />} title="Invites" desc="Generate and manage invite links" />}
+        <SettingsLink href={`/workspaces/${workspaceId}/webhooks`} icon={<Zap className="h-5 w-5 text-info" />} title="Webhooks" desc="Endpoints for incident alerts" />
 
-        {/* Webhooks */}
-        <Link
-          href={`/workspaces/${workspaceId}/webhooks`}
-          className="flex items-center justify-between p-6 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-colors group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-zinc-900 border-2 border-zinc-800 group-hover:border-cyan-500/50 transition-colors">
-              <Zap className="w-5 h-5 text-cyan-400" />
-            </div>
-            <div>
-              <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                Webhook Endpoints
-              </h3>
-              <p className="text-[10px] text-zinc-600 mt-1">
-                Configure broadcast endpoints for incident alerts
-              </p>
-            </div>
-          </div>
-          <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-            Manage &rarr;
-          </span>
-        </Link>
-
-        {/* Danger Zone */}
+        {/* Danger zone */}
         {isOwner && (
-          <div className="p-6 bg-zinc-950 border-2 border-red-900/50 shadow-[4px_4px_0px_0px_rgba(248,113,113,0.05)]">
-            <h3 className="text-xs font-bold text-red-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4" />
-              Danger Zone
+          <section className="rounded-lg border border-down/30 bg-down/[0.04] p-6">
+            <h3 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold text-down">
+              <ShieldAlert className="h-4 w-4" /> Danger zone
             </h3>
-
-            <p className="text-xs text-zinc-500 mb-4">
-              Deleting this workspace will permanently remove all monitors,
-              checks, incidents, webhooks, and API keys. This action cannot be
-              undone.
+            <p className="mb-4 text-sm text-muted-foreground">
+              Deleting this workspace permanently removes all monitors, checks, incidents, webhooks, and API keys. This cannot be undone.
             </p>
-
             <DeleteWorkspaceButton workspaceId={workspaceId} />
-          </div>
+          </section>
         )}
       </div>
     </main>
+  );
+}
+
+function SettingsLink({ href, icon, title, desc }: { href: string; icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <Link href={href} className="glass group flex items-center justify-between rounded-lg p-5 transition-colors hover:border-up/25">
+      <div className="flex items-center gap-4">
+        <span className="grid h-11 w-11 place-items-center rounded-lg border border-border bg-surface-raised">{icon}</span>
+        <div>
+          <h3 className="font-display text-sm font-medium text-foreground">{title}</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
+        </div>
+      </div>
+      <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+    </Link>
   );
 }

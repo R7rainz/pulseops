@@ -35,33 +35,19 @@ export default function DeleteWorkspaceButton({
 
   if (!confirm) {
     return (
-      <button
-        onClick={() => setConfirm(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-red-500/50 text-red-400 hover:bg-red-500/10 text-xs font-bold uppercase tracking-widest transition-colors"
-      >
-        <Trash2 className="w-4 h-4" />
-        Delete Workspace
+      <button onClick={() => setConfirm(true)} className="btn btn-danger">
+        <Trash2 className="h-4 w-4" /> Delete workspace
       </button>
     );
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <p className="text-xs text-red-400 uppercase tracking-widest font-bold">
-        Are you sure?
-      </p>
-      <button
-        onClick={handleDelete}
-        disabled={pending}
-        className="px-4 py-2 bg-red-500 hover:bg-red-400 text-zinc-950 font-bold uppercase tracking-widest text-xs border-2 border-transparent transition-all disabled:opacity-50"
-      >
-        {pending ? "Deleting..." : "Confirm"}
+    <div className="flex flex-wrap items-center gap-3">
+      <p className="text-sm font-medium text-down">Are you sure? This can’t be undone.</p>
+      <button onClick={handleDelete} disabled={pending} className="btn btn-danger">
+        {pending ? "Deleting…" : "Confirm delete"}
       </button>
-      <button
-        onClick={() => setConfirm(false)}
-        disabled={pending}
-        className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-400 hover:text-zinc-100 text-xs font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
-      >
+      <button onClick={() => setConfirm(false)} disabled={pending} className="btn btn-ghost">
         Cancel
       </button>
     </div>
