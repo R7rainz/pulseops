@@ -35,6 +35,7 @@ export default function Toast() {
   useEffect(() => {
     const data = getToastCookie();
     if (data) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- surfacing a toast persisted in a cookie on mount
       setToast(data);
       const timer = setTimeout(dismiss, 4000);
       return () => clearTimeout(timer);
@@ -45,22 +46,25 @@ export default function Toast() {
 
   const icon =
     toast.type === "success" ? (
-      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+      <CheckCircle2 className="h-4 w-4 text-up" />
     ) : toast.type === "error" ? (
-      <AlertCircle className="w-4 h-4 text-red-400" />
+      <AlertCircle className="h-4 w-4 text-down" />
     ) : (
-      <Info className="w-4 h-4 text-cyan-400" />
+      <Info className="h-4 w-4 text-info" />
     );
 
   return (
-    <div className="fixed top-4 right-4 z-[100] flex items-start gap-3 bg-zinc-950 border-2 border-zinc-800 px-5 py-3.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] max-w-sm">
+    <div
+      role="status"
+      aria-live="polite"
+      className={`glass fixed right-4 top-4 z-[100] flex max-w-sm items-start gap-3 rounded-lg px-4 py-3 shadow-lg transition-all duration-300 ${
+        leaving ? "translate-x-2 opacity-0" : "translate-x-0 opacity-100"
+      }`}
+    >
       {icon}
-      <p className="text-sm text-zinc-200 font-mono flex-1">{toast.message}</p>
-      <button
-        onClick={dismiss}
-        className="p-0.5 text-zinc-500 hover:text-zinc-300 transition-colors"
-      >
-        <X className="w-3.5 h-3.5" />
+      <p className="flex-1 text-sm text-foreground">{toast.message}</p>
+      <button onClick={dismiss} className="p-0.5 text-muted-foreground transition-colors hover:text-foreground" aria-label="Dismiss">
+        <X className="h-3.5 w-3.5" />
       </button>
     </div>
   );
