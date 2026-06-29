@@ -329,6 +329,40 @@
   }
 }
 
+/* ── Fluid motion ──────────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+@keyframes drift {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(6%, -5%) scale(1.08); }
+  66% { transform: translate(-5%, 4%) scale(0.94); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+.animate-drift {
+  animation: drift 22s ease-in-out infinite;
+  will-change: transform;
+}
+.fade-up {
+  animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-drift,
+  .fade-up {
+    animation: none !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
