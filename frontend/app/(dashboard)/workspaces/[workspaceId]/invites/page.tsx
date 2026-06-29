@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { API_URL } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   UserPlus,
@@ -13,13 +14,17 @@ import {
   Mail,
   Shield,
   Clock,
-  TerminalSquare,
   Link as LinkIcon,
-  X,
   ExternalLink,
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
+
+const ROLE_CHIP: Record<string, string> = {
+  ADMIN: "border-info/30 bg-info/10 text-info",
+  MEMBER: "border-up/30 bg-up/10 text-up",
+  VIEWER: "border-paused/30 bg-paused/10 text-paused",
+};
 
 interface InviteResult {
   email: string;
@@ -134,6 +139,7 @@ export default function InvitesPage({
   }
 
   async function handleRevoke(inviteId: number) {
+    if (!window.confirm("Revoke this invite? The link will stop working.")) return;
     try {
       const tokenRes = await fetch("/api/auth/token");
       const { token } = await tokenRes.json();
@@ -162,78 +168,58 @@ export default function InvitesPage({
   const inviteLink = (token: string) => `${window.location.origin}/invite/${token}`;
 
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
-      <div className="max-w-4xl mx-auto space-y-10">
+    <main className="min-h-dvh p-6 md:p-10">
+      <div className="mx-auto max-w-4xl space-y-6">
+        <Link
+          href={`/workspaces/${workspaceId}/monitors`}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to monitors
+        </Link>
 
-        {/* Header */}
-        <div>
-          <Link
-            href={`/workspaces/${workspaceId}/monitors`}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Return to Command Center
-          </Link>
-
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-900 pb-6">
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100 flex items-center gap-3">
-                <UserPlus className="w-8 h-8 text-cyan-400" />
-                Access <span className="text-cyan-400">Invites</span>
-              </h1>
-              <p className="text-sm text-zinc-500 mt-2 uppercase tracking-widest font-bold">
-                Provision secure entry tokens for new operators
-              </p>
-            </div>
-            <div className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              {invites.active.length} Active
-            </div>
+        <div className="flex flex-col justify-between gap-4 border-b border-border pb-5 md:flex-row md:items-center">
+          <div>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Invites</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Invite teammates to this workspace</p>
           </div>
+          <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-up/30 bg-up/10 px-3 py-1.5 text-xs font-medium text-up">
+            <Shield className="h-3.5 w-3.5" /> {invites.active.length} active
+          </span>
         </div>
 
-        {/* Generate Invite Form */}
-        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(34,211,238,0.05)]">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2 border-b-2 border-zinc-900 pb-4">
-            <TerminalSquare className="w-4 h-4 text-cyan-400" />
-            Issue New Invite
+        {/* Generate */}
+        <div className="glass rounded-lg p-6">
+          <h3 className="mb-4 flex items-center gap-2 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">
+            <UserPlus className="h-4 w-4 text-info" /> Issue an invite
           </h3>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-950/50 border border-red-900 text-red-400 text-[10px] font-bold uppercase tracking-widest">
-              {error}
-            </div>
+            <div role="alert" className="mb-4 rounded-lg border border-down/40 bg-down/10 p-3 text-sm text-down">{error}</div>
           )}
 
-          <form onSubmit={handleGenerate} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-            <div className="md:col-span-5 space-y-2">
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                <Mail className="w-3 h-3" />
-                Operator Emails <span className="text-zinc-700 font-normal">(one per line, comma or semicolon)</span>
+          <form onSubmit={handleGenerate} className="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
+            <div className="space-y-1.5 md:col-span-5">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                <Mail className="h-3.5 w-3.5" /> Emails <span className="text-xs font-normal text-muted-foreground">(comma or new line)</span>
               </label>
               <textarea
                 value={emailsText}
                 onChange={(e) => setEmailsText(e.target.value)}
-                placeholder={"alice@pulseops.dev\nbob@acme.com, carol@example.com"}
+                placeholder={"alice@company.com\nbob@company.com"}
                 rows={3}
-                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-cyan-500 transition-colors text-sm font-mono resize-none"
+                className="field resize-none font-mono text-sm"
               />
-              {emailsText && (
-                <p className="text-[10px] text-zinc-600">
-                  {parseEmails(emailsText).length} recipient(s) detected
-                </p>
-              )}
+              {emailsText && <p className="text-xs text-muted-foreground">{parseEmails(emailsText).length} recipient(s)</p>}
             </div>
 
-            <div className="md:col-span-3 space-y-2">
-              <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                <Shield className="w-3 h-3" />
-                Role Assignment
+            <div className="space-y-1.5 md:col-span-3">
+              <label className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                <Shield className="h-3.5 w-3.5" /> Role
               </label>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-cyan-500 transition-colors appearance-none"
+                className="field cursor-pointer"
               >
                 <option value="VIEWER">Viewer</option>
                 <option value="MEMBER">Member</option>
@@ -242,156 +228,95 @@ export default function InvitesPage({
             </div>
 
             <div className="md:col-span-4">
-              <button
-                type="submit"
-                disabled={generating}
-                className="w-full h-[52px] bg-cyan-600 hover:bg-cyan-500 text-zinc-950 font-bold uppercase tracking-widest border-2 border-transparent transition-all text-xs disabled:opacity-50 flex items-center justify-center gap-3"
-              >
-                <UserPlus className="w-5 h-5" />
-                {generating ? "Generating Secure Tokens..." : "Generate Invite Links"}
+              <button type="submit" disabled={generating} className="btn btn-primary h-11 w-full">
+                <UserPlus className="h-4 w-4" />
+                {generating ? "Generating…" : "Generate invites"}
               </button>
             </div>
           </form>
         </div>
 
-        {/* Generation Results */}
+        {/* Results */}
         {results && results.length > 0 && (
-          <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2 border-b-2 border-zinc-900 pb-4">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Delivery Results
+          <div className="glass rounded-lg p-6">
+            <h3 className="mb-4 flex items-center gap-2 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">
+              <CheckCircle2 className="h-4 w-4 text-up" /> Results
             </h3>
             <div className="space-y-2">
               {results.map((r) => (
-                <div
-                  key={r.email}
-                  className="flex items-center justify-between px-3 py-2 bg-zinc-900/50 border border-zinc-800"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    {r.sent ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                    ) : (
-                      <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-                    )}
-                    <span className="text-sm text-zinc-300 truncate">{r.email}</span>
-                    <span className={`text-[10px] font-bold uppercase tracking-widest border px-1.5 py-0.5 ${
-                      r.role === "ADMIN"
-                        ? "text-purple-400 border-purple-800"
-                        : r.role === "MEMBER"
-                          ? "text-cyan-400 border-cyan-800"
-                          : "text-zinc-400 border-zinc-700"
-                    }`}>
-                      {r.role}
+                <div key={r.email} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                  <div className="flex min-w-0 items-center gap-3">
+                    {r.sent ? <CheckCircle2 className="h-4 w-4 shrink-0 text-up" /> : <AlertTriangle className="h-4 w-4 shrink-0 text-degraded" />}
+                    <span className="truncate text-sm text-foreground">{r.email}</span>
+                    <span className={cn("rounded-full border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider", ROLE_CHIP[r.role] ?? ROLE_CHIP.VIEWER)}>
+                      {r.role.toLowerCase()}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0 ml-4">
-                    {r.sent ? (
-                      <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Delivered</span>
-                    ) : (
-                      <span className="text-[10px] text-amber-600 font-bold uppercase tracking-widest">{r.error || "Failed"}</span>
-                    )}
+                  <div className="ml-4 flex shrink-0 items-center gap-2">
+                    <span className={cn("text-[11px] font-medium", r.sent ? "text-up" : "text-degraded")}>{r.sent ? "Sent" : r.error || "Failed"}</span>
                     {r.token && (
                       <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${window.location.origin}/invite/${r.token}`);
-                        }}
-                        className="p-1.5 bg-zinc-950 border border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"
+                        onClick={() => navigator.clipboard.writeText(`${window.location.origin}/invite/${r.token}`)}
+                        className="icon-btn h-8 w-8 hover:border-info/40 hover:text-info"
                         title="Copy invite link"
+                        aria-label="Copy invite link"
                       >
-                        <Copy className="w-3 h-3" />
+                        <Copy className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
                 </div>
               ))}
             </div>
-            <button
-              onClick={() => setResults(null)}
-              className="mt-4 px-4 py-2 bg-zinc-900 border-2 border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors"
-            >
-              Dismiss Results
-            </button>
+            <button onClick={() => setResults(null)} className="btn btn-ghost mt-4">Dismiss</button>
           </div>
         )}
 
-        {/* Active Invites */}
-        <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
-          <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2 border-b-2 border-zinc-900 pb-4">
-            <LinkIcon className="w-4 h-4 text-emerald-400" />
-            Active Invites
-            <span className="text-[10px] text-zinc-600 font-bold ml-auto">
-              {loading ? "LOADING..." : `[${invites.active.length} Tokens]`}
+        {/* Active */}
+        <div className="glass rounded-lg p-6">
+          <h3 className="mb-4 flex items-center gap-2 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">
+            <LinkIcon className="h-4 w-4 text-up" /> Active invites
+            <span className="ml-auto font-mono text-[11px] font-normal text-muted-foreground">
+              {loading ? "…" : invites.active.length}
             </span>
           </h3>
 
           {loading ? (
-            <div className="p-8 text-center text-zinc-600 text-xs uppercase tracking-widest font-bold border-2 border-dashed border-zinc-800">
-              Scanning active tokens...
+            <div className="space-y-2" aria-busy="true">
+              {Array.from({ length: 3 }).map((_, i) => <div key={i} className="h-12 animate-pulse rounded-lg bg-surface-raised" />)}
             </div>
           ) : invites.active.length === 0 ? (
-            <div className="p-8 text-center text-zinc-600 text-xs uppercase tracking-widest font-bold border-2 border-dashed border-zinc-800">
-              No active invite tokens. Issue one above.
-            </div>
+            <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No active invites — issue one above.</div>
           ) : (
-            <div className="divide-y-2 divide-zinc-900">
+            <div className="divide-y divide-border">
               {invites.active.map((invite) => (
-                <div key={invite.id} className="flex items-center justify-between py-4 group hover:bg-zinc-900/30 transition-colors px-2 -mx-2">
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="flex items-center gap-3">
-                      <span className={`text-[10px] font-bold uppercase tracking-widest border px-2 py-0.5 ${
-                        invite.role === "ADMIN"
-                          ? "text-purple-400 border-purple-800 bg-purple-950/20"
-                          : invite.role === "MEMBER"
-                            ? "text-cyan-400 border-cyan-800 bg-cyan-950/20"
-                            : "text-zinc-400 border-zinc-700 bg-zinc-900"
-                      }`}>
-                        {invite.role}
+                <div key={invite.id} className="flex items-center justify-between gap-3 py-3.5">
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2.5">
+                      <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider", ROLE_CHIP[invite.role] ?? ROLE_CHIP.VIEWER)}>
+                        {invite.role.toLowerCase()}
                       </span>
                       {invite.email && (
-                        <span className="text-xs text-zinc-400 flex items-center gap-1.5">
-                          <Mail className="w-3 h-3 text-zinc-600" />
-                          {invite.email}
+                        <span className="flex items-center gap-1.5 text-sm text-foreground/90">
+                          <Mail className="h-3 w-3 text-muted-foreground" /> {invite.email}
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-[10px] text-zinc-600">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        Expires {new Date(invite.expiresAt).toLocaleDateString()}
-                      </span>
-                      <span className="font-mono truncate max-w-xs">
-                        /invite/{invite.token.slice(0, 16)}...
-                      </span>
+                    <div className="flex items-center gap-4 font-mono text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Expires {new Date(invite.expiresAt).toLocaleDateString()}</span>
+                      <span className="truncate">/invite/{invite.token.slice(0, 12)}…</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity ml-4">
-                    <button
-                      onClick={() => handleCopy(invite)}
-                      className="p-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors"
-                      title="Copy Invite Link"
-                    >
-                      {copiedId === invite.id ? (
-                        <Check className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button onClick={() => handleCopy(invite)} className="icon-btn hover:border-up/40 hover:text-up" title="Copy invite link" aria-label="Copy invite link">
+                      {copiedId === invite.id ? <Check className="h-4 w-4 text-up" /> : <Copy className="h-4 w-4" />}
                     </button>
-                    <a
-                      href={inviteLink(invite.token)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"
-                      title="Open Invite Link"
-                    >
-                      <ExternalLink className="w-4 h-4" />
+                    <a href={inviteLink(invite.token)} target="_blank" rel="noopener noreferrer" className="icon-btn hover:border-info/40 hover:text-info" title="Open invite link" aria-label="Open invite link">
+                      <ExternalLink className="h-4 w-4" />
                     </a>
-                    <button
-                      onClick={() => handleRevoke(invite.id)}
-                      className="p-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"
-                      title="Revoke Invite"
-                    >
-                      <Trash2 className="w-4 h-4" />
+                    <button onClick={() => handleRevoke(invite.id)} className="icon-btn hover:border-down/40 hover:text-down" title="Revoke invite" aria-label="Revoke invite">
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -400,36 +325,26 @@ export default function InvitesPage({
           )}
         </div>
 
-        {/* Expired invites */}
+        {/* Expired */}
         {invites.expired.length > 0 && (
-          <div className="p-6 bg-zinc-950 border-2 border-zinc-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
-            <details className="group">
-              <summary className="text-xs font-bold text-zinc-600 uppercase tracking-widest cursor-pointer list-none flex items-center gap-2 hover:text-zinc-400 transition-colors">
-                <X className="w-4 h-4 group-open:hidden" />
-                <span className="group-open:hidden">Show Expired Tokens ({invites.expired.length})</span>
-                <span className="hidden group-open:inline">Hide Expired Tokens</span>
-              </summary>
-              <div className="mt-4 divide-y-2 divide-zinc-900">
-                {invites.expired.map((invite) => (
-                  <div key={invite.id} className="flex items-center justify-between py-3 text-zinc-600">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[9px] font-bold uppercase tracking-widest border border-zinc-800 px-1.5 py-0.5">
-                        {invite.role}
-                      </span>
-                      {invite.email && (
-                        <span className="text-[10px] text-zinc-600">{invite.email}</span>
-                      )}
-                    </div>
-                    <span className="text-[10px]">
-                      Expired {new Date(invite.expiresAt).toLocaleDateString()}
-                    </span>
+          <details className="glass group rounded-lg p-6">
+            <summary className="flex cursor-pointer list-none items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground">
+              <span className="group-open:hidden">Show expired ({invites.expired.length})</span>
+              <span className="hidden group-open:inline">Hide expired</span>
+            </summary>
+            <div className="mt-4 divide-y divide-border">
+              {invites.expired.map((invite) => (
+                <div key={invite.id} className="flex items-center justify-between py-2.5 text-muted-foreground">
+                  <div className="flex items-center gap-3">
+                    <span className="rounded-full border border-border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider">{invite.role.toLowerCase()}</span>
+                    {invite.email && <span className="text-xs">{invite.email}</span>}
                   </div>
-                ))}
-              </div>
-            </details>
-          </div>
+                  <span className="font-mono text-[11px]">Expired {new Date(invite.expiresAt).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          </details>
         )}
-
       </div>
     </main>
   );
