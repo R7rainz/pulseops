@@ -1,12 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  CheckCircle2,
-  AlertCircle,
-  ShieldCheck,
-  AlertTriangle,
-} from "lucide-react";
+import { CheckCircle2, AlertCircle, ShieldCheck } from "lucide-react";
 import { useState, useCallback, useEffect } from "react";
 
 import { API_URL } from "@/lib/constants";
@@ -28,18 +23,18 @@ function ToastMsg({
 
   return (
     <div
-      className={`fixed top-4 right-4 z-[100] flex items-center gap-3 border-2 px-5 py-3.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] max-w-sm ${
-        type === "success"
-          ? "bg-zinc-950 border-emerald-500/50"
-          : "bg-zinc-950 border-red-500/50"
+      role="status"
+      aria-live="polite"
+      className={`glass fixed right-4 top-4 z-[100] flex max-w-sm items-center gap-3 rounded-lg px-4 py-3 shadow-lg ${
+        type === "success" ? "border-up/40" : "border-down/40"
       }`}
     >
       {type === "success" ? (
-        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <CheckCircle2 className="h-4 w-4 text-up" />
       ) : (
-        <AlertCircle className="w-4 h-4 text-red-400" />
+        <AlertCircle className="h-4 w-4 text-down" />
       )}
-      <p className="text-sm text-zinc-200 font-mono flex-1">{message}</p>
+      <p className="flex-1 text-sm text-foreground">{message}</p>
     </div>
   );
 }
@@ -103,27 +98,24 @@ export function IncidentActions({
   return (
     <>
       {canEdit ? (
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
           {status === "OPEN" && (
             <button
               type="button"
               onClick={() => callAction("acknowledge")}
-              className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 border-2 border-zinc-800 hover:border-amber-500 text-zinc-400 hover:text-amber-400 text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
+              className="btn btn-ghost hover:border-degraded/40 hover:text-degraded"
             >
-              ACKNOWLEDGE
+              Acknowledge
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => callAction("resolve")}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 border-2 border-transparent text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors rounded-none"
-          >
-            MARK RESOLVED
+          <button type="button" onClick={() => callAction("resolve")} className="btn btn-accent">
+            <ShieldCheck className="h-4 w-4" />
+            Resolve
           </button>
         </div>
       ) : (
-        <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold border-2 border-zinc-800 px-3 py-2">
-          Read-Only Access
+        <span className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground">
+          Read-only
         </span>
       )}
 

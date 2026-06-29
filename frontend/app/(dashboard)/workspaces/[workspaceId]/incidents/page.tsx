@@ -3,8 +3,15 @@ import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiFetch";
-import { AlertOctagon, CheckCircle2, ShieldAlert, ShieldCheck, Clock, ExternalLink } from "lucide-react";
+import { CheckCircle2, Clock, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { IncidentActions } from "./incident-actions";
+
+const INCIDENT_CHIP: Record<string, string> = {
+  OPEN: "border-down/30 bg-down/10 text-down",
+  ACKNOWLEDGED: "border-degraded/30 bg-degraded/10 text-degraded",
+  RESOLVED: "border-up/30 bg-up/10 text-up",
+};
 
 interface Incident {
   id: number;
@@ -75,110 +82,91 @@ export default async function IncidentsPage({
   const closedTickets = incidents.filter(i => i.status === "RESOLVED");
 
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-12">
+    <main className="min-h-dvh p-6 md:p-10">
+      <div className="mx-auto max-w-7xl space-y-8">
 
-        {/* HEADER BLOCK */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-900 pb-6">
+        {/* HEADER */}
+        <div className="flex flex-col justify-between gap-4 border-b border-border pb-5 md:flex-row md:items-center">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100 flex items-center gap-3">
-              <AlertOctagon className={`w-8 h-8 ${openTickets.length > 0 ? "text-red-500 animate-pulse" : "text-zinc-500"}`} />
-              Incident <span className="text-red-500">Log</span>
-            </h1>
-            <p className="text-sm text-zinc-500 mt-2 uppercase tracking-widest font-bold">
-              Breach Reporting & Triage Systems
-            </p>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Incidents</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Outages and degradations, triaged</p>
           </div>
-          <div className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-            Status: {openTickets.length > 0 ? (
-              <span className="text-red-400 font-black">{openTickets.length} UNRESOLVED BREACHES</span>
-            ) : (
-              <span className="text-emerald-400 font-black">ALL SYSTEMS OPERATIONAL</span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-2 self-start rounded-full border px-3 py-1.5 text-sm font-medium",
+              openTickets.length > 0 ? "border-down/30 bg-down/10 text-down" : "border-up/30 bg-up/10 text-up",
             )}
-          </div>
+          >
+            {openTickets.length > 0 ? (
+              <>{openTickets.length} unresolved</>
+            ) : (
+              <>
+                <CheckCircle2 className="h-4 w-4" /> All clear
+              </>
+            )}
+          </span>
         </div>
 
-        {/* ACTIVE INCIDENTS PANEL */}
-        <div className="space-y-4">
-          <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-red-500" /> Active Fire-Drills
-          </h2>
-
+        {/* ACTIVE */}
+        <section className="space-y-3">
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Active</h2>
           {openTickets.length === 0 ? (
-            <div className="p-8 border-2 border-zinc-900 bg-zinc-950/50 text-zinc-600 text-xs font-bold uppercase tracking-widest flex items-center gap-3">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Zero unacknowledged breaches detected. Core secure.
+            <div className="flex items-center gap-3 rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+              <CheckCircle2 className="h-4 w-4 text-up" /> No active incidents.
             </div>
           ) : (
-            <div className="border-2 border-zinc-800 bg-zinc-950 divide-y-2 divide-zinc-900">
+            <div className="glass divide-y divide-border overflow-hidden rounded-lg">
               {openTickets.map((ticket) => (
-                  <div key={ticket.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 transition-colors hover:bg-zinc-900/40">
-                  <Link
-                    href={`/workspaces/${workspaceId}/incidents/${ticket.id}`}
-                    className="space-y-2 min-w-0 flex-1 group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className={`px-2 py-0.5 text-[9px] font-bold border uppercase tracking-widest ${ticket.status === "OPEN"
-                          ? "bg-red-950 text-red-400 border-red-800 animate-pulse"
-                          : "bg-amber-950 text-amber-400 border-amber-800"
-                        }`}>
-                        {ticket.status}
+                <div key={ticket.id} className="flex flex-col justify-between gap-4 p-5 transition-colors hover:bg-surface-raised/40 md:flex-row md:items-center">
+                  <Link href={`/workspaces/${workspaceId}/incidents/${ticket.id}`} className="group min-w-0 flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2.5">
+                      <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider", INCIDENT_CHIP[ticket.status])}>
+                        {ticket.status.toLowerCase()}
                       </span>
-                      <h3 className="text-sm font-bold text-zinc-200 group-hover:text-emerald-400 uppercase tracking-widest truncate flex items-center gap-2">
+                      <h3 className="flex items-center gap-1.5 truncate font-display text-sm font-medium text-foreground group-hover:text-up">
                         {ticket.title}
-                        <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-zinc-500" />
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
                       </h3>
                     </div>
-                    <p className="text-xs text-zinc-500 truncate">
-                      Monitor Context: <span className="text-zinc-400 font-bold">{ticket.monitor.name}</span> ({ticket.monitor.url})
+                    <p className="truncate text-xs text-muted-foreground">
+                      {ticket.monitor.name} · <span className="font-mono">{ticket.monitor.url}</span>
                     </p>
-                    <div className="text-[10px] text-zinc-600 font-bold flex items-center gap-1 uppercase">
-                      <Clock className="w-3 h-3" /> Tripped at: {new Date(ticket.startedAt).toLocaleString()}
-                    </div>
+                    <p className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+                      <Clock className="h-3 w-3" /> Started {new Date(ticket.startedAt).toLocaleString()}
+                    </p>
                   </Link>
-
-                  <IncidentActions
-                    incidentId={ticket.id}
-                    workspaceId={workspaceId}
-                    status={ticket.status}
-                    canEdit={canEdit}
-                  />
+                  <IncidentActions incidentId={ticket.id} workspaceId={workspaceId} status={ticket.status} canEdit={canEdit} />
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </section>
 
-        {/* ARCHIVED / RESOLVED LOGS */}
-        <div className="space-y-4 pt-4">
-          <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-zinc-600" /> Historical Resolutions
-          </h2>
-
+        {/* RESOLVED */}
+        <section className="space-y-3">
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Resolved</h2>
           {closedTickets.length === 0 ? (
-            <div className="p-4 text-zinc-700 text-xs font-bold uppercase tracking-widest">
-              No historical entries found in current ledger.
-            </div>
+            <p className="text-sm text-muted-foreground">No resolved incidents yet.</p>
           ) : (
-            <div className="border-2 border-zinc-900 bg-zinc-950/40 divide-y-2 divide-zinc-900/60">
+            <div className="glass divide-y divide-border overflow-hidden rounded-lg">
               {closedTickets.map((ticket) => (
-                <div key={ticket.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-zinc-400 text-xs">
+                <Link
+                  key={ticket.id}
+                  href={`/workspaces/${workspaceId}/incidents/${ticket.id}`}
+                  className="flex flex-col justify-between gap-2 p-4 transition-colors hover:bg-surface-raised/40 sm:flex-row sm:items-center"
+                >
                   <div className="min-w-0">
-                    <p className="font-bold uppercase tracking-widest text-zinc-500 truncate">
-                      {ticket.title}
-                    </p>
-                    <p className="text-[10px] text-zinc-600 truncate mt-0.5">
-                      Target: {ticket.monitor.name}
-                    </p>
+                    <p className="truncate text-sm font-medium text-foreground/80">{ticket.title}</p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{ticket.monitor.name}</p>
                   </div>
-                  <div className="text-right text-[10px] text-zinc-600 font-bold uppercase flex-shrink-0">
-                    <div>Cleared: {ticket.resolvedAt ? new Date(ticket.resolvedAt).toLocaleTimeString() : "N/A"}</div>
-                  </div>
-                </div>
+                  <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                    Resolved {ticket.resolvedAt ? new Date(ticket.resolvedAt).toLocaleString() : "—"}
+                  </span>
+                </Link>
               ))}
             </div>
           )}
-        </div>
-
+        </section>
       </div>
     </main>
   );

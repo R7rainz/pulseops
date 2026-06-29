@@ -4,16 +4,15 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { apiFetch } from "@/lib/apiFetch";
 import { IncidentActions } from "../incident-actions";
-import {
-  ArrowLeft,
-  AlertOctagon,
-  Clock,
-  Radio,
-  CheckCircle2,
-  Eye,
-  XCircle,
-  Activity,
-} from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { cn } from "@/lib/utils";
+import { ArrowLeft, AlertOctagon, Clock, Radio, Eye, XCircle } from "lucide-react";
+
+const INCIDENT_CHIP: Record<string, string> = {
+  OPEN: "border-down/30 bg-down/10 text-down",
+  ACKNOWLEDGED: "border-degraded/30 bg-degraded/10 text-degraded",
+  RESOLVED: "border-up/30 bg-up/10 text-up",
+};
 
 interface Incident {
   id: number;
@@ -97,18 +96,12 @@ export default async function IncidentDetailPage({
 
   if (!incident) {
     return (
-      <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
-        <div className="max-w-4xl mx-auto text-center space-y-4">
-          <XCircle className="w-12 h-12 text-red-500 mx-auto" />
-          <h1 className="text-2xl font-extrabold tracking-widest uppercase text-zinc-400">
-            Incident Not Found
-          </h1>
-          <Link
-            href={`/workspaces/${workspaceId}/incidents`}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Return to Incident Log
+      <main className="grid min-h-dvh place-items-center p-12 text-center">
+        <div>
+          <XCircle className="mx-auto h-10 w-10 text-down" />
+          <p className="mt-4 font-display text-lg font-medium text-foreground">Incident not found</p>
+          <Link href={`/workspaces/${workspaceId}/incidents`} className="btn btn-ghost mt-5">
+            <ArrowLeft className="h-4 w-4" /> Back to incidents
           </Link>
         </div>
       </main>
@@ -133,272 +126,166 @@ export default async function IncidentDetailPage({
     // non-critical
   }
 
-  const StatusBadge = ({ status }: { status: string }) => {
-    const styles: Record<string, string> = {
-      OPEN: "bg-red-950 text-red-400 border-red-800 animate-pulse",
-      ACKNOWLEDGED: "bg-amber-950 text-amber-400 border-amber-800",
-      RESOLVED: "bg-emerald-950 text-emerald-400 border-emerald-800",
-    };
-    return (
-      <span className={`px-2 py-0.5 text-[9px] font-bold border uppercase tracking-widest ${styles[status] || styles.OPEN}`}>
-        {status}
-      </span>
-    );
-  };
-
-  const CheckIcon = ({ status }: { status: string }) => {
-    if (status === "UP") return <CheckCircle2 className="w-4 h-4 text-emerald-400" />;
-    if (status === "DOWN") return <XCircle className="w-4 h-4 text-red-400" />;
-    return <Activity className="w-4 h-4 text-amber-400" />;
-  };
-
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-10">
+    <main className="min-h-dvh p-6 md:p-10">
+      <div className="mx-auto max-w-5xl space-y-6">
 
-        {/* BACK LINK */}
         <Link
           href={`/workspaces/${workspaceId}/incidents`}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back to Incident Log
+          <ArrowLeft className="h-4 w-4" /> Back to incidents
         </Link>
 
         {/* HEADER */}
-        <div className="border-b-2 border-zinc-900 pb-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <AlertOctagon className={`w-8 h-8 ${isResolved ? "text-zinc-500" : "text-red-500"}`} />
-                <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100">
-                  Incident <span className={isResolved ? "text-zinc-400" : "text-red-500"}>Report</span>
-                </h1>
-              </div>
-              <p className="text-lg font-bold text-zinc-200 uppercase tracking-widest">
-                {incident.title}
-              </p>
-              <div className="flex items-center gap-3">
-                <StatusBadge status={incident.status} />
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Duration: {duration}
-                </span>
-              </div>
+        <div className="glass flex flex-col justify-between gap-5 rounded-lg p-6 md:flex-row md:items-center">
+          <div className="min-w-0 space-y-2.5">
+            <div className="flex items-center gap-2.5">
+              <AlertOctagon className={cn("h-5 w-5", isResolved ? "text-muted-foreground" : "text-down")} />
+              <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider", INCIDENT_CHIP[incident.status])}>
+                {incident.status.toLowerCase()}
+              </span>
+              <span className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
+                <Clock className="h-3 w-3" /> {duration}
+              </span>
             </div>
-
-            <div className="flex items-center gap-3">
-              <IncidentActions
-                incidentId={incident.id}
-                workspaceId={workspaceId}
-                status={incident.status}
-                canEdit={canEdit}
-              />
-            </div>
+            <h1 className="truncate font-display text-2xl font-semibold tracking-tight text-foreground">{incident.title}</h1>
           </div>
+          <IncidentActions incidentId={incident.id} workspaceId={workspaceId} status={incident.status} canEdit={canEdit} />
         </div>
 
-        {/* TIMELINE + MONITOR INFO GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           {/* TIMELINE */}
-          <div className="lg:col-span-2 p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)]">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-              <Clock className="w-4 h-4 text-cyan-400" />
-              Event Timeline
+          <section className="glass rounded-lg p-6 lg:col-span-2">
+            <h3 className="mb-6 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+              <Clock className="h-4 w-4 text-info" /> Timeline
             </h3>
-
             <div className="space-y-0">
-              {/* TRIAGED */}
-              <div className="flex gap-4 pb-8 relative">
-                <div className="flex flex-col items-center">
-                  <div className="w-5 h-5 rounded-full bg-red-500 border-2 border-red-400 z-10" />
-                  <div className="w-0.5 flex-1 bg-zinc-800 mt-1" />
-                </div>
-                <div className="pt-0.5">
-                  <p className="text-sm font-bold text-red-400 uppercase tracking-widest">Breach Triaged</p>
-                  <p className="text-xs text-zinc-500 mt-1">{new Date(incident.startedAt).toLocaleString()}</p>
-                  <p className="text-[10px] text-zinc-600 mt-0.5">Monitor auto-detected failure threshold breached</p>
-                </div>
-              </div>
-
-              {/* ACKNOWLEDGED */}
-              <div className="flex gap-4 pb-8 relative">
-                <div className="flex flex-col items-center">
-                  <div className={`w-5 h-5 rounded-full border-2 z-10 ${
-                    incident.status === "OPEN"
-                      ? "bg-zinc-800 border-zinc-700"
-                      : "bg-amber-500 border-amber-400"
-                  }`} />
-                  {incident.status !== "RESOLVED" && <div className="w-0.5 flex-1 bg-zinc-800 mt-1" />}
-                </div>
-                <div className="pt-0.5">
-                  <p className={`text-sm font-bold uppercase tracking-widest ${
-                    incident.status === "OPEN" ? "text-zinc-600" : "text-amber-400"
-                  }`}>
-                    Acknowledged
-                  </p>
-                  {incident.status === "OPEN" ? (
-                    <p className="text-xs text-zinc-700 mt-1">Awaiting operator acknowledgment</p>
-                  ) : (
-                    <>
-                      <p className="text-xs text-zinc-500 mt-1">{new Date(incident.startedAt).toLocaleString()}</p>
-                      <p className="text-[10px] text-zinc-600 mt-0.5">Operator acknowledged the breach</p>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* RESOLVED */}
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className={`w-5 h-5 rounded-full border-2 z-10 ${
-                    isResolved
-                      ? "bg-emerald-500 border-emerald-400"
-                      : "bg-zinc-800 border-zinc-700"
-                  }`} />
-                </div>
-                <div className="pt-0.5">
-                  <p className={`text-sm font-bold uppercase tracking-widest ${
-                    isResolved ? "text-emerald-400" : "text-zinc-600"
-                  }`}>
-                    Resolved
-                  </p>
-                  {isResolved && incident.resolvedAt ? (
-                    <>
-                      <p className="text-xs text-zinc-500 mt-1">{new Date(incident.resolvedAt).toLocaleString()}</p>
-                      <p className="text-[10px] text-zinc-600 mt-0.5">Services restored to normal operation</p>
-                    </>
-                  ) : (
-                    <p className="text-xs text-zinc-700 mt-1">Pending resolution</p>
-                  )}
-                </div>
-              </div>
+              <TimelineStep color="bg-down" connector title="Detected" active titleClass="text-down"
+                time={new Date(incident.startedAt).toLocaleString()} note="Failure threshold breached automatically." />
+              <TimelineStep
+                color={incident.status === "OPEN" ? "bg-surface-raised" : "bg-degraded"}
+                connector={incident.status !== "RESOLVED"}
+                title="Acknowledged"
+                active={incident.status !== "OPEN"}
+                titleClass={incident.status === "OPEN" ? "text-muted-foreground" : "text-degraded"}
+                time={incident.status === "OPEN" ? undefined : new Date(incident.startedAt).toLocaleString()}
+                note={incident.status === "OPEN" ? "Awaiting acknowledgement." : "Acknowledged by an operator."}
+              />
+              <TimelineStep
+                color={isResolved ? "bg-up" : "bg-surface-raised"}
+                title="Resolved"
+                active={isResolved}
+                titleClass={isResolved ? "text-up" : "text-muted-foreground"}
+                time={isResolved && incident.resolvedAt ? new Date(incident.resolvedAt).toLocaleString() : undefined}
+                note={isResolved ? "Service restored to normal." : "Pending resolution."}
+              />
             </div>
-          </div>
+          </section>
 
-          {/* MONITOR CONTEXT CARD */}
-          <div className="p-6 bg-zinc-950 border-2 border-zinc-800 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.05)] space-y-4">
-            <h3 className="text-xs font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
-              <Radio className="w-4 h-4 text-emerald-500" />
-              Monitor Context
+          {/* MONITOR CONTEXT */}
+          <section className="glass space-y-4 rounded-lg p-6">
+            <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+              <Radio className="h-4 w-4 text-up" /> Monitor
             </h3>
-
-            <div className="space-y-4">
+            <div className="space-y-3.5">
               <div>
-                <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Target</p>
-                <Link
-                  href={`/workspaces/${workspaceId}/monitors/${incident.monitor.id}`}
-                  className="text-sm font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-wider truncate block mt-1"
-                >
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Name</p>
+                <Link href={`/workspaces/${workspaceId}/monitors/${incident.monitor.id}`} className="mt-1 block truncate text-sm font-medium text-info hover:underline">
                   {incident.monitor.name}
                 </Link>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Endpoint</p>
-                <p className="text-xs text-zinc-300 mt-1 truncate font-mono">{incident.monitor.url}</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Endpoint</p>
+                <p className="mt-1 truncate font-mono text-xs text-foreground">{incident.monitor.url}</p>
               </div>
               <div>
-                <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Current Status</p>
-                <span className={`inline-flex items-center gap-1.5 mt-1 px-2 py-1 text-[10px] font-bold border uppercase tracking-widest ${
-                  incident.monitor.status === "UP"
-                    ? "text-emerald-400 border-emerald-800 bg-emerald-950/20"
-                    : incident.monitor.status === "DOWN"
-                    ? "text-red-400 border-red-800 bg-red-950/20"
-                    : "text-amber-400 border-amber-800 bg-amber-950/20"
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${
-                    incident.monitor.status === "UP" ? "bg-emerald-400" :
-                    incident.monitor.status === "DOWN" ? "bg-red-400" : "bg-amber-400"
-                  }`} />
-                  {incident.monitor.status}
-                </span>
+                <p className="mb-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Current status</p>
+                <StatusBadge status={incident.monitor.status} size="sm" />
               </div>
               <div>
-                <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold">Incident ID</p>
-                <p className="text-xs text-zinc-500 mt-1 font-mono">#{incident.id}</p>
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Incident</p>
+                <p className="mt-1 font-mono text-xs text-muted-foreground">#{incident.id}</p>
               </div>
             </div>
-
-            <Link
-              href={`/workspaces/${workspaceId}/monitors/${incident.monitor.id}`}
-              className="flex items-center justify-center gap-2 mt-4 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              View Monitor Diagnostics
+            <Link href={`/workspaces/${workspaceId}/monitors/${incident.monitor.id}`} className="btn btn-ghost w-full">
+              <Eye className="h-3.5 w-3.5" /> View monitor
             </Link>
-          </div>
+          </section>
         </div>
 
-        {/* RECENT CHECKS DURING INCIDENT */}
-        <div className="space-y-4">
-          <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-            <Activity className="w-4 h-4 text-zinc-500" />
-            Recent Probe Results
-          </h2>
-
+        {/* RECENT CHECKS */}
+        <section className="space-y-3">
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Recent checks</h2>
           {checks.length === 0 ? (
-            <div className="p-8 border-2 border-dashed border-zinc-800 bg-zinc-950 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">
-              No probe data available for this period.
+            <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+              No check data for this period.
             </div>
           ) : (
-            <div className="border-2 border-zinc-800 bg-zinc-950 overflow-x-auto">
-              <div className="min-w-[600px] grid grid-cols-12 gap-4 px-6 py-4 border-b-2 border-zinc-800 bg-zinc-900 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                <div className="col-span-1">Status</div>
-                <div className="col-span-3">Timestamp</div>
-                <div className="col-span-2">Code</div>
-                <div className="col-span-2">Latency</div>
-                <div className="col-span-4">Message</div>
-              </div>
-
-              <div className="min-w-[600px] divide-y-2 divide-zinc-900">
-                {checks.map((check) => {
-                  const checkedAt = new Date(check.checkedAt).getTime();
-                  const startedAt = new Date(incident.startedAt).getTime();
-                  const resolvedAt = incident.resolvedAt
-                    ? new Date(incident.resolvedAt).getTime()
-                    : Infinity;
-                  const duringIncident = checkedAt >= startedAt && checkedAt <= resolvedAt;
-
-                  return (
-                    <div
-                      key={check.id}
-                      className={`grid grid-cols-12 gap-4 px-6 py-4 items-center transition-colors ${
-                        duringIncident
-                          ? "bg-red-950/10 hover:bg-red-950/20"
-                          : "hover:bg-zinc-900/50"
-                      }`}
-                    >
-                      <div className="col-span-1">
-                        <CheckIcon status={check.status} />
-                      </div>
-                      <div className="col-span-3 text-xs text-zinc-400 font-bold">
-                        {new Date(check.checkedAt).toLocaleString()}
-                      </div>
-                      <div className="col-span-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 border ${
-                          check.status === "UP"
-                            ? "text-emerald-400 border-emerald-800 bg-emerald-950/20"
-                            : "text-red-400 border-red-800 bg-red-950/20"
-                        }`}>
-                          {check.statusCode ?? "N/A"}
-                        </span>
-                      </div>
-                      <div className="col-span-2 text-xs text-zinc-500 font-bold">
-                        {check.responseTimeMs != null ? `${check.responseTimeMs}ms` : "—"}
-                      </div>
-                      <div className="col-span-4 text-xs text-zinc-500 truncate">
-                        {check.errorMessage || "—"}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="glass overflow-x-auto rounded-lg">
+              <table className="w-full min-w-[600px] text-sm">
+                <thead>
+                  <tr className="border-b border-border font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                    <th className="px-5 py-3 text-left font-medium">Status</th>
+                    <th className="px-5 py-3 text-left font-medium">Time</th>
+                    <th className="px-5 py-3 text-left font-medium">Code</th>
+                    <th className="px-5 py-3 text-left font-medium">Latency</th>
+                    <th className="px-5 py-3 text-left font-medium">Message</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {checks.map((check) => {
+                    const checkedAt = new Date(check.checkedAt).getTime();
+                    const startedAt = new Date(incident.startedAt).getTime();
+                    const resolvedAt = incident.resolvedAt ? new Date(incident.resolvedAt).getTime() : Infinity;
+                    const duringIncident = checkedAt >= startedAt && checkedAt <= resolvedAt;
+                    return (
+                      <tr key={check.id} className={cn("transition-colors", duringIncident ? "bg-down/[0.06]" : "hover:bg-surface-raised/50")}>
+                        <td className="px-5 py-3"><StatusBadge status={check.status} size="sm" /></td>
+                        <td className="whitespace-nowrap px-5 py-3 font-mono text-xs text-muted-foreground">{new Date(check.checkedAt).toLocaleString()}</td>
+                        <td className="px-5 py-3 font-mono tabular-nums text-foreground">{check.statusCode ?? "—"}</td>
+                        <td className="px-5 py-3 font-mono tabular-nums text-foreground">{check.responseTimeMs != null ? `${check.responseTimeMs}ms` : "—"}</td>
+                        <td className="max-w-[200px] truncate px-5 py-3 text-muted-foreground">{check.errorMessage || "—"}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
-        </div>
-
+        </section>
       </div>
     </main>
+  );
+}
+
+function TimelineStep({
+  color,
+  connector = false,
+  title,
+  titleClass,
+  time,
+  note,
+}: {
+  color: string;
+  connector?: boolean;
+  title: string;
+  active?: boolean;
+  titleClass?: string;
+  time?: string;
+  note?: string;
+}) {
+  return (
+    <div className="relative flex gap-4 pb-8 last:pb-0">
+      <div className="flex flex-col items-center">
+        <span className={cn("z-10 h-4 w-4 rounded-full ring-4 ring-surface", color)} />
+        {connector && <span className="mt-1 w-px flex-1 bg-border" />}
+      </div>
+      <div className="pt-0">
+        <p className={cn("text-sm font-medium", titleClass)}>{title}</p>
+        {time && <p className="mt-0.5 font-mono text-xs text-muted-foreground">{time}</p>}
+        {note && <p className="mt-0.5 text-xs text-muted-foreground/80">{note}</p>}
+      </div>
+    </div>
   );
 }
