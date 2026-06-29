@@ -164,42 +164,44 @@
   --paused: #8a8178;
 
   --radius: 0.875rem;
-  --shadow-card: 0 1px 2px rgba(60, 40, 16, 0.05), 0 14px 34px -18px rgba(120, 86, 28, 0.22);
+  --shadow-card: 0 1px 2px rgba(60, 40, 16, 0.06), 0 2px 6px rgba(90, 64, 20, 0.06),
+    0 20px 46px -22px rgba(120, 86, 28, 0.3);
 }
 
-/* ── PulseOps DARK theme — warm amber counterpart (toggle) ── */
+/* ── PulseOps DARK theme — warm espresso + glowing amber (toggle) ── */
 .dark {
-  --background: #1a1612;
-  --foreground: #ece5d8;
-  --card: #221d18;
-  --card-foreground: #ece5d8;
-  --popover: #221d18;
-  --popover-foreground: #ece5d8;
-  --surface: #221d18;
-  --surface-raised: #2b251f;
-  --muted: #2b251f;
-  --muted-foreground: #a89e90;
-  --primary: #e0a347;
-  --primary-foreground: #1a1612;
-  --secondary: #2b251f;
-  --secondary-foreground: #ece5d8;
-  --accent: #2b251f;
-  --accent-foreground: #ece5d8;
-  --destructive: #e3756b;
-  --border: rgba(236, 229, 216, 0.1);
-  --input: rgba(236, 229, 216, 0.14);
-  --ring: #e0a347;
+  --background: #161109;
+  --foreground: #f1e9db;
+  --card: #221a10;
+  --card-foreground: #f1e9db;
+  --popover: #221a10;
+  --popover-foreground: #f1e9db;
+  --surface: #211910;
+  --surface-raised: #2d2416;
+  --muted: #2a2115;
+  --muted-foreground: #b8ab97;
+  --primary: #eaad53;
+  --primary-foreground: #161109;
+  --secondary: #2a2115;
+  --secondary-foreground: #f1e9db;
+  --accent: #2a2115;
+  --accent-foreground: #f1e9db;
+  --destructive: #ec8073;
+  --border: rgba(241, 233, 219, 0.1);
+  --input: rgba(241, 233, 219, 0.14);
+  --ring: #eaad53;
 
-  --up: #56c08a;
-  --up-foreground: #07140c;
-  --degraded: #e6a23c;
+  --up: #5fc890;
+  --up-foreground: #06140c;
+  --degraded: #eeae47;
   --degraded-foreground: #1a1206;
-  --down: #e3756b;
+  --down: #ec8073;
   --down-foreground: #1a0806;
-  --info: #cda07e;
-  --paused: #a89e90;
+  --info: #d6ab83;
+  --paused: #b8ab97;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 36px -18px rgba(0, 0, 0, 0.55);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35),
+    0 22px 50px -22px rgba(0, 0, 0, 0.75);
 }
 
 @layer components {
@@ -256,10 +258,12 @@
     background: var(--primary);
     color: var(--primary-foreground);
     border: 1px solid transparent;
+    box-shadow: 0 6px 16px -8px color-mix(in oklab, var(--primary) 65%, transparent);
   }
   .btn-primary:hover:not(:disabled) {
+    transform: translateY(-1px);
     box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent),
-      0 10px 26px -12px color-mix(in oklab, var(--primary) 70%, transparent);
+      0 14px 30px -10px color-mix(in oklab, var(--primary) 78%, transparent);
   }
   .btn-accent {
     background: color-mix(in oklab, var(--primary) 12%, transparent);
@@ -331,13 +335,19 @@
 
 /* ── Fluid motion ──────────────────────────────────────────── */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14px); }
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(3%, -22px) scale(1.06); }
 }
 @keyframes drift {
   0% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(6%, -5%) scale(1.08); }
-  66% { transform: translate(-5%, 4%) scale(0.94); }
+  25% { transform: translate(9%, -7%) scale(1.12); }
+  50% { transform: translate(4%, 8%) scale(0.95); }
+  75% { transform: translate(-8%, -3%) scale(1.06); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+@keyframes sway {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-9%, 7%) scale(1.14); }
   100% { transform: translate(0, 0) scale(1); }
 }
 @keyframes fadeUp {
@@ -345,10 +355,15 @@
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-float {
-  animation: float 7s ease-in-out infinite;
+  animation: float 9s ease-in-out infinite;
+  will-change: transform;
 }
 .animate-drift {
-  animation: drift 22s ease-in-out infinite;
+  animation: drift 24s ease-in-out infinite;
+  will-change: transform;
+}
+.animate-sway {
+  animation: sway 30s ease-in-out infinite;
   will-change: transform;
 }
 .fade-up {
@@ -358,6 +373,7 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
   .animate-drift,
+  .animate-sway,
   .fade-up {
     animation: none !important;
   }

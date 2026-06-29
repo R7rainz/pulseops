@@ -1,13 +1,13 @@
 import { cn } from "@/lib/utils";
 
 /**
- * AmbientGlow — soft, calm, warm gradient field (pure CSS, no canvas).
+ * AmbientGlow — soft, flowing, warm gradient field (pure CSS, no canvas).
  *
- * A few large blurred honey/apricot/clay blobs that drift slowly — the calm
- * Claude/Zen vibe. No particles, no WebGL. Respects reduced-motion (the
- * drift/float animations are disabled globally under prefers-reduced-motion).
+ * Large blurred honey/apricot/clay/rose blobs that drift, float and sway on
+ * different timings so the field feels alive and liquid — the calm Claude/Zen
+ * vibe. No particles, no WebGL. Animations are disabled under reduced-motion.
  *
- * `tone="vivid"` is a touch stronger (hero); default is subtle (ambient).
+ * `tone="vivid"` is stronger (hero); default is subtle (ambient).
  */
 export default function AmbientGlow({
   className,
@@ -16,25 +16,32 @@ export default function AmbientGlow({
   className?: string;
   tone?: "subtle" | "vivid";
 }) {
-  const a = tone === "vivid" ? 1 : 0.6;
+  const a = tone === "vivid" ? 1.25 : 0.85;
+  const blob = (
+    color: string,
+    alpha: number,
+    pos: string,
+    size: string,
+    anim: string,
+    delay: string,
+  ) => (
+    <div
+      className={cn("absolute rounded-full", anim, pos, size)}
+      style={{
+        background: `radial-gradient(circle, ${color.replace("ALPHA", String(alpha * a))}, transparent 70%)`,
+        filter: "blur(70px)",
+        animationDelay: delay,
+      }}
+    />
+  );
+
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} aria-hidden="true">
-      <div
-        className="animate-drift absolute -left-[12%] -top-[14%] h-[60vh] w-[60vh] rounded-full blur-[64px]"
-        style={{ background: `radial-gradient(circle, rgba(201,138,43,${0.26 * a}), transparent 70%)` }}
-      />
-      <div
-        className="animate-float absolute right-[2%] top-[6%] h-[48vh] w-[48vh] rounded-full blur-[64px]"
-        style={{ background: `radial-gradient(circle, rgba(224,165,99,${0.22 * a}), transparent 70%)`, animationDelay: "2s" }}
-      />
-      <div
-        className="animate-drift absolute -bottom-[14%] left-[28%] h-[55vh] w-[55vh] rounded-full blur-[72px]"
-        style={{ background: `radial-gradient(circle, rgba(176,118,80,${0.18 * a}), transparent 70%)`, animationDelay: "4s" }}
-      />
-      <div
-        className="animate-float absolute -right-[8%] bottom-[6%] h-[42vh] w-[42vh] rounded-full blur-[64px]"
-        style={{ background: `radial-gradient(circle, rgba(212,180,120,${0.18 * a}), transparent 70%)`, animationDelay: "1s" }}
-      />
+      {blob("rgba(201,138,43,ALPHA)", 0.3, "-left-[14%] -top-[16%]", "h-[68vh] w-[68vh]", "animate-drift", "0s")}
+      {blob("rgba(224,165,99,ALPHA)", 0.26, "right-[0%] top-[2%]", "h-[54vh] w-[54vh]", "animate-float", "2s")}
+      {blob("rgba(176,118,80,ALPHA)", 0.22, "-bottom-[16%] left-[24%]", "h-[60vh] w-[60vh]", "animate-sway", "4s")}
+      {blob("rgba(212,180,120,ALPHA)", 0.22, "-right-[10%] bottom-[4%]", "h-[48vh] w-[48vh]", "animate-drift", "1s")}
+      {blob("rgba(196,128,96,ALPHA)", 0.16, "left-[8%] top-[34%]", "h-[44vh] w-[44vh]", "animate-float", "5s")}
     </div>
   );
 }
