@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { API_URL } from "@/lib/constants";
 import type { MonitorCheck } from "@/lib/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface Props {
   workspaceId: string;
@@ -53,9 +54,10 @@ export default function MonitorCheckLog({ workspaceId, monitorId, token }: Props
     } finally {
       setLoading(false);
     }
-  }, [monitorId]);
+  }, [monitorId, workspaceId, token]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch toggles loading state on offset change
     fetchChecks(offset);
   }, [offset, fetchChecks]);
 
@@ -63,69 +65,57 @@ export default function MonitorCheckLog({ workspaceId, monitorId, token }: Props
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
 
   return (
-    <div className="p-6 border-2 border-zinc-900 bg-zinc-950 space-y-4">
-      <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
-        Probe Log
-        {!loading && (
-          <span className="text-[10px] text-zinc-600 font-normal ml-auto">{total} entries</span>
-        )}
+    <div className="glass space-y-4 rounded-lg p-6">
+      <h2 className="flex items-center gap-2 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">
+        Check log
+        {!loading && <span className="ml-auto font-mono text-[11px] font-normal text-muted-foreground">{total} entries</span>}
       </h2>
 
       {error && (
-        <div className="py-4 text-center text-red-400 text-[10px] uppercase tracking-widest font-bold">
-          {error}
+        <div role="alert" className="rounded-lg border border-down/40 bg-down/10 py-3 text-center text-sm text-down">
+          Couldn’t load checks — {error}
         </div>
       )}
 
       {loading && !error && (
-        <div className="py-8 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold">
-          Loading probe data...
+        <div className="space-y-2 py-2" aria-busy="true">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-8 animate-pulse rounded bg-surface-raised" />
+          ))}
         </div>
       )}
 
       {!loading && !error && checks.length === 0 && (
-        <div className="py-8 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold">
-          No probe data recorded yet.
-        </div>
+        <div className="py-8 text-center text-sm text-muted-foreground">No checks recorded yet.</div>
       )}
 
       {checks.length > 0 && (
         <>
           <div className="overflow-x-auto">
-            <table className="w-full text-xs font-mono">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="border-b-2 border-zinc-900 text-zinc-500 uppercase tracking-widest text-[10px]">
-                  <th className="text-left py-2 pr-4 font-bold">Time</th>
-                  <th className="text-left py-2 pr-4 font-bold">Status</th>
-                  <th className="text-left py-2 pr-4 font-bold">Code</th>
-                  <th className="text-left py-2 pr-4 font-bold">Latency</th>
-                  <th className="text-left py-2 font-bold">Error</th>
+                <tr className="border-b border-border font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                  <th className="py-2 pr-4 text-left font-medium">Time</th>
+                  <th className="py-2 pr-4 text-left font-medium">Status</th>
+                  <th className="py-2 pr-4 text-left font-medium">Code</th>
+                  <th className="py-2 pr-4 text-left font-medium">Latency</th>
+                  <th className="py-2 text-left font-medium">Error</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border/60">
                 {checks.map((check) => (
-                  <tr key={check.id} className="border-b border-zinc-900/50 hover:bg-zinc-900/30 transition-colors">
-                    <td className="py-2 pr-4 text-zinc-400 whitespace-nowrap">
+                  <tr key={check.id} className="transition-colors hover:bg-surface-raised/50">
+                    <td className="whitespace-nowrap py-2.5 pr-4 font-mono text-xs text-muted-foreground">
                       {new Date(check.checkedAt).toLocaleString()}
                     </td>
-                    <td className="py-2 pr-4">
-                      <span className={`font-bold ${
-                        check.status === "UP" ? "text-emerald-400" :
-                        check.status === "DEGRADED" ? "text-amber-400" :
-                        "text-red-400"
-                      }`}>
-                        {check.status}
-                      </span>
+                    <td className="py-2.5 pr-4">
+                      <StatusBadge status={check.status} size="sm" />
                     </td>
-                    <td className="py-2 pr-4 text-zinc-300">
-                      {check.statusCode ?? "—"}
-                    </td>
-                    <td className="py-2 pr-4 text-zinc-300">
+                    <td className="py-2.5 pr-4 font-mono tabular-nums text-foreground">{check.statusCode ?? "—"}</td>
+                    <td className="py-2.5 pr-4 font-mono tabular-nums text-foreground">
                       {check.responseTimeMs != null ? `${check.responseTimeMs}ms` : "—"}
                     </td>
-                    <td className="py-2 text-zinc-500 max-w-[200px] truncate">
-                      {check.errorMessage ?? "—"}
-                    </td>
+                    <td className="max-w-[200px] truncate py-2.5 text-muted-foreground">{check.errorMessage ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -133,24 +123,24 @@ export default function MonitorCheckLog({ workspaceId, monitorId, token }: Props
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2 border-t-2 border-zinc-900">
-              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">
+            <div className="flex items-center justify-between border-t border-border pt-3">
+              <span className="font-mono text-xs text-muted-foreground">
                 Page {currentPage} of {totalPages}
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
                   disabled={offset === 0}
-                  className="flex items-center gap-1 px-3 py-1.5 border-2 border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="btn btn-ghost px-3 py-1.5 text-xs disabled:opacity-30"
                 >
-                  <ChevronLeft className="w-3 h-3" /> Previous
+                  <ChevronLeft className="h-3.5 w-3.5" /> Previous
                 </button>
                 <button
                   onClick={() => setOffset(offset + PAGE_SIZE)}
                   disabled={offset + PAGE_SIZE >= total}
-                  className="flex items-center gap-1 px-3 py-1.5 border-2 border-zinc-800 text-[10px] font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="btn btn-ghost px-3 py-1.5 text-xs disabled:opacity-30"
                 >
-                  Next <ChevronRight className="w-3 h-3" />
+                  Next <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>

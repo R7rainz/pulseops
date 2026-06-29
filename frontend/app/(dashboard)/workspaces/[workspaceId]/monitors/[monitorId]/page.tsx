@@ -7,10 +7,10 @@ import type { MonitorCheck, MonitorStats } from "@/lib/types";
 import MonitorCharts from "@/components/MonitorCharts";
 import MonitorCheckLog from "@/components/MonitorCheckLog";
 import { scheduleMaintenance } from "../actions";
-import {
-  ArrowLeft, Activity, ServerCrash, PauseCircle,
-  TerminalSquare, Lock, AlertTriangle, ShieldCheck, ShieldAlert, Wrench,
-} from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { statusMeta } from "@/lib/status";
+import { cn } from "@/lib/utils";
+import { ArrowLeft, Settings2, Lock, ShieldCheck, ShieldAlert, Wrench } from "lucide-react";
 
 interface MonitorDiag {
   id: number;
@@ -113,270 +113,215 @@ export default async function MonitorDiagnosticsPage({
 
   if (!monitor) {
     return (
-      <div className="p-12 text-center text-zinc-500 font-mono text-xs uppercase tracking-widest">
-        Telemetry target not found or access denied.
-      </div>
+      <main className="grid min-h-dvh place-items-center p-12 text-center">
+        <div>
+          <p className="font-display text-lg font-medium text-foreground">Monitor not found</p>
+          <p className="mt-1 text-sm text-muted-foreground">It may have been deleted, or you don’t have access.</p>
+          <Link href={`/workspaces/${workspaceId}/monitors`} className="btn btn-ghost mt-5">
+            <ArrowLeft className="h-4 w-4" /> Back to monitors
+          </Link>
+        </div>
+      </main>
     );
   }
 
-  const isUp = monitor.status === "UP";
-  const isDown = monitor.status === "DOWN";
-  const isPaused = monitor.status === "PAUSED";
-  const isDegraded = monitor.status === "DEGRADED";
+  const meta = statusMeta(monitor.status);
+  const StatusIcon = meta.icon;
   const isSslExpiring = monitor.tlsDaysRemaining !== null && monitor.tlsDaysRemaining <= 7;
+  const uptime = analytics ? Number(analytics.uptime30Day) : null;
 
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <main className="min-h-dvh p-6 md:p-10">
+      <div className="mx-auto max-w-5xl space-y-6">
 
-        {/* Navigation */}
         <Link
           href={`/workspaces/${workspaceId}/monitors`}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          <ArrowLeft className="w-3.5 h-3.5" /> Return to Matrix
+          <ArrowLeft className="h-4 w-4" /> Back to monitors
         </Link>
 
-        {/* Master Header */}
-        <div className="p-8 border-2 border-zinc-800 bg-zinc-950 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-[8px_8px_0px_0px_rgba(34,211,238,0.05)]">
-          <div className="flex items-center gap-6">
-            <div className={`p-4 border-2 ${
-              isUp ? "bg-emerald-950 border-emerald-500 text-emerald-400" :
-              isDown ? "bg-red-950 border-red-500 text-red-400 animate-pulse" :
-              isDegraded ? "bg-amber-950 border-amber-500 text-amber-400" :
-              "bg-zinc-900 border-zinc-700 text-zinc-500"
-            }`}>
-              {isUp && <Activity className="w-8 h-8" />}
-              {isDown && <ServerCrash className="w-8 h-8" />}
-              {isDegraded && <AlertTriangle className="w-8 h-8" />}
-              {isPaused && <PauseCircle className="w-8 h-8" />}
+        {/* HEADER */}
+        <div className="glass flex flex-col justify-between gap-5 rounded-lg p-6 md:flex-row md:items-center">
+          <div className="flex items-center gap-4">
+            <div className={cn("grid h-14 w-14 shrink-0 place-items-center rounded-lg border", meta.bg, meta.border)}>
+              <StatusIcon className={cn("h-7 w-7", meta.text, monitor.status === "DOWN" && "animate-pulse")} />
             </div>
-
-            <div>
-              <h1 className="text-2xl font-black uppercase tracking-widest text-zinc-100 flex items-center gap-3">
-                {monitor.name}
-              </h1>
-              <p className="text-sm text-zinc-400 mt-1">{monitor.url}</p>
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-2xl font-semibold tracking-tight text-foreground">{monitor.name}</h1>
+              <p className="mt-0.5 truncate font-mono text-sm text-muted-foreground">{monitor.url}</p>
             </div>
           </div>
-
-          <div className="text-right flex flex-col items-end">
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-1">Current State</span>
-            <span className={`px-4 py-1.5 text-xs font-black uppercase tracking-widest border-2 ${
-              isUp ? "border-emerald-500 text-emerald-400" :
-              isDown ? "border-red-500 text-red-400" :
-              isDegraded ? "border-amber-500 text-amber-400" :
-              "border-zinc-700 text-zinc-400"
-            }`}>
-              {monitor.status}
-            </span>
-          </div>
+          <StatusBadge status={monitor.status} />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-          {/* Core Telemetry Config */}
-          <div className="p-6 border-2 border-zinc-900 bg-zinc-950 space-y-6">
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
-              <TerminalSquare className="w-4 h-4 text-cyan-500" /> Routing Configuration
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {/* CONFIG */}
+          <section className="glass rounded-lg p-6">
+            <h2 className="mb-4 flex items-center gap-2 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">
+              <Settings2 className="h-4 w-4 text-info" /> Configuration
             </h2>
+            <dl className="grid grid-cols-2 gap-4">
+              <Detail label="Method" value={monitor.method} />
+              <Detail label="Interval" value={`${monitor.intervalSeconds}s`} />
+              <Detail label="Failures" value={`${monitor.consecutiveFailures} / ${monitor.graceThreshold}`} />
+              <Detail
+                label="Last check"
+                value={monitor.lastCheckedAt ? new Date(monitor.lastCheckedAt).toLocaleTimeString() : "Pending…"}
+              />
+            </dl>
+          </section>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Protocol</p>
-                <p className="text-sm text-zinc-200 mt-1">{monitor.method}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Interval</p>
-                <p className="text-sm text-zinc-200 mt-1">{monitor.intervalSeconds}s</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Threshold Drops</p>
-                <p className="text-sm text-zinc-200 mt-1">{monitor.consecutiveFailures} / {monitor.graceThreshold}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Last Contact</p>
-                <p className="text-sm text-zinc-200 mt-1">
-                  {monitor.lastCheckedAt ? new Date(monitor.lastCheckedAt).toLocaleTimeString() : "Pending..."}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* SSL Cryptographic Profile */}
-          <div className={`p-6 border-2 transition-colors ${
-            isSslExpiring ? "border-amber-900/50 bg-amber-950/10" : "border-zinc-900 bg-zinc-950"
-          } space-y-6`}>
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
-              <Lock className={`w-4 h-4 ${isSslExpiring ? "text-amber-500" : "text-emerald-500"}`} />
-              Cryptographic Profile
+          {/* TLS */}
+          <section className={cn("glass rounded-lg p-6", isSslExpiring && "border-degraded/40")}>
+            <h2 className="mb-4 flex items-center gap-2 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">
+              <Lock className={cn("h-4 w-4", isSslExpiring ? "text-degraded" : "text-up")} /> TLS certificate
             </h2>
 
             {planTier !== "PRO" && monitor.tlsIssuer ? (
-              <div className="py-8 text-center space-y-3">
-                <ShieldAlert className="w-8 h-8 text-amber-500 mx-auto" />
-                <p className="text-xs text-amber-400 font-bold uppercase tracking-widest">
-                  PRO Tier Required
-                </p>
-                <p className="text-[10px] text-zinc-600">
-                  SSL/TLS Cryptographic telemetry is locked behind the PRO subscription.
-                </p>
-                <Link
-                  href={`/workspaces/${workspaceId}/billing`}
-                  className="inline-block mt-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold uppercase tracking-widest text-xs border-2 border-transparent transition-all"
-                >
-                  Upgrade to PRO
+              <div className="space-y-3 py-6 text-center">
+                <ShieldAlert className="mx-auto h-8 w-8 text-degraded" />
+                <p className="text-sm font-medium text-degraded">Pro plan required</p>
+                <p className="text-xs text-muted-foreground">SSL/TLS monitoring is available on the Pro plan.</p>
+                <Link href={`/workspaces/${workspaceId}/billing`} className="btn btn-accent mt-1 text-degraded border-degraded/40 bg-degraded/10">
+                  Upgrade to Pro
                 </Link>
               </div>
             ) : monitor.tlsIssuer ? (
               <div className="space-y-4">
-                <div>
-                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Certificate Authority</p>
-                  <p className="text-sm text-zinc-200 mt-1 truncate">{monitor.tlsIssuer}</p>
-                </div>
-
-                <div className="flex justify-between items-end border-t-2 border-zinc-900 pt-4">
-                  <div>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Expiration Epoch</p>
-                    <p className="text-sm text-zinc-200 mt-1">
-                      {monitor.tlsValidTo ? new Date(monitor.tlsValidTo).toLocaleDateString() : "Unknown"}
-                    </p>
-                  </div>
+                <Detail label="Issuer" value={monitor.tlsIssuer} truncate />
+                <div className="flex items-end justify-between border-t border-border pt-4">
+                  <Detail
+                    label="Expires"
+                    value={monitor.tlsValidTo ? new Date(monitor.tlsValidTo).toLocaleDateString() : "Unknown"}
+                  />
                   <div className="text-right">
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Status</p>
-                    <div className={`flex items-center gap-2 mt-1 ${
-                      isSslExpiring ? "text-amber-400 font-black" : "text-emerald-400"
-                    }`}>
-                      {isSslExpiring ? <ShieldAlert className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
-                      {monitor.tlsDaysRemaining} Days Left
-                    </div>
+                    <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Days left</dt>
+                    <dd className={cn("mt-1 flex items-center gap-1.5 text-sm font-semibold", isSslExpiring ? "text-degraded" : "text-up")}>
+                      {isSslExpiring ? <ShieldAlert className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+                      {monitor.tlsDaysRemaining}
+                    </dd>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="py-8 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold">
-                No TLS Certificate Detected. Standard HTTP Routing.
-              </div>
+              <div className="py-8 text-center text-sm text-muted-foreground">No TLS certificate — plain HTTP endpoint.</div>
             )}
-          </div>
-
+          </section>
         </div>
 
-        {/* SLA & Historical Analytics */}
+        {/* 30-DAY SLA */}
         {analytics && (
-          <div className="p-6 border-2 border-zinc-900 bg-zinc-950">
-            <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest border-b-2 border-zinc-900 pb-4 mb-6">
-              30-Day Service Level Agreement (SLA)
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 divide-x-0 md:divide-x-2 divide-zinc-900">
-              <div className="flex flex-col md:px-6 first:pl-0">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Rolling Uptime</span>
-                <span className={`text-3xl font-black tracking-widest ${
-                  (analytics.uptime30Day as number) >= 99.9 ? "text-emerald-400" :
-                  (analytics.uptime30Day as number) >= 99.0 ? "text-amber-400" : "text-red-400"
-                }`}>
-                  {analytics.uptime30Day as string}%
-                </span>
-              </div>
-              <div className="flex flex-col md:px-6">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Total Breaches</span>
-                <span className="text-2xl font-bold text-zinc-200">
-                  {analytics.totalOutages30Day as number} <span className="text-xs text-zinc-600">Events</span>
-                </span>
-              </div>
-              <div className="flex flex-col md:px-6">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Total Downtime</span>
-                <span className="text-2xl font-bold text-zinc-200">
-                  {analytics.downtimeMinutes30Day as number} <span className="text-xs text-zinc-600">Mins</span>
-                </span>
-              </div>
-              <div className="flex flex-col md:px-6">
-                <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Avg Latency (24h)</span>
-                <span className="text-2xl font-bold text-cyan-400">
-                  {analytics.avgLatency24h as number} <span className="text-xs text-cyan-900">ms</span>
-                </span>
-              </div>
+          <section className="glass rounded-lg p-6">
+            <h2 className="mb-5 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">Last 30 days</h2>
+            <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
+              <Stat
+                label="Uptime"
+                value={`${analytics.uptime30Day}%`}
+                className={uptime !== null && uptime >= 99.9 ? "text-up" : uptime !== null && uptime >= 99 ? "text-degraded" : "text-down"}
+                big
+              />
+              <Stat label="Outages" value={`${analytics.totalOutages30Day}`} unit="events" />
+              <Stat label="Downtime" value={`${analytics.downtimeMinutes30Day}`} unit="min" />
+              <Stat label="Avg latency (24h)" value={`${analytics.avgLatency24h}`} unit="ms" className="text-info" />
             </div>
-          </div>
+          </section>
         )}
 
-        {/* Scheduled Maintenance */}
-        <div className="p-6 border-2 border-zinc-900 bg-zinc-950 space-y-6">
-          <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
-            <Wrench className="w-4 h-4 text-amber-500" /> Scheduled Maintenance
+        {/* MAINTENANCE */}
+        <section className="glass rounded-lg p-6">
+          <h2 className="mb-4 flex items-center gap-2 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">
+            <Wrench className="h-4 w-4 text-degraded" /> Scheduled maintenance
           </h2>
 
           {canEdit ? (
             <form action={scheduleMaintenance} className="space-y-4">
               <input type="hidden" name="workspaceId" value={workspaceId} />
               <input type="hidden" name="monitorId" value={monitor.id} />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="maintenanceStartAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                    Start Time
-                  </label>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-1.5">
+                  <label htmlFor="maintenanceStartAt" className="block text-sm font-medium text-foreground">Start</label>
                   <input
                     id="maintenanceStartAt"
                     name="maintenanceStartAt"
                     type="datetime-local"
                     defaultValue={monitor.maintenanceStartAt ? new Date(monitor.maintenanceStartAt).toISOString().slice(0, 16) : ""}
-                    className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
+                    className="field font-mono [color-scheme:dark]"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="maintenanceEndAt" className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                    End Time
-                  </label>
+                <div className="space-y-1.5">
+                  <label htmlFor="maintenanceEndAt" className="block text-sm font-medium text-foreground">End</label>
                   <input
                     id="maintenanceEndAt"
                     name="maintenanceEndAt"
                     type="datetime-local"
                     defaultValue={monitor.maintenanceEndAt ? new Date(monitor.maintenanceEndAt).toISOString().slice(0, 16) : ""}
-                    className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 text-sm font-mono focus:outline-none focus:border-amber-500 transition-colors [color-scheme:dark]"
+                    className="field font-mono [color-scheme:dark]"
                   />
                 </div>
               </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="submit"
-                  className="bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold uppercase tracking-widest py-2 px-5 border-2 border-transparent transition-all text-xs"
-                >
-                  Schedule Maintenance
+              <div className="flex items-center gap-3 pt-1">
+                <button type="submit" className="btn btn-accent text-degraded border-degraded/40 bg-degraded/10">
+                  Schedule
                 </button>
                 {monitor.maintenanceStartAt && (
-                  <button
-                    type="submit"
-                    name="clear"
-                    value="true"
-                    className="bg-zinc-900 hover:bg-red-950 text-zinc-400 hover:text-red-400 font-bold uppercase tracking-widest py-2 px-5 border-2 border-zinc-800 hover:border-red-500 transition-all text-xs"
-                  >
-                    Clear
+                  <button type="submit" name="clear" value="true" className="btn btn-ghost">
+                    Clear window
                   </button>
                 )}
               </div>
-
               {monitor.maintenanceStartAt && (
-                <div className="text-[10px] text-zinc-500 font-mono pt-2 border-t-2 border-zinc-900">
+                <p className="border-t border-border pt-3 font-mono text-xs text-muted-foreground">
                   Current window: {new Date(monitor.maintenanceStartAt).toLocaleString()} — {new Date(monitor.maintenanceEndAt!).toLocaleString()}
-                </div>
+                </p>
               )}
             </form>
           ) : (
-            <div className="py-4 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold border-2 border-dashed border-zinc-800">
-              Elevated privileges required to configure maintenance windows.
+            <div className="rounded-lg border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
+              You need admin access to configure maintenance windows.
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Telemetry Charts */}
+        {/* CHARTS */}
         <MonitorCharts checks={checks} stats={stats} />
 
-        {/* Probe Log */}
+        {/* CHECK LOG */}
         <MonitorCheckLog workspaceId={workspaceId} monitorId={monitor.id} token={token} />
-
       </div>
     </main>
+  );
+}
+
+function Detail({ label, value, truncate }: { label: string; value: string; truncate?: boolean }) {
+  return (
+    <div className="min-w-0">
+      <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</dt>
+      <dd className={cn("mt-1 text-sm text-foreground", truncate && "truncate")}>{value}</dd>
+    </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  unit,
+  className,
+  big,
+}: {
+  label: string;
+  value: string;
+  unit?: string;
+  className?: string;
+  big?: boolean;
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</span>
+      <span className={cn("font-display font-semibold tabular-nums", big ? "text-3xl" : "text-2xl", className ?? "text-foreground")}>
+        {value}
+        {unit && <span className="ml-1 text-xs font-normal text-muted-foreground">{unit}</span>}
+      </span>
+    </div>
   );
 }

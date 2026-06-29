@@ -7,47 +7,62 @@ interface Props {
   stats: MonitorStats;
 }
 
+const UP = "#9FD8BD";
+const DOWN = "#F0584B";
+
 export default function StatusPieChart({ stats }: Props) {
   const data = [
-    { name: "UP", value: stats.upChecks },
-    { name: "DOWN", value: stats.downChecks },
+    { name: "Up", value: stats.upChecks },
+    { name: "Down", value: stats.downChecks },
   ];
-
-  const COLORS = ["#34d399", "#ef4444"];
+  const colors = [UP, DOWN];
 
   if (stats.totalChecks === 0) {
-    return (
-      <div className="flex items-center justify-center h-32 text-zinc-600 text-xs font-bold uppercase tracking-widest">
-        No data
-      </div>
-    );
+    return <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">No data</div>;
   }
 
+  const uptimePct = ((stats.upChecks / stats.totalChecks) * 100).toFixed(1);
+
   return (
-    <div className="h-32">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={28}
-            outerRadius={42}
-            startAngle={90}
-            endAngle={-270}
-            dataKey="value"
-            stroke="none"
-          >
-            {data.map((_, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={COLORS[index]}
-                opacity={data[index].value === 0 ? 0.2 : 1}
-              />
-            ))}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
+    <div className="flex items-center gap-4">
+      <div className="relative h-28 w-28 shrink-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={34}
+              outerRadius={50}
+              startAngle={90}
+              endAngle={-270}
+              dataKey="value"
+              stroke="none"
+            >
+              {data.map((d, index) => (
+                <Cell key={`cell-${index}`} fill={colors[index]} opacity={d.value === 0 ? 0.2 : 1} />
+              ))}
+            </Pie>
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <span className="font-display text-base font-semibold tabular-nums text-foreground">{uptimePct}%</span>
+          <span className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">up</span>
+        </div>
+      </div>
+
+      <ul className="space-y-1.5 text-sm">
+        <li className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-up" />
+          <span className="text-muted-foreground">Up</span>
+          <span className="ml-auto font-mono tabular-nums text-foreground">{stats.upChecks}</span>
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-down" />
+          <span className="text-muted-foreground">Down</span>
+          <span className="ml-auto font-mono tabular-nums text-foreground">{stats.downChecks}</span>
+        </li>
+      </ul>
     </div>
   );
 }
