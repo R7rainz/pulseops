@@ -20,11 +20,11 @@ export function Brand({
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <span
         className={cn(
-          "grid place-items-center rounded-md border border-up/30 bg-up/10",
+          "grid place-items-center rounded-md border border-primary/30 bg-primary/10",
           sm ? "h-7 w-7" : "h-8 w-8",
         )}
       >
-        <Activity className={cn("text-up", sm ? "h-4 w-4" : "h-[18px] w-[18px]")} aria-hidden="true" />
+        <Activity className={cn("text-primary", sm ? "h-4 w-4" : "h-[18px] w-[18px]")} aria-hidden="true" />
       </span>
       <span
         className={cn(
@@ -32,7 +32,7 @@ export function Brand({
           sm ? "text-base" : "text-lg",
         )}
       >
-        Pulse<span className="text-up">Ops</span>
+        Pulse<span className="text-primary">Ops</span>
       </span>
     </span>
   );

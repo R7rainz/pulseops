@@ -64,7 +64,7 @@ function ResetForm() {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>Invalid reset link. No token provided.</p>
         </div>
-        <Link href="/forgot-password" className="text-sm font-medium text-info transition-colors hover:text-up">
+        <Link href="/forgot-password" className="text-sm font-medium text-info transition-colors hover:text-primary">
           Request a new reset link
         </Link>
       </div>
@@ -74,11 +74,11 @@ function ResetForm() {
   if (state?.success) {
     return (
       <div className="text-center">
-        <div role="status" className="mb-6 flex items-start gap-2.5 rounded-lg border border-up/40 bg-up/10 p-3 text-left text-sm text-up">
+        <div role="status" className="mb-6 flex items-start gap-2.5 rounded-lg border border-primary/40 bg-primary/10 p-3 text-left text-sm text-primary">
           <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{state.success}</p>
         </div>
-        <Link href="/login" className="inline-flex items-center gap-2 text-sm font-medium text-info transition-colors hover:text-up">
+        <Link href="/login" className="inline-flex items-center gap-2 text-sm font-medium text-info transition-colors hover:text-primary">
           <ArrowLeft className="h-4 w-4" />
           Proceed to sign in
         </Link>
@@ -119,7 +119,7 @@ function ResetForm() {
             {PASSWORD_RULES.map((rule) => {
               const ok = rule.test(password);
               return (
-                <li key={rule.label} className={`flex items-center gap-2 text-[11px] ${ok ? "text-up" : "text-muted-foreground"}`}>
+                <li key={rule.label} className={`flex items-center gap-2 text-[11px] ${ok ? "text-primary" : "text-muted-foreground"}`}>
                   {ok ? <Check className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
                   {rule.label}
                 </li>

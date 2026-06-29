@@ -68,7 +68,7 @@ function SignupForm() {
         Already have an account?{" "}
         <Link
           href={`/login${inviteToken ? `?invite_token=${inviteToken}` : ""}`}
-          className="font-medium text-up transition-colors hover:underline"
+          className="font-medium text-primary transition-colors hover:underline"
         >
           Sign in
         </Link>

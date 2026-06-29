@@ -53,12 +53,12 @@ export default function ForgotPasswordPage() {
             <div className="text-center">
               <div
                 role="status"
-                className="mb-6 flex items-start gap-2.5 rounded-lg border border-up/40 bg-up/10 p-3 text-left text-sm text-up"
+                className="mb-6 flex items-start gap-2.5 rounded-lg border border-primary/40 bg-primary/10 p-3 text-left text-sm text-primary"
               >
                 <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{message}</p>
               </div>
-              <Link href="/login" className="inline-flex items-center gap-2 text-sm font-medium text-info transition-colors hover:text-up">
+              <Link href="/login" className="inline-flex items-center gap-2 text-sm font-medium text-info transition-colors hover:text-primary">
                 <ArrowLeft className="h-4 w-4" />
                 Back to sign in
               </Link>

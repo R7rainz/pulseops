@@ -53,7 +53,7 @@ function LoginForm() {
             <PasswordInput id="password" name="password" label="Password" autoComplete="current-password" required placeholder="••••••••" />
 
             <div className="flex justify-end">
-              <Link href="/forgot-password" className="text-xs font-medium text-info transition-colors hover:text-up">
+              <Link href="/forgot-password" className="text-xs font-medium text-info transition-colors hover:text-primary">
                 Forgot password?
               </Link>
             </div>
@@ -69,7 +69,7 @@ function LoginForm() {
         No account?{" "}
         <Link
           href={`/signup${inviteToken ? `?invite_token=${inviteToken}` : ""}`}
-          className="font-medium text-up transition-colors hover:underline"
+          className="font-medium text-primary transition-colors hover:underline"
         >
           Create one
         </Link>

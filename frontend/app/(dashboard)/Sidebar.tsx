@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Brand } from "@/components/Brand";
+import ThemeToggle from "@/components/ThemeToggle";
 import { logoutUser } from "@/app/(auth)/auth.actions";
 
 interface Workspace {
@@ -89,7 +90,7 @@ export default function Sidebar({
               <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                 Workspaces
               </h2>
-              <Link href="/workspaces/new" className="icon-btn h-7 w-7 hover:text-up hover:border-up/40" title="New workspace" aria-label="New workspace">
+              <Link href="/workspaces/new" className="icon-btn h-7 w-7 hover:text-primary hover:border-primary/40" title="New workspace" aria-label="New workspace">
                 <Plus className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -116,14 +117,14 @@ export default function Sidebar({
                       key={ws.id}
                       className={cn(
                         "overflow-hidden rounded-lg border transition-colors",
-                        isActive ? "border-up/20 bg-up/[0.04]" : "border-transparent hover:border-border",
+                        isActive ? "border-primary/20 bg-primary/[0.04]" : "border-transparent hover:border-border",
                       )}
                     >
                       <Link
                         href={`${wsBase}/monitors`}
                         className={cn(
                           "flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors",
-                          isActive ? "text-up" : "text-foreground/80 hover:text-foreground",
+                          isActive ? "text-primary" : "text-foreground/80 hover:text-foreground",
                         )}
                       >
                         <Layers className="h-4 w-4 shrink-0" />
@@ -159,13 +160,14 @@ export default function Sidebar({
         {/* PROFILE & LOGOUT */}
         <div className="space-y-2 border-t border-border p-3">
           <div className="flex items-center gap-3 px-2 py-1">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-info/30 bg-info/10 font-display text-sm font-semibold text-info">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-primary/30 bg-primary/10 font-display text-sm font-semibold text-primary">
               {(user.name || user.email || "?").charAt(0).toUpperCase()}
             </span>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{user.name || "Operator"}</p>
               <p className="truncate font-mono text-[11px] text-muted-foreground">{user.email || "—"}</p>
             </div>
+            <ThemeToggle className="h-8 w-8 shrink-0" />
           </div>
 
           <Link
@@ -173,7 +175,7 @@ export default function Sidebar({
             className={cn(
               "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               pathname === "/account"
-                ? "bg-up/[0.06] text-up"
+                ? "bg-primary/[0.06] text-primary"
                 : "text-muted-foreground hover:bg-surface-raised hover:text-foreground",
             )}
           >
@@ -214,7 +216,7 @@ function NavItem({
       className={cn(
         "flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
         isActive
-          ? "bg-up/[0.08] text-up"
+          ? "bg-primary/[0.08] text-primary"
           : "text-muted-foreground hover:bg-surface-raised hover:text-foreground",
       )}
     >
