@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { API_URL } from "@/lib/constants";
 import Link from "next/link";
 import { ShieldCheck, ServerCrash, AlertTriangle } from "lucide-react";
-import ParticleField from "@/components/ParticleField";
+import AmbientGlow from "@/components/AmbientGlow";
 import { Brand } from "@/components/Brand";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
@@ -86,8 +86,7 @@ export default async function PublicStatusPage({
       {/* ambient background */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 bg-background" />
-        <div className="absolute inset-0 bg-[radial-gradient(90%_60%_at_50%_-5%,rgba(37,99,235,0.09),transparent_60%)]" />
-        <ParticleField className="absolute inset-0 h-full w-full" />
+        <AmbientGlow />
       </div>
 
       <div className="mx-auto max-w-3xl px-6 py-14 sm:py-20">

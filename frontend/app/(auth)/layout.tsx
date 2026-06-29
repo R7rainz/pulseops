@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Activity, Radio, Bell, Globe } from "lucide-react";
-import ParticleField from "@/components/ParticleField";
+import AmbientGlow from "@/components/AmbientGlow";
 import { Brand } from "@/components/Brand";
 
 const POINTS = [
@@ -12,22 +12,22 @@ const POINTS = [
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-dvh text-foreground selection:bg-primary/20 lg:grid lg:grid-cols-[1.05fr_1fr]">
-      {/* LEFT — fluid brand panel (desktop only) */}
+      {/* LEFT — warm brand panel (desktop only) */}
       <aside className="relative hidden overflow-hidden text-white lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
-        {/* fluid gradient field */}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(140deg,#1e3a8a_0%,#2563eb_45%,#0ea5e9_100%)]" />
+        {/* warm fluid gradient field */}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(150deg,#5c3a0d_0%,#9e6a12_46%,#c98a2b_100%)]" />
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="animate-drift absolute -left-1/4 -top-10 h-[65%] w-[70%] rounded-full bg-white/20 blur-3xl" />
+          <div className="animate-drift absolute -left-1/4 -top-10 h-[65%] w-[70%] rounded-full bg-[#f5d9a0]/25 blur-3xl" />
           <div
-            className="animate-float absolute -bottom-10 right-0 h-[55%] w-[60%] rounded-full bg-sky-200/30 blur-3xl"
+            className="animate-float absolute -bottom-10 right-0 h-[55%] w-[60%] rounded-full bg-[#e8b563]/30 blur-3xl"
             style={{ animationDelay: "1.5s" }}
           />
           <div
-            className="animate-drift absolute left-1/3 top-1/3 h-[45%] w-[50%] rounded-full bg-indigo-300/25 blur-3xl"
+            className="animate-drift absolute left-1/3 top-1/3 h-[45%] w-[50%] rounded-full bg-white/15 blur-3xl"
             style={{ animationDelay: "3s" }}
           />
         </div>
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(130%_120%_at_50%_0%,transparent_55%,rgba(10,18,48,0.45)_100%)]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(130%_120%_at_50%_0%,transparent_55%,rgba(40,24,4,0.4)_100%)]" />
 
         {/* brand */}
         <Link href="/" className="inline-flex items-center gap-2.5">
@@ -65,8 +65,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <main className="relative flex min-h-dvh items-center justify-center overflow-hidden p-6 sm:p-10">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-background" />
-          <div className="absolute inset-0 bg-[radial-gradient(90%_60%_at_50%_-10%,rgba(37,99,235,0.08),transparent_60%)]" />
-          <ParticleField className="absolute inset-0 h-full w-full opacity-60 lg:opacity-35" max={50} />
+          <AmbientGlow className="opacity-80 lg:opacity-50" />
         </div>
 
         {/* mobile brand */}

@@ -129,77 +129,77 @@
   --sidebar-ring: oklch(0.547 0.021 43.1);
 }
 
-/* ── PulseOps brand — Arctic-blue LIGHT theme (default) ──────────────
-   Blue (#2563EB) = brand/accent. Green/amber/red = status ONLY. */
+/* ── PulseOps brand — Cream + Amber LIGHT theme (default) ──────────────
+   Warm, calm (Claude/Zen-ish). Amber = brand/accent. Green/amber/red = status. */
 :root {
-  --background: #f6f9fe;
-  --foreground: #0b1220;
+  --background: #f8f5ee;
+  --foreground: #2a2620;
   --card: #ffffff;
-  --card-foreground: #0b1220;
+  --card-foreground: #2a2620;
   --popover: #ffffff;
-  --popover-foreground: #0b1220;
-  --surface: #ffffff;
-  --surface-raised: #eef3fb;
-  --muted: #eef3fb;
-  --muted-foreground: #586273;
-  --primary: #2563eb;
+  --popover-foreground: #2a2620;
+  --surface: #fffdf9;
+  --surface-raised: #f3efe6;
+  --muted: #f1ece2;
+  --muted-foreground: #6e665e;
+  --primary: #9e6a12;
   --primary-foreground: #ffffff;
-  --secondary: #eef3fb;
-  --secondary-foreground: #0b1220;
-  --accent: #eef3fb;
-  --accent-foreground: #0b1220;
-  --destructive: #dc2626;
-  --border: #e3e9f3;
-  --input: #d8e0ee;
-  --ring: #2563eb;
+  --secondary: #f1ece2;
+  --secondary-foreground: #2a2620;
+  --accent: #f1ece2;
+  --accent-foreground: #2a2620;
+  --destructive: #c1352b;
+  --border: #e7e0d3;
+  --input: #ded6c7;
+  --ring: #9e6a12;
 
-  /* semantic status (light-tuned for contrast on white) */
-  --up: #16a34a;
+  /* semantic status (warm-tuned for contrast on cream) */
+  --up: #198754;
   --up-foreground: #ffffff;
-  --degraded: #d97706;
+  --degraded: #c2710c;
   --degraded-foreground: #ffffff;
-  --down: #dc2626;
+  --down: #c1352b;
   --down-foreground: #ffffff;
-  --info: #0ea5e9;
-  --paused: #64748b;
+  --info: #a9714c;
+  --paused: #8a8178;
 
-  --radius: 0.75rem;
-  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 30px -14px rgba(37, 99, 235, 0.18);
+  --radius: 0.875rem;
+  --shadow-card: 0 1px 2px rgba(60, 40, 16, 0.05), 0 14px 34px -18px rgba(120, 86, 28, 0.22);
 }
 
-/* ── PulseOps DARK theme — blue-accented counterpart (toggle) ── */
+/* ── PulseOps DARK theme — warm amber counterpart (toggle) ── */
 .dark {
-  --background: #0a0f1a;
-  --foreground: #e6edf7;
-  --card: #111a2b;
-  --card-foreground: #e6edf7;
-  --popover: #111a2b;
-  --popover-foreground: #e6edf7;
-  --surface: #111a2b;
-  --surface-raised: #18233a;
-  --muted: #18233a;
-  --muted-foreground: #94a3b8;
-  --primary: #60a5fa;
-  --primary-foreground: #0a0f1a;
-  --secondary: #18233a;
-  --secondary-foreground: #e6edf7;
-  --accent: #18233a;
-  --accent-foreground: #e6edf7;
-  --destructive: #f87171;
-  --border: rgba(226, 237, 247, 0.1);
-  --input: rgba(226, 237, 247, 0.14);
-  --ring: #60a5fa;
+  --background: #1a1612;
+  --foreground: #ece5d8;
+  --card: #221d18;
+  --card-foreground: #ece5d8;
+  --popover: #221d18;
+  --popover-foreground: #ece5d8;
+  --surface: #221d18;
+  --surface-raised: #2b251f;
+  --muted: #2b251f;
+  --muted-foreground: #a89e90;
+  --primary: #e0a347;
+  --primary-foreground: #1a1612;
+  --secondary: #2b251f;
+  --secondary-foreground: #ece5d8;
+  --accent: #2b251f;
+  --accent-foreground: #ece5d8;
+  --destructive: #e3756b;
+  --border: rgba(236, 229, 216, 0.1);
+  --input: rgba(236, 229, 216, 0.14);
+  --ring: #e0a347;
 
-  --up: #34d399;
-  --up-foreground: #04140c;
-  --degraded: #fbbf24;
+  --up: #56c08a;
+  --up-foreground: #07140c;
+  --degraded: #e6a23c;
   --degraded-foreground: #1a1206;
-  --down: #f87171;
+  --down: #e3756b;
   --down-foreground: #1a0806;
-  --info: #38bdf8;
-  --paused: #94a3b8;
+  --info: #cda07e;
+  --paused: #a89e90;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 34px -14px rgba(0, 0, 0, 0.55);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 36px -18px rgba(0, 0, 0, 0.55);
 }
 
 @layer components {
