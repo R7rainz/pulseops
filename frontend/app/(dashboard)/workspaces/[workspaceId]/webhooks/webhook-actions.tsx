@@ -44,30 +44,19 @@ export function WebhookActions({
     <>
       <button
         onClick={handleToggle}
-        className={`p-2 border-2 transition-colors ${
-          isActive
-            ? "bg-zinc-950 border-zinc-800 text-emerald-500 hover:border-zinc-600"
-            : "bg-zinc-950 border-zinc-800 text-zinc-600 hover:text-emerald-400 hover:border-emerald-500"
-        }`}
+        className={`icon-btn ${isActive ? "text-up hover:border-up/40" : "hover:border-up/40 hover:text-up"}`}
         title={isActive ? "Disable" : "Enable"}
+        aria-label={isActive ? "Disable webhook" : "Enable webhook"}
       >
-        {isActive ? <Power className="w-4 h-4" /> : <PowerOff className="w-4 h-4" />}
+        {isActive ? <Power className="h-4 w-4" /> : <PowerOff className="h-4 w-4" />}
       </button>
 
-      <button
-        onClick={handleTest}
-        className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-amber-400 hover:border-amber-500 transition-colors"
-        title="Send Test Ping"
-      >
-        <Play className="w-4 h-4" />
+      <button onClick={handleTest} className="icon-btn hover:border-degraded/40 hover:text-degraded" title="Send test ping" aria-label="Send test ping">
+        <Play className="h-4 w-4" />
       </button>
 
-      <button
-        onClick={handleDelete}
-        className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"
-        title="Delete Webhook"
-      >
-        <Trash2 className="w-4 h-4" />
+      <button onClick={handleDelete} className="icon-btn hover:border-down/40 hover:text-down" title="Delete webhook" aria-label="Delete webhook">
+        <Trash2 className="h-4 w-4" />
       </button>
     </>
   );
