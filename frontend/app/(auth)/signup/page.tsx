@@ -4,7 +4,7 @@ import { useActionState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { signupUser } from "../auth.actions";
 import Link from "next/link";
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import PasswordInput from "@/components/PasswordInput";
 
 function SignupForm() {
@@ -13,102 +13,66 @@ function SignupForm() {
   const inviteToken = searchParams.get("invite_token");
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-50 font-mono flex items-center justify-center p-6 selection:bg-emerald-500/30 selection:text-emerald-400">
-      {/* Background Pulse matching the Core Theme */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500 opacity-[0.05] blur-[150px] pointer-events-none animate-pulse" />
+    <div>
+      <div className="mb-8 text-center">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Create your account</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">Start monitoring in under a minute</p>
+      </div>
 
-      <div className="w-full max-w-md relative z-10 my-8">
-        {/* Header */}
-        <div className="mb-10 text-center">
-          <div className="inline-flex p-3 bg-zinc-900 border-2 border-zinc-800 mb-6">
-            <ShieldCheck className="w-6 h-6 text-emerald-400" />
-          </div>
-          <h1 className="text-3xl font-extrabold uppercase tracking-widest text-zinc-100">
-            System<span className="text-emerald-400">Registry</span>
-          </h1>
-          <p className="text-zinc-500 text-sm mt-2 uppercase tracking-wide">
-            Provision New Identity
-          </p>
-        </div>
-
-        {/* Sharp Materialistic Form Box with Offset Shadow */}
-        <div className="bg-zinc-950 border-2 border-zinc-800 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.1)]">
-          <form action={formAction} className="space-y-6">
-            {inviteToken && (
-              <input type="hidden" name="invite_token" value={inviteToken} />
-            )}
+      <div className="pulse-shell">
+        <div className="p-7">
+          <form action={formAction} className="space-y-5">
+            {inviteToken && <input type="hidden" name="invite_token" value={inviteToken} />}
             {state?.error && (
-              <div className="p-4 bg-red-950/30 border-2 border-red-500/50 flex items-start gap-3 text-sm text-red-400">
-                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-                <p className="pt-0.5">{state.error}</p>
+              <div
+                role="alert"
+                className="flex items-start gap-2.5 rounded-lg border border-down/40 bg-down/10 p-3 text-sm text-down"
+              >
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                <p>{state.error}</p>
               </div>
             )}
 
-            <div className="space-y-2">
-              <label
-                htmlFor="name"
-                className="block text-xs font-bold text-zinc-400 uppercase tracking-widest"
-              >
-                Operator Designation
+            <div className="space-y-1.5">
+              <label htmlFor="name" className="block text-sm font-medium text-foreground">
+                Name
               </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                required
-                placeholder="e.g., RAINZ"
-                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
-              />
+              <input id="name" name="name" type="text" autoComplete="name" required placeholder="Your name" className="field" />
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="block text-xs font-bold text-zinc-400 uppercase tracking-widest"
-              >
-                Email Identity
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground">
+                Email
               </label>
               <input
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
                 required
-                placeholder="admin@pulseops.dev"
-                className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
+                placeholder="you@company.com"
+                className="field"
               />
             </div>
 
-            <PasswordInput
-              id="password"
-              name="password"
-              label="Access Token"
-              required
-              placeholder="••••••••"
-            />
+            <PasswordInput id="password" name="password" label="Password" autoComplete="new-password" required placeholder="At least 8 characters" />
 
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-4 border-2 border-transparent transition-all disabled:opacity-50 rounded-none"
-            >
-              {isPending ? "Provisioning..." : "Execute Registry"}
+            <button type="submit" disabled={isPending} className="btn btn-primary w-full py-3">
+              {isPending ? "Creating account…" : "Create account"}
             </button>
           </form>
         </div>
-
-        {/* Footer Link */}
-        <div className="mt-8 text-center">
-          <p className="text-zinc-500 text-sm">
-            Identity already provisioned?{" "}
-            <Link
-              href={`/login${inviteToken ? `?invite_token=${inviteToken}` : ""}`}
-              className="text-cyan-400 hover:text-cyan-300 hover:underline font-bold uppercase tracking-wide"
-            >
-              Establish Session
-            </Link>
-          </p>
-        </div>
       </div>
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link
+          href={`/login${inviteToken ? `?invite_token=${inviteToken}` : ""}`}
+          className="font-medium text-up transition-colors hover:underline"
+        >
+          Sign in
+        </Link>
+      </p>
     </div>
   );
 }
