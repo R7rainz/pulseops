@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Bricolage_Grotesque, Instrument_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -27,15 +28,18 @@ export const metadata: Metadata = {
   description: "Monitor uptime, latency, and incidents across your infrastructure.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Light is the default; dark is opt-in via the theme toggle (cookie-driven, SSR — no flash).
+  const isDark = (await cookies()).get("pulseops_theme")?.value === "dark";
+
   return (
     <html
       lang="en"
-      className={cn("dark", "h-full", "antialiased", "font-sans", display.variable, sans.variable, geistMono.variable)}
+      className={cn(isDark && "dark", "h-full", "antialiased", "font-sans", display.variable, sans.variable, geistMono.variable)}
     >
       <body className="min-h-full flex flex-col">
         {children}
