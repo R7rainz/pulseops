@@ -32,8 +32,8 @@ export default function Reactor({ className }: { className?: string }) {
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(55, w / h, 0.1, 100);
-    camera.position.z = 7.5;
+    const camera = new THREE.PerspectiveCamera(58, w / h, 0.1, 100);
+    camera.position.z = 8.5;
 
     const BLUE = new THREE.Color("#2563eb");
     const SKY = new THREE.Color("#0ea5e9");
@@ -43,22 +43,22 @@ export default function Reactor({ className }: { className?: string }) {
     // ── Core: wireframe shell + inner solid ──
     const core = new THREE.Group();
     const shell = new THREE.Mesh(
-      new THREE.IcosahedronGeometry(1.15, 1),
+      new THREE.IcosahedronGeometry(1.3, 1),
       new THREE.MeshBasicMaterial({ color: BLUE, wireframe: true, transparent: true, opacity: 0.45 }),
     );
     const innerMat = new THREE.MeshBasicMaterial({ color: SKY, transparent: true, opacity: 0.9 });
-    const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(0.62, 2), innerMat);
+    const inner = new THREE.Mesh(new THREE.IcosahedronGeometry(0.72, 2), innerMat);
     core.add(shell, inner);
     scene.add(core);
 
     // ── Ring ──
     const ringMat = new THREE.MeshBasicMaterial({ color: INDIGO, transparent: true, opacity: 0.55 });
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(2.35, 0.012, 12, 140), ringMat);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(3, 0.014, 12, 160), ringMat);
     ring.rotation.x = Math.PI / 2.3;
     scene.add(ring);
 
     // ── Particle stream (spiral inward) ──
-    const COUNT = 2600;
+    const COUNT = 3400;
     const positions = new Float32Array(COUNT * 3);
     const colors = new Float32Array(COUNT * 3);
     const radii = new Float32Array(COUNT);
@@ -67,10 +67,10 @@ export default function Reactor({ className }: { className?: string }) {
     const speeds = new Float32Array(COUNT);
 
     function place(i: number, atRim: boolean) {
-      radii[i] = atRim ? 3.2 + Math.random() * 2.4 : 0.3 + Math.random() * 5.2;
+      radii[i] = atRim ? 4.2 + Math.random() * 3.6 : 0.3 + Math.random() * 7.4;
       angles[i] = Math.random() * Math.PI * 2;
-      heights[i] = (Math.random() - 0.5) * 1.6;
-      speeds[i] = 0.004 + Math.random() * 0.011;
+      heights[i] = (Math.random() - 0.5) * 1.8;
+      speeds[i] = 0.004 + Math.random() * 0.012;
     }
     for (let i = 0; i < COUNT; i++) {
       place(i, false);

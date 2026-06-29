@@ -78,17 +78,17 @@ export default async function RootPage() {
         </div>
       </nav>
 
-      {/* HERO */}
-      <section className="relative mx-auto max-w-6xl px-6 pb-24 pt-24 sm:pt-32">
-        {/* reactor render behind the hero */}
-        <div className="pointer-events-none absolute inset-x-0 -top-16 bottom-0 overflow-hidden">
-          <div className="absolute left-1/2 top-1/2 h-[140%] w-[140%] -translate-x-1/2 -translate-y-1/2">
-            <Reactor className="absolute inset-0 h-full w-full" />
-          </div>
-          <div className="absolute left-1/2 top-[42%] h-[640px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.16),transparent_62%)] blur-2xl" />
+      {/* HERO — full-bleed reactor */}
+      <section className="relative flex min-h-[92vh] items-center justify-center overflow-hidden px-6 pb-20 pt-10">
+        {/* full-width reactor render */}
+        <div className="pointer-events-none absolute inset-0">
+          <Reactor className="absolute inset-0 h-full w-full" />
+          <div className="absolute left-1/2 top-1/2 h-[900px] w-[900px] max-w-[96vw] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.18),transparent_60%)] blur-2xl" />
+          {/* fade the render into the page where the next section begins */}
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-background" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center text-center">
+        <div className="fade-up relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center text-center">
           <div className="mb-8 inline-flex max-w-full items-center gap-2.5 rounded-full border border-border bg-surface/70 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
             <span className="relative flex h-2 w-2 shrink-0">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
@@ -126,7 +126,7 @@ export default async function RootPage() {
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="border-t border-border py-24">
+      <section id="features" className="border-t border-border py-20">
         <div className="mx-auto max-w-6xl px-6">
           <div className="mb-14 text-center">
             <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">Capabilities</p>
@@ -175,7 +175,7 @@ export default async function RootPage() {
       </section>
 
       {/* ROADMAP + TESTIMONIAL */}
-      <section className="border-t border-border py-24">
+      <section className="border-t border-border py-20">
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-6 lg:grid-cols-2">
           <div>
             <h2 className="mb-8 flex items-center gap-2.5 font-display text-xl font-semibold tracking-tight">
@@ -214,7 +214,7 @@ export default async function RootPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-border py-24">
+      <section className="border-t border-border py-20">
         <div className="mx-auto max-w-3xl px-6">
           <div className="pulse-shell">
             <div className="px-8 py-12 text-center">
