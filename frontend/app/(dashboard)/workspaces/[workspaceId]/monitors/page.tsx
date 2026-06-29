@@ -3,7 +3,7 @@ import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import { createMonitor } from "./actions";
-import { PlusSquare, TerminalSquare, Crown, Zap } from "lucide-react";
+import { Plus, Crown, Zap } from "lucide-react";
 import MonitorView from "./monitor-view";
 import MembersPanel from "@/components/MembersPanel";
 
@@ -61,100 +61,62 @@ export default async function MonitorsPage({
   const canEdit = role === "OWNER" || role === "ADMIN";
 
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
-      <div className="max-w-7xl mx-auto space-y-12">
+    <main className="min-h-dvh p-6 md:p-10">
+      <div className="mx-auto max-w-7xl space-y-8">
 
-        {/* STRICT HEADER */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-900 pb-6">
+        {/* HEADER */}
+        <div className="flex flex-col justify-between gap-4 border-b border-border pb-5 md:flex-row md:items-center">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100 flex items-center gap-3">
-              <TerminalSquare className="w-8 h-8 text-emerald-400" />
-              Engine <span className="text-emerald-400">Core</span>
-            </h1>
-            <p className="text-sm text-zinc-500 mt-2 uppercase tracking-widest font-bold">
-              Active Routing & Telemetry
-            </p>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Monitors</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Uptime, latency &amp; SSL across your endpoints</p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className={`px-4 py-2 border-2 text-xs font-bold uppercase tracking-widest flex items-center gap-2 ${
-              planTier === "PRO"
-                ? "bg-amber-950/20 border-amber-800 text-amber-400"
-                : "bg-zinc-950 border-zinc-800 text-zinc-500"
-            }`}>
-              {planTier === "PRO" ? <Crown className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
-              {planTier || "FREE"}
-            </div>
-            <div className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2">
-              <span className="w-2 h-2 bg-cyan-400 animate-pulse" />
-              Workspace ID: {workspaceId}
-            </div>
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
+                planTier === "PRO"
+                  ? "border-degraded/30 bg-degraded/10 text-degraded"
+                  : "border-border text-muted-foreground"
+              }`}
+            >
+              {planTier === "PRO" ? <Crown className="h-3.5 w-3.5" /> : <Zap className="h-3.5 w-3.5" />}
+              {planTier || "FREE"} plan
+            </span>
           </div>
         </div>
 
-        {/* BRUTALIST CREATION FORM */}
-        {canEdit && (
-          <div className="bg-zinc-950 border-2 border-zinc-800 p-8 shadow-[8px_8px_0px_0px_rgba(52,211,153,0.05)]">
-            <div className="mb-6 border-b-2 border-zinc-900 pb-4">
-              <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-widest flex items-center gap-2">
-                <PlusSquare className="w-4 h-4 text-emerald-400" />
-                Provision Target
-              </h2>
-            </div>
-
-            <form
-              action={createMonitor}
-              className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end"
-            >
+        {/* CREATE FORM */}
+        {canEdit ? (
+          <div className="glass rounded-lg p-5 sm:p-6">
+            <h2 className="mb-4 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+              <Plus className="h-4 w-4 text-up" />
+              Add a monitor
+            </h2>
+            <form action={createMonitor} className="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
               <input type="hidden" name="workspaceId" value={workspaceId} />
-
-              <div className="md:col-span-4 space-y-2">
-                <label htmlFor="name" className="block text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                  Designation
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="e.g., API Gateway"
-                  required
-                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
-                />
+              <div className="space-y-1.5 md:col-span-4">
+                <label htmlFor="name" className="block text-sm font-medium text-foreground">Name</label>
+                <input id="name" name="name" type="text" placeholder="e.g. API Gateway" required className="field" />
               </div>
-
-              <div className="md:col-span-5 space-y-2">
-                <label htmlFor="url" className="block text-xs font-bold text-zinc-500 uppercase tracking-widest">
-                  Target URL
-                </label>
-                <input
-                  id="url"
-                  name="url"
-                  type="url"
-                  placeholder="https://api.pulseops.dev"
-                  required
-                  className="w-full bg-zinc-900 border-2 border-zinc-800 px-4 py-3 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors rounded-none"
-                />
+              <div className="space-y-1.5 md:col-span-5">
+                <label htmlFor="url" className="block text-sm font-medium text-foreground">URL</label>
+                <input id="url" name="url" type="url" placeholder="https://api.example.com" required className="field" />
               </div>
-
               <div className="md:col-span-3">
-                <button
-                  type="submit"
-                  className="w-full h-[52px] bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest border-2 border-transparent transition-all rounded-none"
-                >
-                  Deploy
+                <button type="submit" className="btn btn-primary h-11 w-full">
+                  <Plus className="h-4 w-4" />
+                  Add monitor
                 </button>
               </div>
             </form>
           </div>
-        )}
-
-        {!canEdit && (
-          <div className="bg-zinc-950 border-2 border-dashed border-zinc-800 p-8 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">
-            Elevated privileges required to provision new targets.
+        ) : (
+          <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            You need admin access to add monitors in this workspace.
           </div>
         )}
 
-        {/* client toggle */}
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
+        {/* MONITORS + MEMBERS */}
+        <div className="grid grid-cols-1 gap-8 xl:grid-cols-4">
           <div className="xl:col-span-3">
             <MonitorView monitors={monitors} workspaceId={workspaceId} canEdit={canEdit} />
           </div>
@@ -162,7 +124,6 @@ export default async function MonitorsPage({
             <MembersPanel workspaceId={workspaceId} />
           </div>
         </div>
-
       </div>
     </main>
   );

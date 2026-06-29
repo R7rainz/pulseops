@@ -39,6 +39,18 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-up: var(--up);
+  --color-up-foreground: var(--up-foreground);
+  --color-degraded: var(--degraded);
+  --color-degraded-foreground: var(--degraded-foreground);
+  --color-down: var(--down);
+  --color-down-foreground: var(--down-foreground);
+  --color-info: var(--info);
+  --color-paused: var(--paused);
+  --font-display: var(--font-display);
+  --font-heading: var(--font-display);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -115,6 +127,167 @@
   --sidebar-accent-foreground: oklch(0.986 0.002 67.8);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.547 0.021 43.1);
+}
+
+/* ── PulseOps brand: semantic status tokens (theme-neutral, vivid) ── */
+:root {
+  --up: #9fd8bd;
+  --up-foreground: #07120c;
+  --degraded: #e2a356;
+  --degraded-foreground: #1a1206;
+  --down: #f0584b;
+  --down-foreground: #1a0806;
+  --info: #a3d1df;
+  --paused: #93a096;
+  --surface: oklch(1 0 0);
+  --surface-raised: oklch(0.97 0.003 160);
+}
+
+/* ── PulseOps dark theme: near-black green-tinted base + glass surfaces ── */
+.dark {
+  --background: #070b09;
+  --foreground: #eeeae0;
+  --card: #0e1512;
+  --card-foreground: #eeeae0;
+  --popover: #0e1512;
+  --popover-foreground: #eeeae0;
+  --surface: #0e1512;
+  --surface-raised: #131c18;
+  --muted: #131c18;
+  --muted-foreground: #93a096;
+  --primary: #eeeae0;
+  --primary-foreground: #0a0f0c;
+  --accent: #131c18;
+  --accent-foreground: #eeeae0;
+  --border: rgba(238, 234, 224, 0.1);
+  --input: rgba(238, 234, 224, 0.14);
+  --ring: #9fd8bd;
+}
+
+@layer components {
+  /* Glass surface — translucent dark + blur. Use for panels/cards. */
+  .glass {
+    background: color-mix(in oklab, var(--surface) 72%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1px solid var(--border);
+  }
+  /* Gradient border shell — premium hairline frame around hero panels. */
+  .pulse-shell {
+    position: relative;
+    border-radius: var(--radius);
+    background: radial-gradient(
+      120% 120% at 50% 0%,
+      color-mix(in oklab, var(--up) 22%, transparent) 0%,
+      color-mix(in oklab, var(--up) 6%, transparent) 32%,
+      transparent 64%
+    );
+    padding: 1px;
+  }
+  .pulse-shell > * {
+    border-radius: calc(var(--radius) - 1px);
+    background: var(--surface);
+  }
+
+  /* ── Buttons ─────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    padding: 0.625rem 1.1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease,
+      transform 0.18s ease, box-shadow 0.18s ease;
+    white-space: nowrap;
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn:focus-visible {
+    outline: 2px solid var(--up);
+    outline-offset: 2px;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: var(--primary-foreground);
+    border: 1px solid transparent;
+  }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--up) 40%, transparent),
+      0 8px 24px -12px color-mix(in oklab, var(--up) 70%, transparent);
+  }
+  .btn-accent {
+    background: color-mix(in oklab, var(--up) 18%, transparent);
+    color: var(--up);
+    border: 1px solid color-mix(in oklab, var(--up) 35%, transparent);
+  }
+  .btn-accent:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--up) 26%, transparent);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted-foreground);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: var(--foreground);
+    border-color: color-mix(in oklab, var(--foreground) 25%, transparent);
+  }
+  .btn-danger {
+    background: color-mix(in oklab, var(--down) 14%, transparent);
+    color: var(--down);
+    border: 1px solid color-mix(in oklab, var(--down) 35%, transparent);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--down) 22%, transparent);
+  }
+
+  /* Square icon button (paused/resume/check/delete row actions) */
+  .icon-btn {
+    display: inline-grid;
+    place-items: center;
+    height: 2.25rem;
+    width: 2.25rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    color: var(--muted-foreground);
+    cursor: pointer;
+    transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  }
+  .icon-btn:hover {
+    background: color-mix(in oklab, var(--foreground) 6%, transparent);
+    color: var(--foreground);
+  }
+  .icon-btn:focus-visible {
+    outline: 2px solid var(--up);
+    outline-offset: 2px;
+  }
+
+  /* ── Inputs ──────────────────────────────────────────────── */
+  .field {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--input);
+    background: color-mix(in oklab, var(--surface) 60%, transparent);
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9375rem;
+    color: var(--foreground);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  }
+  .field::placeholder {
+    color: color-mix(in oklab, var(--muted-foreground) 80%, transparent);
+  }
+  .field:focus {
+    outline: none;
+    border-color: color-mix(in oklab, var(--up) 55%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--up) 18%, transparent);
+  }
 }
 
 @layer base {

@@ -3,6 +3,7 @@
 import type { MonitorCheck, MonitorStats } from "@/lib/types";
 import ResponseTimeChart from "./ResponseTimeChart";
 import StatusPieChart from "./StatusPieChart";
+import { StatusBadge } from "@/components/ui/status-badge";
 
 interface Props {
   checks: MonitorCheck[];
@@ -10,7 +11,7 @@ interface Props {
 }
 
 function pctClass(v: number) {
-  return v >= 98 ? "text-emerald-400" : v >= 90 ? "text-amber-400" : "text-red-400";
+  return v >= 98 ? "text-up" : v >= 90 ? "text-degraded" : "text-down";
 }
 
 export default function MonitorCharts({ checks, stats }: Props) {
@@ -18,73 +19,69 @@ export default function MonitorCharts({ checks, stats }: Props) {
   const r30 = stats?.range30d;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
       <div className="md:col-span-2">
         <ResponseTimeChart checks={checks} />
       </div>
-      <div className="p-6 border-2 border-zinc-900 bg-zinc-950 space-y-4">
-        <h2 className="text-sm font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2 border-b-2 border-zinc-900 pb-2">
-          Telemetry Overview
-        </h2>
+
+      <div className="glass space-y-4 rounded-lg p-6">
+        <h2 className="border-b border-border pb-3 font-display text-sm font-semibold text-foreground">Overview</h2>
+
         {stats ? (
           <div className="space-y-4">
             <StatusPieChart stats={stats} />
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t-2 border-zinc-900">
-              <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Total Probes</p>
-                <p className="text-lg text-zinc-200 mt-1 font-black">{stats.totalChecks}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Latest</p>
-                <p className={`text-lg mt-1 font-black ${stats.latestStatus === "UP" ? "text-emerald-400" : stats.latestStatus === "DEGRADED" ? "text-amber-400" : "text-red-400"}`}>
-                  {stats.latestStatus}
-                </p>
-              </div>
-            </div>
 
-            {/* 24h stats */}
-            <div className="pt-2 border-t-2 border-zinc-900">
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Last 24 Hours</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Uptime</p>
-                  <p className={`text-sm font-black ${r24 ? pctClass(r24.uptimePercentage) : "text-zinc-600"}`}>
-                    {r24 ? `${r24.uptimePercentage.toFixed(1)}%` : "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Avg Latency</p>
-                  <p className="text-sm text-zinc-200 font-black">
-                    {r24 ? `${r24.averageResponseTimeMs.toFixed(0)}ms` : "—"}
-                  </p>
+            <div className="grid grid-cols-2 gap-3 border-t border-border pt-3">
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Total checks</p>
+                <p className="mt-1 font-display text-lg font-semibold tabular-nums text-foreground">{stats.totalChecks}</p>
+              </div>
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Latest</p>
+                <div className="mt-1">
+                  <StatusBadge status={stats.latestStatus} size="sm" />
                 </div>
               </div>
             </div>
 
-            {/* 30d stats */}
-            <div className="pt-2 border-t-2 border-zinc-900">
-              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2">Last 30 Days</p>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Uptime</p>
-                  <p className={`text-sm font-black ${r30 ? pctClass(r30.uptimePercentage) : "text-zinc-600"}`}>
-                    {r30 ? `${r30.uptimePercentage.toFixed(1)}%` : "—"}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Avg Latency</p>
-                  <p className="text-sm text-zinc-200 font-black">
-                    {r30 ? `${r30.averageResponseTimeMs.toFixed(0)}ms` : "—"}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <RangeBlock title="Last 24 hours" uptime={r24?.uptimePercentage} latency={r24?.averageResponseTimeMs} pctClass={pctClass} />
+            <RangeBlock title="Last 30 days" uptime={r30?.uptimePercentage} latency={r30?.averageResponseTimeMs} pctClass={pctClass} />
           </div>
         ) : (
-          <div className="py-8 text-center text-zinc-600 text-[10px] uppercase tracking-widest font-bold">
-            No telemetry data collected yet.
-          </div>
+          <div className="py-8 text-center text-sm text-muted-foreground">No data collected yet.</div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function RangeBlock({
+  title,
+  uptime,
+  latency,
+  pctClass,
+}: {
+  title: string;
+  uptime?: number;
+  latency?: number;
+  pctClass: (v: number) => string;
+}) {
+  return (
+    <div className="border-t border-border pt-3">
+      <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{title}</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground/70">Uptime</p>
+          <p className={`text-sm font-semibold tabular-nums ${uptime != null ? pctClass(uptime) : "text-muted-foreground"}`}>
+            {uptime != null ? `${uptime.toFixed(1)}%` : "—"}
+          </p>
+        </div>
+        <div>
+          <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground/70">Avg latency</p>
+          <p className="text-sm font-semibold tabular-nums text-foreground">
+            {latency != null ? `${latency.toFixed(0)}ms` : "—"}
+          </p>
+        </div>
       </div>
     </div>
   );

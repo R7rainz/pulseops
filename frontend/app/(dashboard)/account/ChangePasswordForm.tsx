@@ -2,10 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { changePassword } from "./actions";
-import {
-  Key, Eye, EyeOff, AlertTriangle, CheckCircle,
-  XCircle, Check,
-} from "lucide-react";
+import { Key, AlertTriangle, CheckCircle, XCircle, Check } from "lucide-react";
+import PasswordInput from "@/components/PasswordInput";
 
 const PASSWORD_RULES = [
   { test: (p: string) => p.length >= 8, label: "At least 8 characters" },
@@ -17,89 +15,48 @@ const PASSWORD_RULES = [
 
 export default function ChangePasswordForm() {
   const [state, formAction, isPending] = useActionState(changePassword, {});
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   return (
-    <div className="border-2 border-zinc-900 bg-zinc-950 p-6 mb-8">
-      <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-widest mb-6 flex items-center gap-2">
-        <Key className="w-4 h-4 text-amber-400" />
-        Change Password
+    <div className="glass mb-6 rounded-lg p-6">
+      <h2 className="mb-5 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+        <Key className="h-4 w-4 text-degraded" /> Change password
       </h2>
-      <form action={formAction} className="space-y-5">
+      <form action={formAction} className="space-y-4">
         {state?.error && (
-          <div className="p-4 bg-red-950/30 border-2 border-red-500/50 flex items-start gap-3 text-sm text-red-400">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-down/40 bg-down/10 p-3 text-sm text-down">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <p>{state.error}</p>
           </div>
         )}
         {state?.success && (
-          <div className="p-4 bg-emerald-950/30 border-2 border-emerald-500/50 flex items-start gap-3 text-sm text-emerald-400">
-            <CheckCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div role="status" className="flex items-start gap-2.5 rounded-lg border border-up/40 bg-up/10 p-3 text-sm text-up">
+            <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <p>{state.success}</p>
           </div>
         )}
+
+        <PasswordInput id="currentPassword" name="currentPassword" label="Current password" autoComplete="current-password" required placeholder="Current password" />
+
         <div>
-          <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
-            Current Password
-          </label>
-          <div className="relative">
-            <input
-              name="currentPassword"
-              type={showCurrent ? "text" : "password"}
-              autoComplete="off"
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors pr-10"
-              placeholder="Current password"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-600 hover:text-zinc-300 transition-colors"
-              tabIndex={-1}
-            >
-              {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-        <div>
-          <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
-            New Password
-          </label>
-          <div className="relative">
-            <input
-              name="newPassword"
-              type={showNew ? "text" : "password"}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors pr-10"
-              placeholder="New password"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowNew(!showNew)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-600 hover:text-zinc-300 transition-colors"
-              tabIndex={-1}
-            >
-              {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
+          <PasswordInput
+            id="newPassword"
+            name="newPassword"
+            label="New password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+            placeholder="New password"
+          />
           {newPassword && (
             <ul className="mt-2 space-y-1">
               {PASSWORD_RULES.map((rule) => {
                 const ok = rule.test(newPassword);
                 return (
-                  <li
-                    key={rule.label}
-                    className={`flex items-center gap-2 text-[11px] font-bold tracking-wider ${
-                      ok ? "text-emerald-400" : "text-zinc-600"
-                    }`}
-                  >
-                    {ok ? <Check className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                  <li key={rule.label} className={`flex items-center gap-2 text-[11px] ${ok ? "text-up" : "text-muted-foreground"}`}>
+                    {ok ? <Check className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
                     {rule.label}
                   </li>
                 );
@@ -107,42 +64,27 @@ export default function ChangePasswordForm() {
             </ul>
           )}
         </div>
+
         <div>
-          <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
-            Confirm New Password
-          </label>
-          <div className="relative">
-            <input
-              name="confirmPassword"
-              type={showConfirm ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors pr-10"
-              placeholder="Confirm new password"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-600 hover:text-zinc-300 transition-colors"
-              tabIndex={-1}
-            >
-              {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
+          <PasswordInput
+            id="confirmPassword"
+            name="confirmPassword"
+            label="Confirm new password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            placeholder="Confirm new password"
+          />
           {confirmPassword && newPassword !== confirmPassword && (
-            <p className="mt-1.5 text-[11px] text-red-400 font-bold tracking-wider flex items-center gap-1.5">
-              <XCircle className="w-3 h-3" />
-              Passwords do not match
+            <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-down">
+              <XCircle className="h-3 w-3" /> Passwords do not match
             </p>
           )}
         </div>
-        <button
-          type="submit"
-          disabled={isPending}
-          className="px-6 py-2.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
-        >
-          {isPending ? "Updating..." : "Update Password"}
+
+        <button type="submit" disabled={isPending} className="btn btn-accent text-degraded border-degraded/40 bg-degraded/10">
+          {isPending ? "Updating…" : "Update password"}
         </button>
       </form>
     </div>

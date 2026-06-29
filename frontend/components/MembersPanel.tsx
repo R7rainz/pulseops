@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { API_URL } from "@/lib/constants";
 import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
-import { Crown, Shield, User, Settings } from "lucide-react";
+import { Crown, Shield, User, Settings, Users } from "lucide-react";
 
 interface Member {
   id: number;
@@ -13,17 +13,11 @@ interface Member {
 }
 
 const ROLE_ORDER = ["OWNER", "ADMIN", "MEMBER", "VIEWER"];
-const ROLE_COLORS: Record<string, string> = {
-  OWNER: "text-amber-400 border-amber-800 bg-amber-950/20",
-  ADMIN: "text-purple-400 border-purple-800 bg-purple-950/20",
-  MEMBER: "text-cyan-400 border-cyan-800 bg-cyan-950/20",
-  VIEWER: "text-zinc-400 border-zinc-700 bg-zinc-900",
-};
-const ROLE_ICONS: Record<string, React.ReactNode> = {
-  OWNER: <Crown className="w-3 h-3" />,
-  ADMIN: <Shield className="w-3 h-3" />,
-  MEMBER: <User className="w-3 h-3" />,
-  VIEWER: <User className="w-3 h-3" />,
+const ROLE_META: Record<string, { chip: string; icon: React.ReactNode }> = {
+  OWNER: { chip: "text-degraded border-degraded/30 bg-degraded/10", icon: <Crown className="h-3 w-3" /> },
+  ADMIN: { chip: "text-info border-info/30 bg-info/10", icon: <Shield className="h-3 w-3" /> },
+  MEMBER: { chip: "text-up border-up/30 bg-up/10", icon: <User className="h-3 w-3" /> },
+  VIEWER: { chip: "text-paused border-paused/30 bg-paused/10", icon: <User className="h-3 w-3" /> },
 };
 
 export default async function MembersPanel({ workspaceId }: { workspaceId: string }) {
@@ -33,10 +27,11 @@ export default async function MembersPanel({ workspaceId }: { workspaceId: strin
 
   let members: Member[] = [];
   try {
-    const res = await apiFetch(
-      `${API_URL}/api/v1/workspaces/${workspaceId}/members`,
-      { token, cookieStore, cache: "no-store" },
-    );
+    const res = await apiFetch(`${API_URL}/api/v1/workspaces/${workspaceId}/members`, {
+      token,
+      cookieStore,
+      cache: "no-store",
+    });
     if (res.ok) {
       const json = await res.json();
       members = json.data || [];
@@ -54,36 +49,35 @@ export default async function MembersPanel({ workspaceId }: { workspaceId: strin
   }
 
   return (
-    <div className="border-2 border-zinc-800 bg-zinc-950 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.03)]">
-      <div className="px-5 py-3 border-b-2 border-zinc-900 flex items-center gap-2">
-        <p className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-          <User className="w-3.5 h-3.5 text-emerald-400" />
-          Team Roster
-        </p>
-        <span className="text-[10px] text-zinc-600 ml-auto">{members.length} operator(s)</span>
+    <div className="glass overflow-hidden rounded-lg">
+      <div className="flex items-center gap-2 border-b border-border px-5 py-3.5">
+        <Users className="h-4 w-4 text-up" />
+        <p className="font-display text-sm font-semibold text-foreground">Team</p>
+        <span className="ml-auto font-mono text-[11px] text-muted-foreground">{members.length}</span>
       </div>
-      <div className="divide-y divide-zinc-900">
+
+      <div className="divide-y divide-border">
         {ROLE_ORDER.map((role) => {
           const roleMembers = groups[role];
           if (!roleMembers) return null;
+          const meta = ROLE_META[role];
           return (
-            <div key={role}>
-              <div className={`px-5 py-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${ROLE_COLORS[role]}`}>
-                {ROLE_ICONS[role]}
-                {role} — {roleMembers.length}
+            <div key={role} className="py-1">
+              <div className="flex items-center px-5 py-1.5">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${meta.chip}`}>
+                  {meta.icon}
+                  {role.toLowerCase()}
+                </span>
+                <span className="ml-auto font-mono text-[10px] text-muted-foreground">{roleMembers.length}</span>
               </div>
               {roleMembers.map((m) => (
-                <div key={m.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-zinc-900/30 transition-colors">
-                  <div className="w-8 h-8 flex-shrink-0 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center">
-                    <span className="text-xs font-bold text-zinc-400 uppercase">
-                      {(m.user.name || m.user.email)[0]}
-                    </span>
-                  </div>
+                <div key={m.id} className="flex items-center gap-3 px-5 py-2 transition-colors hover:bg-surface-raised/50">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-border bg-surface-raised text-xs font-semibold uppercase text-muted-foreground">
+                    {(m.user.name || m.user.email)[0]}
+                  </span>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-zinc-200 truncate uppercase tracking-widest">
-                      {m.user.name || "Unnamed"}
-                    </p>
-                    <p className="text-[10px] text-zinc-500 truncate">{m.user.email}</p>
+                    <p className="truncate text-sm font-medium text-foreground">{m.user.name || "Unnamed"}</p>
+                    <p className="truncate font-mono text-[11px] text-muted-foreground">{m.user.email}</p>
                   </div>
                 </div>
               ))}
@@ -91,12 +85,13 @@ export default async function MembersPanel({ workspaceId }: { workspaceId: strin
           );
         })}
       </div>
+
       <Link
         href={`/workspaces/${workspaceId}/settings`}
-        className="flex items-center gap-2 px-5 py-3 border-t-2 border-zinc-900 text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-emerald-400 hover:bg-zinc-900/30 transition-colors"
+        className="flex items-center gap-2 border-t border-border px-5 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-surface-raised/50 hover:text-up"
       >
-        <Settings className="w-3 h-3" />
-        Manage in Settings
+        <Settings className="h-3.5 w-3.5" />
+        Manage in settings
       </Link>
     </div>
   );

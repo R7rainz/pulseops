@@ -46,31 +46,18 @@ export default function CreateApiKeyForm({
 
   if (newKey) {
     return (
-      <div className="border-2 border-emerald-500/30 bg-emerald-500/5 p-4">
-        <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2">
-          API Key Created — Copy it now
-        </p>
+      <div className="rounded-lg border border-up/30 bg-up/[0.05] p-4">
+        <p className="mb-2 text-xs font-medium text-up">API key created — copy it now, it won’t be shown again.</p>
         <div className="flex items-center gap-2">
-          <code className="flex-1 bg-zinc-900 border-2 border-zinc-800 px-3 py-2 text-xs text-zinc-200 break-all font-mono select-all">
+          <code className="flex-1 select-all break-all rounded-lg border border-border bg-surface-raised px-3 py-2 font-mono text-xs text-foreground">
             {newKey}
           </code>
-          <button
-            onClick={handleCopy}
-            className="p-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-400 hover:text-emerald-400 hover:border-emerald-500 transition-colors"
-            title="Copy"
-          >
-            {copied ? (
-              <Check className="w-4 h-4 text-emerald-400" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
+          <button onClick={handleCopy} className="icon-btn hover:border-up/40 hover:text-up" title="Copy" aria-label="Copy API key">
+            {copied ? <Check className="h-4 w-4 text-up" /> : <Copy className="h-4 w-4" />}
           </button>
         </div>
-        <button
-          onClick={() => setNewKey(null)}
-          className="mt-3 text-[10px] text-zinc-500 hover:text-zinc-300 uppercase tracking-widest font-bold transition-colors"
-        >
-          &larr; Create another
+        <button onClick={() => setNewKey(null)} className="mt-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
+          ← Create another
         </button>
       </div>
     );
@@ -79,45 +66,27 @@ export default function CreateApiKeyForm({
   return (
     <div>
       {!open ? (
-        <button
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-emerald-400 hover:bg-emerald-500/10 text-xs font-bold uppercase tracking-widest transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Generate Key
+        <button onClick={() => setOpen(true)} className="btn btn-accent">
+          <Plus className="h-4 w-4" /> Generate key
         </button>
       ) : (
         <form onSubmit={handleSubmit} className="flex items-end gap-3">
-          <div className="flex-1 space-y-2">
-            <label
-              htmlFor="key-name"
-              className="block text-[10px] font-bold text-zinc-500 uppercase tracking-widest"
-            >
-              Key Name
-            </label>
+          <div className="flex-1 space-y-1.5">
+            <label htmlFor="key-name" className="block text-sm font-medium text-foreground">Key name</label>
             <input
               id="key-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="CI/CD Pipeline"
+              placeholder="e.g. CI/CD pipeline"
               required
-              className="w-full bg-zinc-900 border-2 border-zinc-800 px-3 py-2 text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="field"
             />
           </div>
-          <button
-            type="submit"
-            disabled={pending || !name.trim()}
-            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest text-xs border-2 border-transparent transition-all disabled:opacity-50 h-[42px]"
-          >
-            {pending ? "..." : "Create"}
+          <button type="submit" disabled={pending || !name.trim()} className="btn btn-primary h-11">
+            {pending ? "…" : "Create"}
           </button>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            disabled={pending}
-            className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-zinc-400 hover:text-zinc-100 text-xs font-bold uppercase tracking-widest transition-colors h-[42px]"
-          >
+          <button type="button" onClick={() => setOpen(false)} disabled={pending} className="btn btn-ghost h-11">
             Cancel
           </button>
         </form>

@@ -13,12 +13,9 @@ export function AcceptInviteButton({
   return (
     <form action={acceptInvite.bind(null, token)}>
       <input type="hidden" name="token" value={token} />
-      <button
-        type="submit"
-        className="w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest py-4 border-2 border-transparent transition-all text-sm flex items-center justify-center gap-3"
-      >
-        <UserPlus className="w-5 h-5" />
-        Accept Invite to {workspaceName}
+      <button type="submit" className="btn btn-primary w-full py-3">
+        <UserPlus className="h-4 w-4" />
+        Join {workspaceName}
       </button>
     </form>
   );

@@ -1,7 +1,11 @@
 import { notFound } from "next/navigation";
 import { API_URL } from "@/lib/constants";
 import Link from "next/link";
-import { ArrowLeft, Activity, ServerCrash, PauseCircle, ShieldCheck, AlertTriangle } from "lucide-react";
+import { ShieldCheck, ServerCrash, AlertTriangle } from "lucide-react";
+import Aurora from "@/components/Aurora";
+import { Brand } from "@/components/Brand";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { cn } from "@/lib/utils";
 
 interface PublicMonitor {
   id: number;
@@ -17,26 +21,44 @@ interface StatusData {
   monitors: PublicMonitor[];
 }
 
+const SYSTEM = {
+  OPERATIONAL: {
+    icon: ShieldCheck,
+    title: "All systems operational",
+    text: "text-up",
+    bg: "bg-up/10",
+    border: "border-up/30",
+  },
+  PARTIAL_OUTAGE: {
+    icon: AlertTriangle,
+    title: "Degraded performance",
+    text: "text-degraded",
+    bg: "bg-degraded/10",
+    border: "border-degraded/30",
+  },
+  MAJOR_OUTAGE: {
+    icon: ServerCrash,
+    title: "Major outage",
+    text: "text-down",
+    bg: "bg-down/10",
+    border: "border-down/30",
+  },
+} as const;
+
 export default async function PublicStatusPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const resolvedParams = await params;
-  const { slug } = resolvedParams;
+  const { slug } = await params;
 
   let statusData: StatusData | null = null;
-
   try {
-    const res = await fetch(`${API_URL}/api/v1/status/${slug}`, {
-      next: { revalidate: 30 },
-    });
-
+    const res = await fetch(`${API_URL}/api/v1/status/${slug}`, { next: { revalidate: 30 } });
     if (!res.ok) {
       if (res.status === 404) notFound();
       throw new Error("Failed to load status");
     }
-
     const json = await res.json();
     statusData = json.data;
   } catch (err) {
@@ -45,130 +67,98 @@ export default async function PublicStatusPage({
 
   if (!statusData) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500 font-mono text-xs uppercase tracking-widest font-bold">
-        Unable to establish telemetry uplink.
+      <div className="grid min-h-dvh place-items-center bg-background px-6 text-center">
+        <div>
+          <p className="font-display text-lg font-medium text-foreground">Status unavailable</p>
+          <p className="mt-1 text-sm text-muted-foreground">We couldn’t load this status page. Please try again.</p>
+        </div>
       </div>
     );
   }
 
-  const { workspaceName, systemState, monitors } = statusData;
+  const { workspaceName, systemState, metrics, monitors } = statusData;
+  const sys = SYSTEM[systemState] ?? SYSTEM.OPERATIONAL;
+  const SysIcon = sys.icon;
+  const updated = new Date();
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-50 font-mono selection:bg-emerald-500/30">
-      <div className="max-w-4xl mx-auto px-6 py-16 space-y-12">
+    <main className="relative min-h-dvh overflow-hidden bg-background text-foreground">
+      {/* ambient background */}
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <Aurora className="absolute inset-0 h-full w-full" />
+        <div className="absolute inset-0 bg-[radial-gradient(110%_80%_at_50%_30%,transparent_45%,rgba(7,11,9,0.7)_100%)]" />
+      </div>
 
-        {/* BACK LINK */}
-        <div>
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-4 py-2 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-emerald-400 hover:border-emerald-400 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to Console
-          </Link>
+      <div className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
+        <header className="flex items-center justify-between">
+          <Brand href="/" size="sm" />
+          <span className="font-mono text-[11px] text-muted-foreground">
+            Updated {updated.toLocaleString()}
+          </span>
+        </header>
+
+        <div className="mt-12 text-center">
+          <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">{workspaceName}</h1>
+          <p className="mt-2 text-sm text-muted-foreground">System status &amp; uptime</p>
         </div>
 
-        {/* PUBLIC HEADER */}
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl md:text-5xl font-black tracking-widest uppercase text-zinc-100">
-            {workspaceName}
-          </h1>
-          <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold">
-            Public Telemetry & System Status
-          </p>
-        </div>
-
-        {/* MASTER STATUS BANNER */}
-        <div className={`p-8 border-2 flex flex-col items-center text-center gap-4 ${
-          systemState === "OPERATIONAL"
-            ? "bg-emerald-950/20 border-emerald-900/50"
-            : systemState === "PARTIAL_OUTAGE"
-              ? "bg-amber-950/20 border-amber-900/50"
-              : "bg-red-950/20 border-red-900/50"
-        }`}>
-          {systemState === "OPERATIONAL" && <ShieldCheck className="w-12 h-12 text-emerald-500" />}
-          {systemState === "PARTIAL_OUTAGE" && <AlertTriangle className="w-12 h-12 text-amber-500 animate-pulse" />}
-          {systemState === "MAJOR_OUTAGE" && <ServerCrash className="w-12 h-12 text-red-500 animate-pulse" />}
-
-          <div>
-            <h2 className={`text-xl font-black uppercase tracking-widest ${
-              systemState === "OPERATIONAL" ? "text-emerald-400" : systemState === "PARTIAL_OUTAGE" ? "text-amber-400" : "text-red-400"
-            }`}>
-              {systemState === "OPERATIONAL" ? "All Systems Operational" : systemState === "PARTIAL_OUTAGE" ? "Degraded Performance Detected" : "Critical Infrastructure Outage"}
-            </h2>
-            <p className="text-xs text-zinc-500 uppercase tracking-widest font-bold mt-2">
-              Last updated: {new Date().toLocaleTimeString()}
+        {/* system banner */}
+        <div className={cn("mt-8 flex items-center gap-4 rounded-xl border p-5 sm:p-6", sys.bg, sys.border)}>
+          <SysIcon className={cn("h-8 w-8 shrink-0", sys.text, systemState !== "OPERATIONAL" && "animate-pulse")} aria-hidden="true" />
+          <div className="min-w-0">
+            <h2 className={cn("font-display text-lg font-semibold", sys.text)}>{sys.title}</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {metrics.total} {metrics.total === 1 ? "monitor" : "monitors"}
+              {metrics.down > 0 && <span className="text-down"> · {metrics.down} down</span>}
+              {metrics.paused > 0 && <span> · {metrics.paused} paused</span>}
             </p>
           </div>
         </div>
 
-        {/* NODE MATRIX */}
-        <div className="space-y-4">
-          <h3 className="text-xs font-bold text-zinc-600 uppercase tracking-widest border-b-2 border-zinc-900 pb-2">
-            Infrastructure Nodes
-          </h3>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {monitors.length === 0 ? (
-              <div className="col-span-full p-8 border-2 border-dashed border-zinc-800 text-center text-zinc-600 text-xs font-bold uppercase tracking-widest">
-                No public nodes provisioned.
-              </div>
-            ) : (
-              monitors.map((node) => (
-                <div key={node.id} className="p-4 bg-zinc-900/50 border-2 border-zinc-800">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-bold text-zinc-300 uppercase tracking-widest truncate pr-4">
-                      {node.name}
-                    </span>
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className={`text-[10px] font-black uppercase tracking-widest ${
-                        node.status === "UP" ? "text-emerald-500" : node.status === "DOWN" ? "text-red-500" : "text-zinc-500"
-                      }`}>
-                        {node.status}
-                      </span>
-                      {node.status === "UP" && <Activity className="w-4 h-4 text-emerald-500" />}
-                      {node.status === "DOWN" && <ServerCrash className="w-4 h-4 text-red-500" />}
-                      {node.status === "PAUSED" && <PauseCircle className="w-4 h-4 text-zinc-600" />}
-                    </div>
+        {/* monitors */}
+        <section className="mt-10">
+          <h3 className="mb-3 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Monitors</h3>
+          {monitors.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+              No public monitors yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {monitors.map((node) => (
+                <div key={node.id} className="glass rounded-lg p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <span className="truncate font-display text-sm font-medium text-foreground">{node.name}</span>
+                    <StatusBadge status={node.status} size="sm" />
                   </div>
-
-                  {/* SPARKLINE: 90-day uptime history */}
-                  <div className="flex items-end gap-[1px] h-8">
-                    {node.uptimeHistory.map((ratio, i) => {
-                      const barHeight = Math.max(2, Math.round(ratio * 28));
-                      return (
-                        <div
-                          key={i}
-                          className="flex-1 rounded-t"
-                          style={{
-                            height: `${barHeight}px`,
-                            backgroundColor:
-                              ratio >= 0.98
-                                ? "rgb(52 211 153)"
-                                : ratio >= 0.9
-                                  ? "rgb(251 191 36)"
-                                  : "rgb(239 68 68)",
-                            opacity: ratio > 0 ? 1 : 0.15,
-                          }}
-                          title={`Day ${i + 1}: ${Math.round(ratio * 100)}% uptime`}
-                        />
-                      );
-                    })}
+                  {/* 90-day uptime bars */}
+                  <div className="flex h-8 items-end gap-px" role="img" aria-label={`90-day uptime history for ${node.name}`}>
+                    {node.uptimeHistory.map((ratio, i) => (
+                      <span
+                        key={i}
+                        className={cn(
+                          "flex-1 rounded-t-[1px]",
+                          ratio >= 0.98 ? "bg-up" : ratio >= 0.9 ? "bg-degraded" : "bg-down",
+                        )}
+                        style={{ height: `${Math.max(8, Math.round(ratio * 100))}%`, opacity: ratio > 0 ? 1 : 0.12 }}
+                        title={`Day ${i + 1}: ${Math.round(ratio * 100)}% uptime`}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-1.5 flex justify-between font-mono text-[10px] text-muted-foreground">
+                    <span>90 days ago</span>
+                    <span>Today</span>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+              ))}
+            </div>
+          )}
+        </section>
 
-        {/* FOOTER */}
-        <div className="text-center pt-12 border-t-2 border-zinc-900">
-          <a href="/" className="text-[10px] text-zinc-600 hover:text-zinc-400 uppercase tracking-widest font-bold transition-colors">
-            Powered by PulseOps Telemetry
-          </a>
-        </div>
-
+        <footer className="mt-14 border-t border-border pt-6 text-center">
+          <Link href="/" className="font-mono text-[11px] text-muted-foreground transition-colors hover:text-up">
+            Powered by PulseOps
+          </Link>
+        </footer>
       </div>
     </main>
   );

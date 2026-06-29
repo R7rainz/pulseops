@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  Trash2, Play, Pause, ExternalLink, Activity, ServerCrash,
-  PauseCircle, AlertTriangle, LayoutGrid, List,
-} from "lucide-react";
+import { Trash2, Play, Pause, RefreshCw, LayoutGrid, List } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { StatusBadge, StatusDot } from "@/components/ui/status-badge";
+import { ConfirmSubmit } from "@/components/ui/confirm-submit";
 import { pauseMonitor, resumeMonitor, triggerCheck, deleteMonitor } from "./actions";
 import MonitorGrid from "@/components/MonitorGrid";
 
@@ -30,172 +30,185 @@ export default function MonitorView({
   workspaceId: string;
   canEdit?: boolean;
 }) {
-  const [view, setView] = useState<"grid" | "matrix">("grid");
+  const [view, setView] = useState<"grid" | "list">("grid");
 
   useEffect(() => {
     const saved = localStorage.getItem("pulseops_view_pref");
-    if (saved === "matrix" || saved === "grid") setView(saved);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring a persisted UI preference on mount
+    if (saved === "list" || saved === "grid") setView(saved);
   }, []);
 
-  const handleViewChange = (newView: "grid" | "matrix") => {
-    setView(newView);
-    localStorage.setItem("pulseops_view_pref", newView);
+  const handleViewChange = (next: "grid" | "list") => {
+    setView(next);
+    localStorage.setItem("pulseops_view_pref", next);
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between border-b-2 border-zinc-900 pb-2">
-        <h2 className="text-sm font-bold tracking-widest uppercase text-zinc-400">
-          Telemetry {view === "grid" ? "Grid" : "Matrix"} <span className="text-emerald-500 text-[10px] ml-2">LIVE</span>
-        </h2>
-
-        <div className="flex items-center gap-4">
-          <span className="text-xs font-bold text-zinc-600 uppercase tracking-widest">
-            [{monitors.length} Nodes]
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-4 border-b border-border pb-3">
+        <div className="flex items-center gap-3">
+          <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">Monitors</h2>
+          <span className="font-mono text-xs text-muted-foreground">{monitors.length}</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-up/30 bg-up/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-up">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-up opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-up" />
+            </span>
+            Live
           </span>
-          <div className="flex items-center gap-1 bg-zinc-950 border-2 border-zinc-900 p-1">
-            <button
-              onClick={() => handleViewChange("grid")}
-              className={`p-1.5 transition-colors ${view === "grid"
-                ? "bg-zinc-800 text-emerald-400"
-                : "text-zinc-600 hover:text-zinc-400"
-                }`}
-              title="Card Grid View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => handleViewChange("matrix")}
-              className={`p-1.5 transition-colors ${view === "matrix"
-                ? "bg-zinc-800 text-emerald-400"
-                : "text-zinc-600 hover:text-zinc-400"
-                }`}
-              title="Matrix Table View"
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
+        </div>
+
+        <div className="flex items-center gap-1 rounded-lg border border-border p-1">
+          <button
+            onClick={() => handleViewChange("grid")}
+            className={cn(
+              "grid h-7 w-7 cursor-pointer place-items-center rounded-md transition-colors",
+              view === "grid" ? "bg-surface-raised text-up" : "text-muted-foreground hover:text-foreground",
+            )}
+            title="Card grid"
+            aria-label="Card grid view"
+            aria-pressed={view === "grid"}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => handleViewChange("list")}
+            className={cn(
+              "grid h-7 w-7 cursor-pointer place-items-center rounded-md transition-colors",
+              view === "list" ? "bg-surface-raised text-up" : "text-muted-foreground hover:text-foreground",
+            )}
+            title="List"
+            aria-label="List view"
+            aria-pressed={view === "list"}
+          >
+            <List className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
       {monitors.length === 0 ? (
-        <div className="p-12 border-2 border-dashed border-zinc-800 bg-zinc-950 text-center text-zinc-500 text-sm font-bold uppercase tracking-widest">
-          Zero targets provisioned in current workspace.
+        <div className="rounded-lg border border-dashed border-border p-12 text-center">
+          <p className="font-display text-base font-medium text-foreground">No monitors yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Add your first endpoint to start tracking uptime and latency.
+          </p>
         </div>
+      ) : view === "grid" ? (
+        <MonitorGrid workspaceId={workspaceId} initialMonitors={monitors} canEdit={canEdit} />
       ) : (
-        <>
-          {view === "grid" && (
-            <MonitorGrid
-              workspaceId={workspaceId}
-              initialMonitors={monitors}
-              canEdit={canEdit}
-            />
-          )}
-
-          {/*matrix or list view typeof*/}
-          {view === "matrix" && (
-            <div className="border-2 border-zinc-800 bg-zinc-950 overflow-x-auto">
-              <div className="min-w-[900px] grid grid-cols-12 gap-4 px-6 py-4 border-b-2 border-zinc-800 bg-zinc-900 text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
-                <div className="col-span-1">State</div>
-                <div className="col-span-2">Designation</div>
-                <div className="col-span-3">Endpoint</div>
-                <div className="col-span-2">Protocol</div>
-                <div className="col-span-2">Threshold</div>
-                <div className="col-span-2 text-right">Operations</div>
-              </div>
-
-              <div className="min-w-[900px] divide-y-2 divide-zinc-900">
-                {monitors.map((node) => {
-                  const isDown = node.status === "DOWN";
-                  const isPaused = node.status === "PAUSED";
-                  const isDegraded = node.status === "DEGRADED";
-                  const isFailing = (isDegraded || node.consecutiveFailures > 0) && node.consecutiveFailures < (node.graceThreshold || 3);
-                  const isUp = node.status === "UP" && !isFailing;
-
-                  return (
-                    <div key={node.id} className="grid grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-zinc-900 transition-colors group">
-
-                      <div className="col-span-1 flex items-center">
-                        {isUp && <Activity className="w-5 h-5 text-emerald-400" />}
-                        {isDown && <ServerCrash className="w-5 h-5 text-red-500 animate-pulse" />}
-                        {isPaused && <PauseCircle className="w-5 h-5 text-zinc-600" />}
-                        {isFailing && <AlertTriangle className="w-5 h-5 text-amber-500" />}
+        <div className="glass overflow-x-auto rounded-lg">
+          <table className="w-full min-w-[820px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-border font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium">Name</th>
+                <th className="px-5 py-3 font-medium">Endpoint</th>
+                <th className="px-5 py-3 font-medium">Method</th>
+                <th className="px-5 py-3 font-medium">Failures</th>
+                {canEdit && <th className="px-5 py-3 text-right font-medium">Actions</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {monitors.map((node) => {
+                const grace = node.graceThreshold || 3;
+                return (
+                  <tr key={node.id} className="group transition-colors hover:bg-surface-raised/60">
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <StatusDot status={node.status} />
+                        <StatusBadge status={node.status} size="sm" />
                       </div>
-
-                      <div className="col-span-2 min-w-0">
-                        <p className="text-sm font-bold text-zinc-200 uppercase tracking-widest truncate">{node.name}</p>
-                        <p className="text-[10px] text-zinc-500 mt-1">ID: {node.id}</p>
-                      </div>
-
-                      <div className="col-span-3 min-w-0">
-                        <p className="text-xs text-zinc-400 truncate border-l-2 border-zinc-800 pl-3">{node.url}</p>
-                      </div>
-
-                      <div className="col-span-2">
-                        <div className="inline-flex items-center gap-2 px-2 py-1 bg-zinc-950 border border-zinc-800">
-                          <span className={`text-[10px] font-bold ${node.method === 'GET' ? 'text-cyan-400' : 'text-purple-400'}`}>
-                            {node.method || "GET"}
-                          </span>
-                          <span className="text-[10px] text-zinc-500">{node.intervalSeconds || 60}s</span>
-                        </div>
-                      </div>
-
-                      <div className="col-span-2 flex items-center gap-2">
-                        {isPaused ? (
-                          <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Suspended</span>
-                        ) : (
-                          <div className="flex gap-1" title={`${node.consecutiveFailures} / ${node.graceThreshold} failures`}>
-                            {Array.from({ length: node.graceThreshold || 3 }).map((_, i) => (
-                              <div key={i} className={`w-2 h-4 ${i < node.consecutiveFailures ? 'bg-amber-500' : 'bg-zinc-800'}`} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="col-span-2 flex items-center justify-end gap-2">
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {canEdit && (
-                            <>
-                              {node.status !== "PAUSED" ? (
-                                <form action={pauseMonitor}>
-                                  <input type="hidden" name="workspaceId" value={workspaceId} />
-                                  <input type="hidden" name="monitorId" value={node.id} />
-                                  <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-amber-400 hover:border-amber-500 transition-colors"><Pause className="w-3.5 h-3.5" /></button>
-                                </form>
-                              ) : (
-                                <form action={resumeMonitor}>
-                                  <input type="hidden" name="workspaceId" value={workspaceId} />
-                                  <input type="hidden" name="monitorId" value={node.id} />
-                                  <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500 transition-colors"><Play className="w-3.5 h-3.5" /></button>
-                                </form>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <Link
+                        href={`/workspaces/${workspaceId}/monitors/${node.id}`}
+                        className="font-display text-sm font-medium text-foreground outline-none hover:text-up focus-visible:ring-2 focus-visible:ring-up/50"
+                      >
+                        {node.name}
+                      </Link>
+                    </td>
+                    <td className="max-w-[280px] px-5 py-3.5">
+                      <span className="block truncate font-mono text-xs text-muted-foreground">{node.url}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="inline-flex items-center gap-2 font-mono text-xs">
+                        <span className={node.method === "GET" ? "text-info" : "text-degraded"}>
+                          {node.method || "GET"}
+                        </span>
+                        <span className="text-muted-foreground">{node.intervalSeconds || 60}s</span>
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      {node.status === "PAUSED" ? (
+                        <span className="font-mono text-xs text-muted-foreground">Paused</span>
+                      ) : (
+                        <div className="flex items-center gap-1" title={`${node.consecutiveFailures} / ${grace} failures`}>
+                          {Array.from({ length: grace }).map((_, i) => (
+                            <span
+                              key={i}
+                              className={cn(
+                                "h-3.5 w-1.5 rounded-full",
+                                i < node.consecutiveFailures ? "bg-degraded" : "bg-border",
                               )}
-                              <form action={triggerCheck}>
-                                <input type="hidden" name="workspaceId" value={workspaceId} />
-                                <input type="hidden" name="monitorId" value={node.id} />
-                                <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-cyan-400 hover:border-cyan-500 transition-colors"><ExternalLink className="w-3.5 h-3.5" /></button>
-                              </form>
-                              <form action={deleteMonitor}>
-                                <input type="hidden" name="workspaceId" value={workspaceId} />
-                                <input type="hidden" name="monitorId" value={node.id} />
-                                <button type="submit" className="p-1.5 border border-zinc-800 text-zinc-500 hover:text-red-400 hover:border-red-500 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
-                              </form>
-                            </>
-                          )}
+                            />
+                          ))}
                         </div>
-                        <Link
-                          href={`/workspaces/${workspaceId}/monitors/${node.id}`}
-                          className="px-3 py-1.5 bg-zinc-950 border border-zinc-800 hover:border-emerald-500 text-zinc-400 hover:text-emerald-400 text-[10px] font-bold uppercase tracking-widest transition-colors ml-2"
-                        >
-                          DIAG
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </>
+                      )}
+                    </td>
+                    {canEdit && (
+                      <td className="px-5 py-3.5">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {node.status !== "PAUSED" ? (
+                            <form action={pauseMonitor}>
+                              <input type="hidden" name="workspaceId" value={workspaceId} />
+                              <input type="hidden" name="monitorId" value={node.id} />
+                              <button type="submit" className="icon-btn h-8 w-8 hover:text-degraded hover:border-degraded/40" title="Pause monitor" aria-label="Pause monitor">
+                                <Pause className="h-3.5 w-3.5" />
+                              </button>
+                            </form>
+                          ) : (
+                            <form action={resumeMonitor}>
+                              <input type="hidden" name="workspaceId" value={workspaceId} />
+                              <input type="hidden" name="monitorId" value={node.id} />
+                              <button type="submit" className="icon-btn h-8 w-8 hover:text-up hover:border-up/40" title="Resume monitor" aria-label="Resume monitor">
+                                <Play className="h-3.5 w-3.5" />
+                              </button>
+                            </form>
+                          )}
+                          <form action={triggerCheck}>
+                            <input type="hidden" name="workspaceId" value={workspaceId} />
+                            <input type="hidden" name="monitorId" value={node.id} />
+                            <button type="submit" className="icon-btn h-8 w-8 hover:text-info hover:border-info/40" title="Run check now" aria-label="Run check now">
+                              <RefreshCw className="h-3.5 w-3.5" />
+                            </button>
+                          </form>
+                          <form action={deleteMonitor}>
+                            <input type="hidden" name="workspaceId" value={workspaceId} />
+                            <input type="hidden" name="monitorId" value={node.id} />
+                            <ConfirmSubmit
+                              message={`Delete “${node.name}”? This removes its check history and cannot be undone.`}
+                              className="icon-btn h-8 w-8 hover:text-down hover:border-down/40"
+                              title="Delete monitor"
+                              aria-label="Delete monitor"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </ConfirmSubmit>
+                          </form>
+                          <Link
+                            href={`/workspaces/${workspaceId}/monitors/${node.id}`}
+                            className="ml-1 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-up/40 hover:text-up"
+                          >
+                            Details
+                          </Link>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

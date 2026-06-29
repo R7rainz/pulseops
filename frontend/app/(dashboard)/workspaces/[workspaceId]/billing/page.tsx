@@ -3,17 +3,8 @@
 import { useState, useEffect } from "react";
 import { API_URL } from "@/lib/constants";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Crown,
-  Zap,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  CreditCard,
-  Shield,
-  TerminalSquare,
-} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ArrowLeft, Crown, Zap, CheckCircle, XCircle, Loader2, Shield } from "lucide-react";
 
 declare global {
   interface Window {
@@ -135,96 +126,75 @@ export default function BillingPage({
   }
 
   return (
-    <main className="p-8 md:p-12 font-mono text-zinc-50 min-h-screen">
-      <div className="max-w-3xl mx-auto space-y-10">
-        {/* Header */}
-        <div>
-          <Link
-            href={`/workspaces/${workspaceId}/monitors`}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-8 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-400 hover:border-cyan-400 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Return to Command Center
-          </Link>
+    <main className="min-h-dvh p-6 md:p-10">
+      <div className="mx-auto max-w-3xl space-y-6">
+        <Link
+          href={`/workspaces/${workspaceId}/monitors`}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" /> Back to monitors
+        </Link>
 
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b-2 border-zinc-900 pb-6">
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-widest uppercase text-zinc-100 flex items-center gap-3">
-                <CreditCard className="w-8 h-8 text-emerald-400" />
-                Billing &{" "}
-                <span className="text-emerald-400">Plan</span>
-              </h1>
-              <p className="text-sm text-zinc-500 mt-2 uppercase tracking-widest font-bold">
-                Manage your subscription and telemetry tier
-              </p>
-            </div>
-            <div className="px-4 py-2 bg-zinc-950 border-2 border-zinc-800 text-xs font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-2">
-              <Shield className="w-4 h-4" />
-              Current: {planTier}
-            </div>
+        <div className="flex flex-col justify-between gap-4 border-b border-border pb-5 md:flex-row md:items-center">
+          <div>
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Billing &amp; plan</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Manage your subscription</p>
           </div>
+          <span className="inline-flex items-center gap-1.5 self-start rounded-full border border-up/30 bg-up/10 px-3 py-1.5 text-xs font-medium text-up">
+            <Shield className="h-3.5 w-3.5" /> Current: {planTier}
+          </span>
         </div>
 
         {message && (
-          <div className="p-4 bg-zinc-900 border-2 border-zinc-800 text-xs text-zinc-300 font-bold uppercase tracking-widest">
-            {message}
-          </div>
+          <div role="status" className="glass rounded-lg p-4 text-sm text-foreground">{message}</div>
         )}
 
         {loading ? (
-          <div className="p-8 text-center text-zinc-600 text-xs uppercase tracking-widest font-bold border-2 border-dashed border-zinc-800">
-            Loading plan data...
-          </div>
+          <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Loading plan…</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Free Plan Card */}
-            <div className={`p-6 border-2 ${planTier === "FREE" ? "border-zinc-700 bg-zinc-900" : "border-zinc-800 bg-zinc-950"} shadow-[4px_4px_0px_0px_rgba(255,255,255,0.02)]`}>
-              <div className="flex items-center gap-3 mb-4 border-b-2 border-zinc-900 pb-4">
-                <Zap className="w-6 h-6 text-zinc-500" />
-                <h2 className="text-lg font-bold uppercase tracking-widest text-zinc-400">Free</h2>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            {/* Free */}
+            <div className={cn("glass rounded-lg p-6", planTier === "FREE" && "border-up/30")}>
+              <div className="mb-4 flex items-center gap-2.5 border-b border-border pb-4">
+                <Zap className="h-5 w-5 text-muted-foreground" />
+                <h2 className="font-display text-lg font-semibold text-foreground">Free</h2>
               </div>
-              <p className="text-3xl font-black text-zinc-500 mb-4">$0</p>
-              <ul className="space-y-2 text-xs text-zinc-500 mb-6">
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-zinc-600" /> Up to 5 monitors</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-zinc-600" /> 60s ping interval</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-zinc-600" /> 1 workspace</li>
-                <li className="flex items-center gap-2"><XCircle className="w-3.5 h-3.5 text-zinc-700" /> No SLA reports</li>
+              <p className="mb-5 font-display text-3xl font-semibold text-foreground">$0</p>
+              <ul className="mb-6 space-y-2 text-sm text-muted-foreground">
+                <Feature ok>Up to 5 monitors</Feature>
+                <Feature ok>60s check interval</Feature>
+                <Feature ok>1 workspace</Feature>
+                <Feature>SLA reports</Feature>
               </ul>
               {planTier === "FREE" && (
-                <div className="text-center text-[10px] font-bold uppercase tracking-widest text-zinc-600 border-2 border-zinc-800 py-3">
-                  Current Plan
-                </div>
+                <div className="rounded-full border border-border py-2.5 text-center text-xs font-medium text-muted-foreground">Current plan</div>
               )}
             </div>
 
-            {/* Pro Plan Card */}
-            <div className={`p-6 border-2 ${planTier === "PRO" ? "border-emerald-700 bg-emerald-950/10 shadow-[4px_4px_0px_0px_rgba(52,211,153,0.1)]" : "border-zinc-800 bg-zinc-950 hover:border-emerald-800 transition-colors shadow-[4px_4px_0px_0px_rgba(52,211,153,0.03)]"}`}>
-              <div className="flex items-center gap-3 mb-4 border-b-2 border-zinc-900 pb-4">
-                <Crown className="w-6 h-6 text-amber-400" />
-                <h2 className="text-lg font-bold uppercase tracking-widest text-amber-400">Pro</h2>
+            {/* Pro */}
+            <div className={cn("rounded-lg p-6", planTier === "PRO" ? "border border-up/30 bg-up/[0.04]" : "glass")}>
+              <div className="mb-4 flex items-center gap-2.5 border-b border-border pb-4">
+                <Crown className="h-5 w-5 text-degraded" />
+                <h2 className="font-display text-lg font-semibold text-degraded">Pro</h2>
               </div>
-              <p className="text-3xl font-black text-amber-400 mb-4">$10<span className="text-sm text-zinc-600 font-bold">/mo</span></p>
-              <ul className="space-y-2 text-xs text-zinc-400 mb-6">
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Unlimited monitors</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> 30s ping interval</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Unlimited workspaces</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> SLA reports & analytics</li>
-                <li className="flex items-center gap-2"><CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> Priority support</li>
+              <p className="mb-5 font-display text-3xl font-semibold text-foreground">
+                $10<span className="text-sm font-normal text-muted-foreground">/mo</span>
+              </p>
+              <ul className="mb-6 space-y-2 text-sm text-foreground/90">
+                <Feature ok>Unlimited monitors</Feature>
+                <Feature ok>30s check interval</Feature>
+                <Feature ok>Unlimited workspaces</Feature>
+                <Feature ok>SLA reports &amp; analytics</Feature>
+                <Feature ok>Priority support</Feature>
               </ul>
               {planTier === "PRO" ? (
-                <div className="text-center text-[10px] font-bold uppercase tracking-widest text-emerald-600 border-2 border-emerald-800 py-3">
-                  Active
-                </div>
+                <div className="rounded-full border border-up/30 bg-up/10 py-2.5 text-center text-xs font-medium text-up">Active</div>
               ) : (
-                <button
-                  onClick={handleUpgrade}
-                  disabled={creating}
-                  className="w-full bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold uppercase tracking-widest py-3 text-xs border-2 border-transparent transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                >
+                <button onClick={handleUpgrade} disabled={creating} className="btn btn-primary w-full">
                   {creating ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</>
                   ) : (
-                    <><Crown className="w-4 h-4" /> Upgrade to Pro</>
+                    <><Crown className="h-4 w-4" /> Upgrade to Pro</>
                   )}
                 </button>
               )}
@@ -233,5 +203,14 @@ export default function BillingPage({
         )}
       </div>
     </main>
+  );
+}
+
+function Feature({ ok = false, children }: { ok?: boolean; children: React.ReactNode }) {
+  return (
+    <li className="flex items-center gap-2">
+      {ok ? <CheckCircle className="h-3.5 w-3.5 text-up" /> : <XCircle className="h-3.5 w-3.5 text-muted-foreground/60" />}
+      {children}
+    </li>
   );
 }

@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import { API_URL } from "@/lib/constants";
-import { Mail, Terminal, Calendar, ShieldCheck } from "lucide-react";
+import { Mail, Calendar, ShieldCheck } from "lucide-react";
 import { updateProfile } from "./actions";
 import ChangePasswordForm from "./ChangePasswordForm";
 
@@ -33,74 +33,44 @@ export default async function AccountPage() {
     : "N/A";
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <div className="mb-10">
-        <h1 className="text-2xl font-black uppercase tracking-widest text-zinc-100 flex items-center gap-3">
-          <Terminal className="w-6 h-6 text-emerald-400" />
-          My Account
-        </h1>
-        <p className="text-zinc-600 text-xs uppercase tracking-widest font-bold mt-2">
-          Manage your profile and security settings
-        </p>
+    <div className="mx-auto max-w-3xl p-6 md:p-10">
+      <div className="mb-8 border-b border-border pb-5">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Account</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Manage your profile and security</p>
       </div>
 
       {/* INFO CARD */}
-      <div className="border-2 border-zinc-900 bg-zinc-950 p-6 mb-8">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-14 h-14 bg-zinc-950 border-2 border-zinc-800 flex items-center justify-center text-cyan-400">
-            <Terminal className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-zinc-100 uppercase tracking-widest">
-              {user.name || "Operator"}
-            </p>
-            <p className="text-xs text-zinc-600 uppercase tracking-widest">
-              {user.email}
-            </p>
+      <div className="glass mb-6 rounded-lg p-6">
+        <div className="mb-5 flex items-center gap-4">
+          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-info/30 bg-info/10 font-display text-xl font-semibold text-info">
+            {(user.name || user.email || "?").charAt(0).toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate font-display text-lg font-semibold text-foreground">{user.name || "Operator"}</p>
+            <p className="truncate font-mono text-xs text-muted-foreground">{user.email}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-zinc-600 uppercase tracking-widest font-bold">
-          <Calendar className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Calendar className="h-3.5 w-3.5" />
           Member since {memberSince}
         </div>
       </div>
 
       {/* EDIT PROFILE */}
-      <div className="border-2 border-zinc-900 bg-zinc-950 p-6 mb-8">
-        <h2 className="text-sm font-bold text-zinc-100 uppercase tracking-widest mb-6 flex items-center gap-2">
-          <Mail className="w-4 h-4 text-emerald-400" />
-          Edit Profile
+      <div className="glass mb-6 rounded-lg p-6">
+        <h2 className="mb-5 flex items-center gap-2 font-display text-sm font-semibold text-foreground">
+          <Mail className="h-4 w-4 text-up" /> Profile
         </h2>
-        <form action={updateProfile} className="space-y-5">
-          <div>
-            <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
-              Name
-            </label>
-            <input
-              name="name"
-              defaultValue={user.name}
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm uppercase tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors"
-              placeholder="Your name"
-            />
+        <form action={updateProfile} className="space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="acc-name" className="block text-sm font-medium text-foreground">Name</label>
+            <input id="acc-name" name="name" defaultValue={user.name} className="field" placeholder="Your name" />
           </div>
-          <div>
-            <label className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold block mb-1.5">
-              Email
-            </label>
-            <input
-              name="email"
-              type="email"
-              defaultValue={user.email}
-              className="w-full px-3 py-2.5 bg-zinc-950 border-2 border-zinc-800 text-zinc-200 text-sm uppercase tracking-widest font-bold placeholder:text-zinc-700 focus:outline-none focus:border-emerald-500 transition-colors"
-              placeholder="email@example.com"
-            />
+          <div className="space-y-1.5">
+            <label htmlFor="acc-email" className="block text-sm font-medium text-foreground">Email</label>
+            <input id="acc-email" name="email" type="email" defaultValue={user.email} className="field" placeholder="you@company.com" />
           </div>
-          <button
-            type="submit"
-            className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold uppercase tracking-widest transition-colors"
-          >
-            Save Changes
-          </button>
+          <button type="submit" className="btn btn-primary">Save changes</button>
         </form>
       </div>
 
@@ -108,11 +78,10 @@ export default async function AccountPage() {
       <ChangePasswordForm />
 
       {/* SECURITY NOTE */}
-      <div className="border-2 border-zinc-900/50 bg-zinc-950/50 p-4 flex items-start gap-3">
-        <ShieldCheck className="w-4 h-4 text-cyan-400 mt-0.5 shrink-0" />
-        <p className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold leading-relaxed">
-          Your credentials are hashed and stored securely. We never store
-          plain-text passwords. Session tokens expire after 15 minutes.
+      <div className="mt-6 flex items-start gap-3 rounded-lg border border-border p-4">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />
+        <p className="text-xs leading-relaxed text-muted-foreground">
+          Your credentials are hashed and stored securely — we never store plain-text passwords. Session tokens expire after 15 minutes.
         </p>
       </div>
     </div>

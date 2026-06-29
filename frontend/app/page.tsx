@@ -2,26 +2,19 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/lib/constants";
+import Aurora from "@/components/Aurora";
+import { Brand } from "@/components/Brand";
 import {
-  Activity,
-  Terminal,
-  Shield,
-  Zap,
   ArrowRight,
   GitPullRequest,
-  Quote,
-  Radio,
   Gauge,
   Timer,
   Bell,
   Globe,
-  BarChart3,
   Siren,
-  Webhook,
-  ScrollText,
-  Server,
+  Activity,
+  ShieldCheck,
   Workflow,
-  AlarmClock,
 } from "lucide-react";
 
 export default async function RootPage() {
@@ -41,9 +34,7 @@ export default async function RootPage() {
         const data = await res.json();
         const workspaces = data.data || [];
         destination =
-          workspaces.length > 0
-            ? `/workspaces/${workspaces[0].id}/monitors`
-            : "/workspaces/new";
+          workspaces.length > 0 ? `/workspaces/${workspaces[0].id}/monitors` : "/workspaces/new";
       } else if (res.status === 401) {
         redirect("/api/auth/logout");
       }
@@ -60,363 +51,244 @@ export default async function RootPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-50 font-mono overflow-hidden selection:bg-emerald-500/30 selection:text-emerald-400">
-      {/* HEX GRID BACKGROUND */}
+    <div className="relative min-h-dvh overflow-hidden bg-background text-foreground selection:bg-up/30">
+      {/* AURORA BACKGROUND */}
       <div className="fixed inset-0 -z-20 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px]" />
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-emerald-500 opacity-[0.08] blur-[150px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-cyan-500 opacity-[0.06] blur-[150px] rounded-full animate-pulse" style={{ animationDelay: "3s" }} />
-        <div className="absolute top-[40%] left-[60%] w-[400px] h-[400px] bg-emerald-400 opacity-[0.04] blur-[120px] rounded-full animate-pulse" style={{ animationDelay: "1.5s" }} />
+        {/* soft colour wash (always visible, even before canvas paints) */}
+        <div className="absolute inset-0 bg-[radial-gradient(55%_45%_at_22%_25%,rgba(159,216,189,0.16),transparent_60%),radial-gradient(50%_45%_at_82%_32%,rgba(163,209,223,0.13),transparent_60%),radial-gradient(60%_50%_at_55%_98%,rgba(86,196,160,0.12),transparent_60%)]" />
+        <Aurora className="absolute inset-0 h-full w-full" />
+        {/* vignette for depth + readability */}
+        <div className="absolute inset-0 bg-[radial-gradient(125%_95%_at_50%_28%,transparent_42%,rgba(7,11,9,0.66)_100%)]" />
       </div>
 
-      {/* N A V */}
-      <nav className="border-b-2 border-zinc-900 bg-zinc-950/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 bg-emerald-500/10 border-2 border-emerald-500/30">
-              <Activity className="w-5 h-5 text-emerald-400" />
-            </div>
-            <span className="font-bold text-lg tracking-wider text-zinc-100 uppercase">
-              Pulse<span className="text-emerald-400">Ops</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-6">
+      {/* NAV */}
+      <nav className="sticky top-0 z-50 border-b border-border bg-background/70 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+          <Brand href="/" />
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link
               href="/login"
-              className="text-sm text-zinc-400 hover:text-cyan-400 transition-colors font-medium uppercase tracking-widest"
+              className="px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              Login
+              Sign in
             </Link>
-            <Link
-              href="/signup"
-              className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-bold transition-colors uppercase tracking-widest border-2 border-transparent hover:border-emerald-300"
-            >
-              Deploy Now
+            <Link href="/signup" className="btn btn-primary">
+              Get started
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* H E R O */}
-      <section className="relative border-b-2 border-zinc-900">
-        <div className="max-w-7xl mx-auto px-6 pt-32 pb-28 text-center">
-          <div className="inline-flex items-center gap-3 px-4 py-1.5 bg-zinc-900 border-2 border-zinc-800 text-cyan-400 text-xs font-bold mb-10 uppercase tracking-[0.25em]">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500" />
-            </span>
-            v1.0 — Kafka Pipeline &bull; Redis Cache &bull; BullMQ Workers
+      {/* HERO */}
+      <section className="mx-auto flex max-w-6xl flex-col items-center px-6 pb-24 pt-24 text-center sm:pt-32">
+        <div className="mb-8 inline-flex max-w-full items-center gap-2.5 rounded-full border border-border bg-surface/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-up opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-up" />
+          </span>
+          <span className="truncate">Real-time monitoring &amp; incident alerts</span>
+        </div>
+
+        <h1 className="mx-auto max-w-3xl text-balance font-display text-[2.25rem] font-semibold leading-[1.08] tracking-tight sm:text-5xl md:text-6xl">
+          Know the moment <span className="text-up">something breaks.</span>
+        </h1>
+
+        <p className="mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground sm:text-lg">
+          PulseOps watches your endpoints around the clock — latency, uptime, SSL, and incidents —
+          and tells your team before your customers do.
+        </p>
+
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link href="/signup" className="btn btn-primary group px-7 py-3.5 text-base">
+            Start monitoring
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+          <a href="#features" className="btn btn-ghost px-7 py-3.5 text-base">
+            See features
+          </a>
+        </div>
+
+        {/* METRICS BAR */}
+        <div className="mx-auto mt-20 grid max-w-3xl grid-cols-1 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3">
+          <Stat icon={<Timer className="h-4 w-4" />} label="Median check latency" value="<12ms" />
+          <Stat icon={<Gauge className="h-4 w-4" />} label="Tracked uptime SLA" value="99.97%" />
+          <Stat icon={<Activity className="h-4 w-4" />} label="Monitors per workspace" value="Unlimited" />
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section id="features" className="border-t border-border py-24">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="mb-14 text-center">
+            <p className="font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground">Capabilities</p>
+            <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight">Everything you need to stay online</h2>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-6 max-w-4xl mx-auto leading-none uppercase">
-            Strict Telemetry.
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-300 to-cyan-400">
-              Zero Bloat.
-            </span>
-          </h1>
-
-          <p className="text-zinc-500 text-base md:text-lg max-w-2xl mx-auto mb-12 leading-relaxed uppercase tracking-wider font-bold">
-            Developer-first uptime monitoring with incident management,
-            <br />
-            Kafka-driven scheduling, real-time webhook alerts, and public status pages.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/signup"
-              className="group flex items-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest transition-all shadow-[4px_4px_0px_0px_rgba(52,211,153,0.25)] hover:shadow-[6px_6px_0px_0px_rgba(52,211,153,0.35)]"
-            >
-              Initialize Setup
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <a
-              href="#features"
-              className="flex items-center gap-2 px-8 py-4 bg-zinc-950 border-2 border-zinc-800 hover:border-zinc-600 text-zinc-400 hover:text-zinc-200 font-bold uppercase tracking-widest transition-all"
-            >
-              <Terminal className="w-4 h-4" />
-              Read Docs
-            </a>
-          </div>
-
-          {/* LIVE METRICS BAR */}
-          <div className="mt-20 max-w-3xl mx-auto grid grid-cols-3 gap-0 border-2 border-zinc-900 divide-x-2 divide-zinc-900">
-            <div className="p-5">
-              <p className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold mb-1">Avg Latency</p>
-              <p className="text-lg font-black text-emerald-400 flex items-center gap-2">
-                <Timer className="w-4 h-4" />
-                &lt;12ms
-              </p>
-            </div>
-            <div className="p-5">
-              <p className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold mb-1">Uptime SLA</p>
-              <p className="text-lg font-black text-emerald-400 flex items-center gap-2">
-                <Gauge className="w-4 h-4" />
-                99.97%
-              </p>
-            </div>
-            <div className="p-5">
-              <p className="text-[10px] text-zinc-600 uppercase tracking-[0.2em] font-bold mb-1">Nodes Tracked</p>
-              <p className="text-lg font-black text-emerald-400 flex items-center gap-2">
-                <Radio className="w-4 h-4" />
-                Unlimited
-              </p>
-            </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <Feature
+              icon={<Activity className="h-5 w-5 text-up" />}
+              accent="border-up/30 bg-up/10"
+              title="Real-time dashboard"
+              body="Live status, latency, and uptime for every monitor, cached in Redis and refreshed every few seconds."
+            />
+            <Feature
+              icon={<Siren className="h-5 w-5 text-down" />}
+              accent="border-down/30 bg-down/10"
+              title="Incident management"
+              body="Incidents open automatically on threshold breach, with a full timeline and acknowledge / resolve flow."
+            />
+            <Feature
+              icon={<Bell className="h-5 w-5 text-degraded" />}
+              accent="border-degraded/30 bg-degraded/10"
+              title="Webhook alerts"
+              body="Fire notifications on status changes with delivery logs, retries, and per-endpoint configuration."
+            />
+            <Feature
+              icon={<Globe className="h-5 w-5 text-info" />}
+              accent="border-info/30 bg-info/10"
+              title="Public status pages"
+              body="Shareable status pages with a 90-day uptime history and live system state for your customers."
+            />
+            <Feature
+              icon={<ShieldCheck className="h-5 w-5 text-up" />}
+              accent="border-up/30 bg-up/10"
+              title="SSL & TLS monitoring"
+              body="Automatic certificate inspection with expiry warnings that flag a degraded state before it goes down."
+            />
+            <Feature
+              icon={<Workflow className="h-5 w-5 text-info" />}
+              accent="border-info/30 bg-info/10"
+              title="Built to scale"
+              body="A Kafka-driven scheduler and BullMQ worker pool run checks in parallel — decoupled and resilient."
+            />
           </div>
         </div>
       </section>
 
-      {/* F E A T U R E S */}
-      <section id="features" className="border-b-2 border-zinc-900 py-28">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-sm font-bold text-zinc-600 uppercase tracking-[0.3em] mb-3">Core Capabilities</h2>
-            <p className="text-2xl md:text-3xl font-black uppercase tracking-widest text-zinc-100">
-              Engineered for <span className="text-emerald-400">Precision</span>
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-cyan-500/50 transition-colors">
-                <Server className="w-5 h-5 text-cyan-400" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                Kafka Pipeline
-              </h3>
-              <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                Monitor dispatch flows through Kafka topics. Go worker pool
-                executes probes — decoupled, scalable, resilient.
-              </p>
-            </div>
-
-            <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-emerald-500/50 transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-emerald-500/50 transition-colors">
-                <Activity className="w-5 h-5 text-emerald-400" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                Real-Time Dashboard
-              </h3>
-              <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                SWR-driven live metrics with Redis cache layer. Monitor status,
-                latency histograms, and uptime heatmaps update in real time.
-              </p>
-            </div>
-
-            <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-red-500/50 transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-red-500/50 transition-colors">
-                <Siren className="w-5 h-5 text-red-400" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                Incident Management
-              </h3>
-              <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                Automatic incident creation on threshold breach. Full timeline
-                with acknowledge/resolve workflow and probe context.
-              </p>
-            </div>
-
-            <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-emerald-500/50 transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-emerald-500/50 transition-colors">
-                <Bell className="w-5 h-5 text-emerald-400" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                Webhook Alerts
-              </h3>
-              <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                Fire webhook notifications on status changes. Delivery logs,
-                retry logic, and per-endpoint configuration.
-              </p>
-            </div>
-
-            <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-cyan-500/50 transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-cyan-500/50 transition-colors">
-                <Globe className="w-5 h-5 text-cyan-400" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                Public Status Pages
-              </h3>
-              <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                Shareable status pages with 90-day uptime heatmap, live monitor
-                states, and incident history.
-              </p>
-            </div>
-
-            <div className="group p-8 bg-zinc-950 border-2 border-zinc-800 hover:border-red-500/50 transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 bg-zinc-900 border-2 border-zinc-800 flex items-center justify-center mb-6 group-hover:border-red-500/50 transition-colors">
-                <BarChart3 className="w-5 h-5 text-red-400" />
-              </div>
-              <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                SSL &amp; TLS Monitoring
-              </h3>
-              <p className="text-zinc-500 text-sm leading-relaxed font-medium">
-                Automatic SSL certificate inspection with expiry alerts.
-                Degraded state triggers separate incident threads.
-              </p>
-            </div>
-          </div>
-
-          {/* ARCHITECTURE HIGHLIGHT */}
-          <div className="mt-16 p-10 border-2 border-zinc-800 bg-zinc-950/50">
-            <div className="flex flex-col md:flex-row items-start gap-8">
-              <div className="w-14 h-14 bg-zinc-900 border-2 border-zinc-700 flex items-center justify-center shrink-0">
-                <Workflow className="w-6 h-6 text-cyan-400" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-zinc-100 mb-3 uppercase tracking-widest">
-                  Pipeline Architecture
-                </h3>
-                <p className="text-zinc-500 text-sm leading-relaxed font-medium mb-4">
-                  Kafka dispatches monitor checks to a dedicated Go worker pool
-                  for parallel execution. Results flow through BullMQ queues for
-                  incident evaluation, webhook delivery, and alert processing.
-                  Redis caches live metrics for sub-millisecond dashboard reads.
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Kafka</span>
-                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Go Workers</span>
-                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">BullMQ</span>
-                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Redis</span>
-                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Fastify</span>
-                  <span className="px-3 py-1 bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 uppercase tracking-widest font-bold">PostgreSQL</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* R O A D M A P   +   T E S T I M O N I A L */}
-      <section className="border-b-2 border-zinc-900 bg-zinc-950 py-24">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16">
-          {/* Roadmap */}
+      {/* ROADMAP + TESTIMONIAL */}
+      <section className="border-t border-border py-24">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-6 lg:grid-cols-2">
           <div>
-            <h2 className="text-xl font-black uppercase tracking-widest text-zinc-100 mb-8 flex items-center gap-3">
-              <GitPullRequest className="w-6 h-6 text-cyan-400" />
-              System Roadmap
+            <h2 className="mb-8 flex items-center gap-2.5 font-display text-xl font-semibold tracking-tight">
+              <GitPullRequest className="h-5 w-5 text-info" />
+              On the roadmap
             </h2>
-            <div className="space-y-8 border-l-2 border-zinc-800 pl-8 relative">
-              <div className="absolute w-3 h-3 bg-emerald-400 -left-[7px] top-1.5" />
-              <div>
-                <h4 className="text-emerald-400 font-bold text-xs uppercase tracking-widest mb-1">
-                  Q3 2026
-                </h4>
-                <p className="text-zinc-200 font-bold text-sm uppercase tracking-wide">
-                  Multi-Region Ping Grid
-                </p>
-                <p className="text-zinc-600 text-xs mt-1.5 leading-relaxed">
-                  Dispatch probes from US-East, EU-Central, and AP-South
-                  concurrently for global latency coverage.
-                </p>
-              </div>
-
-              <div className="absolute w-3 h-3 bg-zinc-700 -left-[7px] top-[7.5rem]" />
-              <div>
-                <h4 className="text-zinc-500 font-bold text-xs uppercase tracking-widest mb-1">
-                  Q4 2026
-                </h4>
-                <p className="text-zinc-300 font-bold text-sm uppercase tracking-wide">
-                  Slack / Discord Integrations
-                </p>
-                <p className="text-zinc-600 text-xs mt-1.5 leading-relaxed">
-                  Native messaging platform alerting with rich incident
-                  payloads and acknowledge-from-chat.
-                </p>
-              </div>
-
-              <div className="absolute w-3 h-3 bg-zinc-700 -left-[7px] top-[14.5rem]" />
-              <div>
-                <h4 className="text-zinc-500 font-bold text-xs uppercase tracking-widest mb-1">
-                  2027
-                </h4>
-                <p className="text-zinc-300 font-bold text-sm uppercase tracking-wide">
-                  Custom Alert Rules Engine
-                </p>
-                <p className="text-zinc-600 text-xs mt-1.5 leading-relaxed">
-                  Define threshold-based escalation policies per monitor with
-                  multi-channel dispatch and pager duty rotation.
-                </p>
-              </div>
-            </div>
+            <ol className="relative space-y-8 border-l border-border pl-7">
+              <RoadmapItem when="Q3 2026" active title="Multi-region checks" body="Run probes from US-East, EU-Central, and AP-South for global latency coverage." />
+              <RoadmapItem when="Q4 2026" title="Slack & Discord alerts" body="Native messaging integrations with rich incident payloads and acknowledge-from-chat." />
+              <RoadmapItem when="2027" title="Custom alert rules" body="Threshold-based escalation policies per monitor with multi-channel dispatch and on-call rotation." />
+            </ol>
           </div>
 
-          {/* Testimonial */}
-          <div>
-            <h2 className="text-xl font-black uppercase tracking-widest text-zinc-100 mb-8 flex items-center gap-3">
-              <Quote className="w-6 h-6 text-red-400" />
-              Field Reports
-            </h2>
-            <div className="p-8 border-2 border-zinc-800 bg-zinc-950 hover:border-zinc-700 transition-colors relative">
-              <div className="absolute top-0 right-0 p-4 opacity-[0.04]">
-                <Terminal className="w-24 h-24" />
-              </div>
-              <p className="text-zinc-300 leading-relaxed italic mb-8 text-sm">
-                &ldquo;Finally, a monitoring tool that doesn&apos;t look like a
-                toy. The strict geometry and zero-fluff dashboard fit perfectly
-                alongside my terminal workflow.&rdquo;
-              </p>
-              <div className="border-t-2 border-zinc-900 pt-6">
-                <p className="font-bold text-emerald-400 uppercase text-xs tracking-widest">
-                  System Architect
-                </p>
-                <p className="text-zinc-600 text-xs mt-1">
-                  Fintech Core Infrastructure
-                </p>
-              </div>
-            </div>
+          <div className="space-y-4">
+            <h2 className="mb-8 font-display text-xl font-semibold tracking-tight">What teams say</h2>
+            <figure className="glass rounded-lg p-6">
+              <blockquote className="text-sm leading-relaxed text-foreground/90">
+                “Finally a monitoring tool that doesn’t feel like a toy. The dashboard is dense without being noisy — it fits right next to our terminals.”
+              </blockquote>
+              <figcaption className="mt-5 border-t border-border pt-4">
+                <p className="text-sm font-medium text-up">Platform Engineer</p>
+                <p className="text-xs text-muted-foreground">Fintech core infrastructure</p>
+              </figcaption>
+            </figure>
+            <figure className="glass rounded-lg p-6">
+              <blockquote className="text-sm leading-relaxed text-foreground/90">
+                “Replaced three separate tools. On-call alerts, status page, and uptime checks all in one place.”
+              </blockquote>
+              <figcaption className="mt-5 border-t border-border pt-4">
+                <p className="text-sm font-medium text-info">DevOps Lead</p>
+                <p className="text-xs text-muted-foreground">SaaS infrastructure · 200+ monitors</p>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
 
-            <div className="mt-6 p-8 border-2 border-zinc-800 bg-zinc-950 hover:border-zinc-700 transition-colors">
-              <p className="text-zinc-400 leading-relaxed italic mb-8 text-sm">
-                &ldquo;Replaced three separate tools. On-call rotation,
-                status page, and ping monitoring all in one rigid stack.&rdquo;
+      {/* CTA */}
+      <section className="border-t border-border py-24">
+        <div className="mx-auto max-w-3xl px-6">
+          <div className="pulse-shell">
+            <div className="px-8 py-12 text-center">
+              <h2 className="font-display text-3xl font-semibold tracking-tight">Ready to stop guessing?</h2>
+              <p className="mx-auto mt-3 max-w-md text-sm text-muted-foreground">
+                Create your first workspace in under a minute. No credit card required.
               </p>
-              <div className="border-t-2 border-zinc-900 pt-6">
-                <p className="font-bold text-cyan-400 uppercase text-xs tracking-widest">
-                  DevOps Lead
-                </p>
-                <p className="text-zinc-600 text-xs mt-1">
-                  SaaS Infrastructure &mdash; 200+ Nodes
-                </p>
-              </div>
+              <Link href="/signup" className="btn btn-primary group mt-8 px-7 py-3.5 text-base">
+                Get started free
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* C T A */}
-      <section className="py-24">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="p-12 border-2 border-emerald-900/30 bg-emerald-950/5 relative">
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#10b98108_1px,transparent_1px),linear-gradient(to_bottom,#10b98108_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-            <h2 className="text-2xl md:text-3xl font-black uppercase tracking-widest text-zinc-100 mb-4 relative">
-              Ready to Deploy?
-            </h2>
-            <p className="text-zinc-500 text-sm uppercase tracking-wider font-bold mb-8 relative">
-              Provision your first workspace in under 60 seconds. No credit card
-              required.
-            </p>
-            <Link
-              href="/signup"
-              className="relative inline-flex items-center gap-3 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold uppercase tracking-widest transition-all shadow-[4px_4px_0px_0px_rgba(52,211,153,0.2)] hover:shadow-[6px_6px_0px_0px_rgba(52,211,153,0.3)]"
-            >
-              Initialize Setup
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* F O O T E R */}
-      <footer className="border-t-2 border-zinc-900 py-8">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <p className="text-[10px] text-zinc-700 uppercase tracking-widest font-bold">
-            &copy; {new Date().getFullYear()} PulseOps — Strict Telemetry Engine
-          </p>
-          <p className="text-[10px] text-zinc-700 uppercase tracking-widest font-bold">
-            v1.0.0
+      {/* FOOTER */}
+      <footer className="border-t border-border py-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 sm:flex-row">
+          <Brand href="/" size="sm" />
+          <p className="font-mono text-[11px] text-muted-foreground">
+            © {new Date().getFullYear()} PulseOps · Uptime &amp; telemetry
           </p>
         </div>
       </footer>
     </div>
+  );
+}
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="bg-surface px-6 py-5">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{label}</p>
+      <p className="mt-1.5 flex items-center justify-center gap-2 font-display text-xl font-semibold text-up sm:justify-start">
+        {icon}
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function Feature({
+  icon,
+  accent,
+  title,
+  body,
+}: {
+  icon: React.ReactNode;
+  accent: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="glass group rounded-lg p-6 transition-colors duration-200 hover:border-up/25">
+      <div className={`mb-5 grid h-11 w-11 place-items-center rounded-lg border ${accent}`}>{icon}</div>
+      <h3 className="font-display text-base font-semibold tracking-tight">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </div>
+  );
+}
+
+function RoadmapItem({
+  when,
+  title,
+  body,
+  active = false,
+}: {
+  when: string;
+  title: string;
+  body: string;
+  active?: boolean;
+}) {
+  return (
+    <li className="relative">
+      <span
+        className={`absolute -left-[31px] top-1 h-2.5 w-2.5 rounded-full ${active ? "bg-up" : "bg-border"}`}
+        aria-hidden="true"
+      />
+      <p className={`font-mono text-xs font-medium uppercase tracking-wider ${active ? "text-up" : "text-muted-foreground"}`}>
+        {when}
+      </p>
+      <p className="mt-1 font-display text-sm font-medium text-foreground">{title}</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </li>
   );
 }
