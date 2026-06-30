@@ -17,6 +17,7 @@ import {
   User,
   Menu,
   X,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Brand } from "@/components/Brand";
@@ -48,7 +49,7 @@ export default function Sidebar({
   return (
     <>
       {/* MOBILE TOP BAR */}
-      <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md lg:hidden">
+      <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border/60 bg-background/60 px-4 backdrop-blur-xl lg:hidden">
         <Brand href="/workspaces" size="sm" />
         <button
           onClick={() => setOpen(true)}
@@ -63,7 +64,7 @@ export default function Sidebar({
       {/* SCRIM */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
@@ -71,12 +72,19 @@ export default function Sidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-border bg-surface transition-transform duration-300 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between bg-[color-mix(in_oklab,var(--surface)_66%,transparent)] backdrop-blur-2xl transition-transform duration-300 lg:sticky lg:top-0 lg:z-30 lg:h-screen lg:translate-x-0",
+          "border-r border-border/60 shadow-[inset_-1px_0_0_0_var(--edge-highlight)]",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
+        {/* top vibrancy sheen */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-primary/[0.07] to-transparent"
+        />
+
         {/* LOGO */}
-        <div className="flex h-14 items-center justify-between border-b border-border px-5">
+        <div className="relative flex h-16 items-center justify-between px-5">
           <Brand href="/workspaces" />
           <button onClick={() => setOpen(false)} className="icon-btn h-8 w-8 lg:hidden" aria-label="Close menu">
             <X className="h-4 w-4" />
@@ -84,18 +92,23 @@ export default function Sidebar({
         </div>
 
         {/* NAV */}
-        <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+        <nav className="relative flex-1 space-y-6 overflow-y-auto px-3 py-4">
           <section>
-            <div className="mb-3 flex items-center justify-between px-2">
-              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            <div className="mb-2.5 flex items-center justify-between px-2">
+              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
                 Workspaces
               </h2>
-              <Link href="/workspaces/new" className="icon-btn h-7 w-7 hover:text-primary hover:border-primary/40" title="New workspace" aria-label="New workspace">
+              <Link
+                href="/workspaces/new"
+                className="icon-btn h-7 w-7 hover:border-primary/40 hover:text-primary"
+                title="New workspace"
+                aria-label="New workspace"
+              >
                 <Plus className="h-3.5 w-3.5" />
               </Link>
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               {workspaces.length === 0 ? (
                 <p className="px-2 py-3 text-xs text-muted-foreground">No workspaces yet.</p>
               ) : (
@@ -116,27 +129,42 @@ export default function Sidebar({
                     <div
                       key={ws.id}
                       className={cn(
-                        "overflow-hidden rounded-lg border transition-colors",
-                        isActive ? "border-primary/20 bg-primary/[0.04]" : "border-transparent hover:border-border",
+                        "group overflow-hidden rounded-xl border transition-all duration-200",
+                        isActive
+                          ? "border-primary/25 bg-primary/[0.06] shadow-[inset_0_1px_0_0_var(--edge-highlight)]"
+                          : "border-transparent hover:border-border/70 hover:bg-surface-raised/40",
                       )}
                     >
                       <Link
                         href={`${wsBase}/monitors`}
                         className={cn(
-                          "flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors",
+                          "flex items-center gap-2.5 px-2.5 py-2.5 text-sm font-medium transition-colors",
                           isActive ? "text-primary" : "text-foreground/80 hover:text-foreground",
                         )}
                       >
-                        <Layers className="h-4 w-4 shrink-0" />
+                        <span
+                          className={cn(
+                            "grid h-7 w-7 shrink-0 place-items-center rounded-lg border transition-colors",
+                            isActive
+                              ? "border-primary/30 bg-primary/15 text-primary shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18)]"
+                              : "border-border/70 bg-surface-raised/60 text-muted-foreground group-hover:text-foreground",
+                          )}
+                        >
+                          <Layers className="h-4 w-4" />
+                        </span>
                         <span className="truncate font-display tracking-tight">{ws.name}</span>
+                        <ChevronRight
+                          className={cn(
+                            "ml-auto h-3.5 w-3.5 shrink-0 transition-transform duration-200",
+                            isActive ? "rotate-90 text-primary/70" : "text-muted-foreground/50 group-hover:translate-x-0.5",
+                          )}
+                        />
                       </Link>
 
                       <div
                         className={cn(
-                          "overflow-hidden transition-all duration-200",
-                          isActive
-                            ? "max-h-96 opacity-100"
-                            : "max-h-0 opacity-0 group-hover:max-h-96",
+                          "overflow-hidden transition-all duration-300 ease-out",
+                          isActive ? "max-h-96 opacity-100" : "max-h-0 opacity-0 group-hover:max-h-96 group-hover:opacity-100",
                         )}
                       >
                         <div className="space-y-0.5 px-2 pb-2">
@@ -158,9 +186,9 @@ export default function Sidebar({
         </nav>
 
         {/* PROFILE & LOGOUT */}
-        <div className="space-y-2 border-t border-border p-3">
-          <div className="flex items-center gap-3 px-2 py-1">
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-primary/30 bg-primary/10 font-display text-sm font-semibold text-primary">
+        <div className="relative space-y-1.5 border-t border-border/60 p-3">
+          <div className="mb-1 flex items-center gap-3 rounded-xl border border-border/50 bg-surface-raised/40 px-2.5 py-2 shadow-[inset_0_1px_0_0_var(--edge-highlight)]">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-b from-primary to-[color-mix(in_oklab,var(--primary)_82%,black)] font-display text-sm font-semibold text-primary-foreground shadow-[inset_0_1px_0_0_rgba(255,255,255,0.4)]">
               {(user.name || user.email || "?").charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0 flex-1">
@@ -175,8 +203,8 @@ export default function Sidebar({
             className={cn(
               "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               pathname === "/account"
-                ? "bg-primary/[0.06] text-primary"
-                : "text-muted-foreground hover:bg-surface-raised hover:text-foreground",
+                ? "bg-primary/[0.1] text-primary shadow-[inset_0_1px_0_0_var(--edge-highlight)]"
+                : "text-muted-foreground hover:bg-surface-raised/60 hover:text-foreground",
             )}
           >
             <User className="h-4 w-4" />
@@ -214,13 +242,16 @@ function NavItem({
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
+        "group/nav relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200",
         isActive
-          ? "bg-primary/[0.08] text-primary"
-          : "text-muted-foreground hover:bg-surface-raised hover:text-foreground",
+          ? "bg-primary/[0.12] text-primary shadow-[inset_0_1px_0_0_var(--edge-highlight)]"
+          : "text-muted-foreground hover:bg-surface-raised/60 hover:text-foreground",
       )}
     >
-      <span className="shrink-0">{icon}</span>
+      {isActive && (
+        <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-primary" aria-hidden="true" />
+      )}
+      <span className="shrink-0 transition-transform duration-200 group-hover/nav:scale-110">{icon}</span>
       {label}
     </Link>
   );
