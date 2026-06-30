@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { API_URL } from "@/lib/constants";
 import Link from "next/link";
 import { ShieldCheck, ServerCrash, AlertTriangle } from "lucide-react";
-import Aurora from "@/components/Aurora";
 import { Brand } from "@/components/Brand";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
@@ -83,12 +82,6 @@ export default async function PublicStatusPage({
 
   return (
     <main className="relative min-h-dvh overflow-hidden text-foreground">
-      {/* ambient background */}
-      <div className="fixed inset-0 -z-10 pointer-events-none">
-        <div className="absolute inset-0 bg-background" />
-        <Aurora />
-      </div>
-
       <div className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
         <header className="flex items-center justify-between">
           <Brand href="/" size="sm" />

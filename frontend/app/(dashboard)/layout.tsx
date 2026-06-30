@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Toast from "@/components/Toast";
-import Aurora from "@/components/Aurora";
 import { apiFetch } from "@/lib/apiFetch";
 import { API_URL } from "@/lib/constants";
 
@@ -46,12 +45,6 @@ export default async function DashboardLayout({
 
   return (
     <div className="relative min-h-dvh text-foreground selection:bg-primary/30 lg:flex">
-      {/* subtle warm ambient glow behind everything */}
-      <div className="pointer-events-none fixed inset-0 -z-10">
-        <div className="absolute inset-0 bg-background" />
-        <Aurora className="opacity-90" />
-      </div>
-
       <Sidebar workspaces={workspaces} user={currentUser} />
 
       <main className="relative z-0 min-w-0 flex-1">

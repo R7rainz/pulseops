@@ -2,7 +2,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/lib/constants";
-import Aurora from "@/components/Aurora";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Brand } from "@/components/Brand";
 import { StatusDot } from "@/components/ui/status-badge";
@@ -67,12 +66,6 @@ export default async function RootPage() {
 
   return (
     <div className="relative min-h-dvh overflow-hidden text-foreground selection:bg-primary/20">
-      {/* WARM AMBIENT BACKGROUND */}
-      <div className="fixed inset-0 -z-10 pointer-events-none">
-        <div className="absolute inset-0 bg-background" />
-        <Aurora tone="vivid" />
-      </div>
-
       {/* NAV */}
       <nav className="sticky top-0 z-50 border-b border-border/70 bg-background/70 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">

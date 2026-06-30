@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Activity, Radio, Bell, Globe } from "lucide-react";
-import Aurora from "@/components/Aurora";
 import { Brand } from "@/components/Brand";
 
 const POINTS = [
@@ -63,11 +62,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       {/* RIGHT — form */}
       <main className="relative flex min-h-dvh items-center justify-center overflow-hidden p-6 sm:p-10">
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute inset-0 bg-background" />
-          <Aurora className="opacity-95 lg:opacity-80" />
-        </div>
-
         {/* mobile brand */}
         <div className="absolute left-6 top-6 lg:hidden">
           <Brand href="/" />
