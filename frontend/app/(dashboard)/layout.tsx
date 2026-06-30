@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Toast from "@/components/Toast";
-import AmbientGlow from "@/components/AmbientGlow";
+import Aurora from "@/components/Aurora";
 import { apiFetch } from "@/lib/apiFetch";
 import { API_URL } from "@/lib/constants";
 
@@ -49,7 +49,7 @@ export default async function DashboardLayout({
       {/* subtle warm ambient glow behind everything */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
-        <AmbientGlow className="opacity-60" />
+        <Aurora className="opacity-60" />
       </div>
 
       <Sidebar workspaces={workspaces} user={currentUser} />

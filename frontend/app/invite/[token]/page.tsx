@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { API_URL } from "@/lib/constants";
 import { AcceptInviteButton } from "./accept-button";
 import Link from "next/link";
-import AmbientGlow from "@/components/AmbientGlow";
+import Aurora from "@/components/Aurora";
 import { Brand } from "@/components/Brand";
 import { ShieldCheck, Clock, AlertTriangle, UserPlus, LogIn } from "lucide-react";
 
@@ -56,7 +56,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="relative grid min-h-dvh place-items-center overflow-hidden p-6 text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
-        <AmbientGlow />
+        <Aurora />
       </div>
       <div className="absolute left-6 top-6">
         <Brand href="/" />

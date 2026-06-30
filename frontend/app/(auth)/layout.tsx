@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Activity, Radio, Bell, Globe } from "lucide-react";
-import AmbientGlow from "@/components/AmbientGlow";
+import Aurora from "@/components/Aurora";
 import { Brand } from "@/components/Brand";
 
 const POINTS = [
@@ -65,7 +65,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <main className="relative flex min-h-dvh items-center justify-center overflow-hidden p-6 sm:p-10">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-background" />
-          <AmbientGlow className="opacity-80 lg:opacity-50" />
+          <Aurora className="opacity-80 lg:opacity-50" />
         </div>
 
         {/* mobile brand */}

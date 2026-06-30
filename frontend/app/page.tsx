@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { API_URL } from "@/lib/constants";
-import AmbientGlow from "@/components/AmbientGlow";
+import Aurora from "@/components/Aurora";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Brand } from "@/components/Brand";
 import { StatusDot } from "@/components/ui/status-badge";
@@ -70,7 +70,7 @@ export default async function RootPage() {
       {/* WARM AMBIENT BACKGROUND */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 bg-background" />
-        <AmbientGlow tone="vivid" />
+        <Aurora tone="vivid" />
       </div>
 
       {/* NAV */}
