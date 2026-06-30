@@ -170,25 +170,25 @@
 /* ── PulseOps — Slate + Pastel theme (DEFAULT) ──────────────
    #2C2C2C base · #E4E4E4 text · lavender CTA · cyan + pink accents. */
 .dark {
-  --background: #2c2c2c;
-  --foreground: #e4e4e4;
-  --card: #353537;
-  --card-foreground: #e4e4e4;
-  --popover: #353537;
-  --popover-foreground: #e4e4e4;
-  --surface: #333335;
-  --surface-raised: #3d3d40;
-  --muted: #3a3a3c;
-  --muted-foreground: #adadb2;
+  --background: #101219;
+  --foreground: #e9eaf3;
+  --card: #191c26;
+  --card-foreground: #e9eaf3;
+  --popover: #191c26;
+  --popover-foreground: #e9eaf3;
+  --surface: #171a23;
+  --surface-raised: #232735;
+  --muted: #1f2330;
+  --muted-foreground: #9fa2b6;
   --primary: #b39cd0;
-  --primary-foreground: #241f2e;
-  --secondary: #3a3a3c;
-  --secondary-foreground: #e4e4e4;
-  --accent: #3a3a3c;
-  --accent-foreground: #e4e4e4;
+  --primary-foreground: #1c1726;
+  --secondary: #1f2330;
+  --secondary-foreground: #e9eaf3;
+  --accent: #1f2330;
+  --accent-foreground: #e9eaf3;
   --destructive: #f4707e;
-  --border: rgba(228, 228, 228, 0.12);
-  --input: rgba(228, 228, 228, 0.16);
+  --border: rgba(176, 196, 255, 0.12);
+  --input: rgba(176, 196, 255, 0.16);
   --ring: #b39cd0;
 
   --up: #86d9ad;
@@ -200,8 +200,8 @@
   --info: #a8dadc;
   --paused: #adadb2;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3),
-    0 22px 50px -22px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4),
+    0 24px 56px -24px rgba(8, 10, 26, 0.8);
 }
 
 @layer components {

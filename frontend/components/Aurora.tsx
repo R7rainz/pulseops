@@ -4,42 +4,48 @@ import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Aurora — an immersive, soothing backdrop of slow-drifting light orbs in the
- * arctic-blue palette, rendered to a downscaled canvas and CSS-blurred (cheap
- * and dreamy). The field leans subtly toward the pointer and a faint glow
- * trails the cursor. Honors `prefers-reduced-motion` (one still frame).
+ * Aurora — an immersive, living backdrop of slow-drifting light orbs that
+ * gently breathe, lean toward the pointer, and trail a soft glow at the cursor.
+ * Rendered to a downscaled canvas and CSS-blurred (cheap + dreamy). Honors
+ * `prefers-reduced-motion` (one still frame) and pauses on hidden tabs.
  *
- * Tuned for the LIGHT theme: saturated cool orbs painted with normal blending
- * (additive "lighter" would wash to white on a light page). A faint static
- * gradient sits behind the canvas so there's colour before the first paint.
+ * Theme-aware, read live from the `.dark` class so toggling re-tints instantly:
+ *  - DARK  → saturated orbs with additive blending so they glow on the deep
+ *            base, over a soft indigo/violet/teal wash.
+ *  - LIGHT → cooler arctic orbs with normal blending (additive would wash to
+ *            white on a light page), over a faint sky wash.
  *
  * Drop-in for the old AmbientGlow: same `{ className, tone }` API.
  */
 interface Orb {
   hue: readonly [number, number, number];
-  x: number; // base position 0..1
+  x: number;
   y: number;
-  r: number; // radius as fraction of min dimension
+  r: number;
   ampX: number;
   ampY: number;
   speed: number;
   phase: number;
-  depth: number; // parallax strength
+  depth: number;
   alpha: number;
 }
 
-const AZURE = [99, 138, 255] as const; // brand blue (#638AFF)
-const SKY = [56, 189, 248] as const; // --info sky (#38BDF8)
-const PERIWINKLE = [150, 178, 240] as const; // soft periwinkle
-const LAVENDER = [179, 156, 208] as const; // cool lavender
-const CYAN = [168, 218, 220] as const; // arctic cyan
+// LIGHT — arctic blues, painted normally so they read as soft colour washes.
+const LIGHT_ORBS: Orb[] = [
+  { hue: [99, 138, 255], x: 0.24, y: 0.28, r: 0.58, ampX: 0.05, ampY: 0.04, speed: 0.05, phase: 0, depth: 30, alpha: 0.42 },
+  { hue: [56, 189, 248], x: 0.76, y: 0.34, r: 0.5, ampX: 0.045, ampY: 0.05, speed: 0.042, phase: 1.7, depth: 42, alpha: 0.36 },
+  { hue: [150, 178, 240], x: 0.5, y: 0.8, r: 0.62, ampX: 0.06, ampY: 0.035, speed: 0.035, phase: 3.1, depth: 22, alpha: 0.34 },
+  { hue: [179, 156, 208], x: 0.88, y: 0.78, r: 0.42, ampX: 0.04, ampY: 0.045, speed: 0.03, phase: 4.4, depth: 34, alpha: 0.28 },
+  { hue: [168, 218, 220], x: 0.12, y: 0.74, r: 0.46, ampX: 0.05, ampY: 0.04, speed: 0.038, phase: 2.2, depth: 26, alpha: 0.3 },
+];
 
-const ORBS: Orb[] = [
-  { hue: AZURE, x: 0.24, y: 0.28, r: 0.58, ampX: 0.05, ampY: 0.04, speed: 0.05, phase: 0, depth: 30, alpha: 0.42 },
-  { hue: SKY, x: 0.76, y: 0.34, r: 0.5, ampX: 0.045, ampY: 0.05, speed: 0.042, phase: 1.7, depth: 42, alpha: 0.36 },
-  { hue: PERIWINKLE, x: 0.5, y: 0.8, r: 0.62, ampX: 0.06, ampY: 0.035, speed: 0.035, phase: 3.1, depth: 22, alpha: 0.34 },
-  { hue: LAVENDER, x: 0.88, y: 0.78, r: 0.42, ampX: 0.04, ampY: 0.045, speed: 0.03, phase: 4.4, depth: 34, alpha: 0.28 },
-  { hue: CYAN, x: 0.12, y: 0.74, r: 0.46, ampX: 0.05, ampY: 0.04, speed: 0.038, phase: 2.2, depth: 26, alpha: 0.3 },
+// DARK — luminous indigo / violet / cyan, additively blended so they glow.
+const DARK_ORBS: Orb[] = [
+  { hue: [124, 140, 255], x: 0.24, y: 0.26, r: 0.6, ampX: 0.06, ampY: 0.045, speed: 0.055, phase: 0, depth: 34, alpha: 0.6 },
+  { hue: [167, 139, 250], x: 0.78, y: 0.32, r: 0.52, ampX: 0.05, ampY: 0.055, speed: 0.046, phase: 1.7, depth: 46, alpha: 0.52 },
+  { hue: [94, 234, 212], x: 0.5, y: 0.82, r: 0.64, ampX: 0.065, ampY: 0.04, speed: 0.04, phase: 3.1, depth: 24, alpha: 0.4 },
+  { hue: [88, 150, 255], x: 0.9, y: 0.78, r: 0.46, ampX: 0.045, ampY: 0.05, speed: 0.034, phase: 4.4, depth: 38, alpha: 0.45 },
+  { hue: [179, 156, 208], x: 0.1, y: 0.72, r: 0.5, ampX: 0.055, ampY: 0.045, speed: 0.042, phase: 2.2, depth: 28, alpha: 0.4 },
 ];
 
 export default function Aurora({
@@ -50,7 +56,7 @@ export default function Aurora({
   tone?: "subtle" | "vivid";
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const k = tone === "vivid" ? 1 : 0.72; // intensity factor
+  const k = tone === "vivid" ? 1 : 0.74; // intensity factor
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -84,24 +90,45 @@ export default function Aurora({
       ctx!.fill();
     }
 
+    // soft wash painted under the orbs (deep glow on dark, sky tint on light)
+    function paintWash(dark: boolean) {
+      if (dark) {
+        paintOrb(w * 0.22, h * 0.16, Math.max(w, h) * 0.8, [74, 86, 210], 0.3 * k);
+        paintOrb(w * 0.84, h * 0.9, Math.max(w, h) * 0.7, [140, 96, 214], 0.24 * k);
+        paintOrb(w * 0.6, h * 0.5, Math.max(w, h) * 0.6, [40, 200, 190], 0.12 * k);
+      } else {
+        paintOrb(w * 0.3, h * 0.2, Math.max(w, h) * 0.85, [180, 205, 255], 0.4 * k);
+        paintOrb(w * 0.8, h * 0.85, Math.max(w, h) * 0.7, [210, 200, 240], 0.32 * k);
+      }
+    }
+
     function draw(now: number) {
+      const dark = document.documentElement.classList.contains("dark");
+      const orbs = dark ? DARK_ORBS : LIGHT_ORBS;
       const t = (now - start) / 1000;
       pointer.x += (pointer.tx - pointer.x) * 0.04;
       pointer.y += (pointer.ty - pointer.y) * 0.04;
       const min = Math.min(w, h);
+      // gentle global "breath" so the field feels alive (flowing, not flashing)
+      const breath = 0.86 + 0.14 * Math.sin(t * 0.5);
 
       ctx!.clearRect(0, 0, w, h);
-      // normal blending — saturated cool orbs read as soft washes on light bg
-      for (const o of ORBS) {
+
+      ctx!.globalCompositeOperation = "source-over";
+      paintWash(dark);
+
+      ctx!.globalCompositeOperation = dark ? "lighter" : "source-over";
+      for (const o of orbs) {
         const px = (pointer.x - 0.5) * (o.depth * SCALE);
         const py = (pointer.y - 0.5) * (o.depth * SCALE);
         const cx = (o.x + Math.sin(t * o.speed * Math.PI * 2 + o.phase) * o.ampX) * w + px;
         const cy = (o.y + Math.cos(t * o.speed * Math.PI * 2 + o.phase) * o.ampY) * h + py;
-        paintOrb(cx, cy, o.r * min, o.hue, o.alpha * k);
+        paintOrb(cx, cy, o.r * min, o.hue, o.alpha * k * breath);
       }
-
       // soft glow trailing the cursor
-      paintOrb(pointer.x * w, pointer.y * h, min * 0.26, AZURE, 0.08 * k);
+      paintOrb(pointer.x * w, pointer.y * h, min * 0.26, dark ? [124, 140, 255] : [99, 138, 255], (dark ? 0.14 : 0.08) * k);
+
+      ctx!.globalCompositeOperation = "source-over";
     }
 
     function loop(now: number) {
@@ -121,6 +148,10 @@ export default function Aurora({
     resize();
     window.addEventListener("resize", resize);
 
+    // redraw a still frame when the theme toggles (covers the reduced-motion path)
+    const themeObserver = new MutationObserver(() => draw(performance.now()));
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
     if (reduceMotion) {
       draw(start);
     } else {
@@ -131,6 +162,7 @@ export default function Aurora({
 
     return () => {
       cancelAnimationFrame(raf);
+      themeObserver.disconnect();
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointer);
       document.removeEventListener("visibilitychange", onVisibility);
@@ -138,22 +170,11 @@ export default function Aurora({
   }, [k]);
 
   return (
-    <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} aria-hidden="true">
-      {/* faint static wash — colour before the canvas paints, and adds depth */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(120deg, #CFE2FF 0%, #DCE9FF 45%, #E9E3F6 100%)",
-          opacity: 0.5 * k,
-        }}
-      />
-      {/* animated orb field */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 h-full w-full"
-        style={{ filter: "blur(44px) saturate(1.2)", transform: "translateZ(0)" }}
-      />
-    </div>
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      className={cn("pointer-events-none absolute inset-0 h-full w-full", className)}
+      style={{ filter: "blur(46px) saturate(1.25)", transform: "translateZ(0)" }}
+    />
   );
 }

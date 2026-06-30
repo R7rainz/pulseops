@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import { Bricolage_Grotesque, Instrument_Sans, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Toast from "@/components/Toast";
 
-// Display / headings — Bricolage Grotesque (variable weight)
-const display = Bricolage_Grotesque({
+// Display / headings — Space Grotesk (modern geometric grotesque)
+const display = Space_Grotesk({
   subsets: ["latin"],
   variable: "--font-display",
 });
 
-// Body / UI copy — Instrument Sans
-const sans = Instrument_Sans({
+// Body / UI copy — Geist (clean, modern, neutral)
+const sans = Geist({
   subsets: ["latin"],
   variable: "--font-sans",
 });
 
-// Metrics / numerals / timestamps — Geist Mono
+// Metrics / numerals / timestamps — Geist Mono (cohesive with Geist)
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
