@@ -49,10 +49,10 @@ export default function MonitorView({
         <div className="flex items-center gap-3">
           <h2 className="font-display text-sm font-semibold tracking-tight text-foreground">Monitors</h2>
           <span className="font-mono text-xs text-muted-foreground">{monitors.length}</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-up/30 bg-up/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-up">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-primary">
             <span className="relative flex h-1.5 w-1.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-up opacity-75" />
-              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-up" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
             </span>
             Live
           </span>
@@ -63,7 +63,7 @@ export default function MonitorView({
             onClick={() => handleViewChange("grid")}
             className={cn(
               "grid h-7 w-7 cursor-pointer place-items-center rounded-md transition-colors",
-              view === "grid" ? "bg-surface-raised text-up" : "text-muted-foreground hover:text-foreground",
+              view === "grid" ? "bg-surface-raised text-primary" : "text-muted-foreground hover:text-foreground",
             )}
             title="Card grid"
             aria-label="Card grid view"
@@ -75,7 +75,7 @@ export default function MonitorView({
             onClick={() => handleViewChange("list")}
             className={cn(
               "grid h-7 w-7 cursor-pointer place-items-center rounded-md transition-colors",
-              view === "list" ? "bg-surface-raised text-up" : "text-muted-foreground hover:text-foreground",
+              view === "list" ? "bg-surface-raised text-primary" : "text-muted-foreground hover:text-foreground",
             )}
             title="List"
             aria-label="List view"
@@ -122,7 +122,7 @@ export default function MonitorView({
                     <td className="px-5 py-3.5">
                       <Link
                         href={`/workspaces/${workspaceId}/monitors/${node.id}`}
-                        className="font-display text-sm font-medium text-foreground outline-none hover:text-up focus-visible:ring-2 focus-visible:ring-up/50"
+                        className="font-display text-sm font-medium text-foreground outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/50"
                       >
                         {node.name}
                       </Link>
@@ -170,7 +170,7 @@ export default function MonitorView({
                             <form action={resumeMonitor}>
                               <input type="hidden" name="workspaceId" value={workspaceId} />
                               <input type="hidden" name="monitorId" value={node.id} />
-                              <button type="submit" className="icon-btn h-8 w-8 hover:text-up hover:border-up/40" title="Resume monitor" aria-label="Resume monitor">
+                              <button type="submit" className="icon-btn h-8 w-8 hover:text-primary hover:border-primary/40" title="Resume monitor" aria-label="Resume monitor">
                                 <Play className="h-3.5 w-3.5" />
                               </button>
                             </form>
@@ -196,7 +196,7 @@ export default function MonitorView({
                           </form>
                           <Link
                             href={`/workspaces/${workspaceId}/monitors/${node.id}`}
-                            className="ml-1 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-up/40 hover:text-up"
+                            className="ml-1 rounded-full border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
                           >
                             Details
                           </Link>

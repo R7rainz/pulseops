@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { API_URL } from "@/lib/constants";
 import { AcceptInviteButton } from "./accept-button";
 import Link from "next/link";
-import Aurora from "@/components/Aurora";
+import AmbientGlow from "@/components/AmbientGlow";
 import { Brand } from "@/components/Brand";
 import { ShieldCheck, Clock, AlertTriangle, UserPlus, LogIn } from "lucide-react";
 
@@ -53,10 +53,10 @@ function InviteCard({
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative grid min-h-dvh place-items-center overflow-hidden bg-background p-6 text-foreground">
+    <div className="relative grid min-h-dvh place-items-center overflow-hidden p-6 text-foreground">
       <div className="pointer-events-none fixed inset-0 -z-10">
-        <Aurora className="absolute inset-0 h-full w-full" />
-        <div className="absolute inset-0 bg-[radial-gradient(110%_80%_at_50%_40%,transparent_45%,rgba(7,11,9,0.65)_100%)]" />
+        <div className="absolute inset-0 bg-background" />
+        <AmbientGlow />
       </div>
       <div className="absolute left-6 top-6">
         <Brand href="/" />

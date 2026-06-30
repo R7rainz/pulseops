@@ -64,7 +64,7 @@ function ResetForm() {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>Invalid reset link. No token provided.</p>
         </div>
-        <Link href="/forgot-password" className="text-sm font-medium text-info transition-colors hover:text-up">
+        <Link href="/forgot-password" className="text-sm font-medium text-info transition-colors hover:text-primary">
           Request a new reset link
         </Link>
       </div>
@@ -74,11 +74,11 @@ function ResetForm() {
   if (state?.success) {
     return (
       <div className="text-center">
-        <div role="status" className="mb-6 flex items-start gap-2.5 rounded-lg border border-up/40 bg-up/10 p-3 text-left text-sm text-up">
+        <div role="status" className="mb-6 flex items-start gap-2.5 rounded-lg border border-primary/40 bg-primary/10 p-3 text-left text-sm text-primary">
           <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{state.success}</p>
         </div>
-        <Link href="/login" className="inline-flex items-center gap-2 text-sm font-medium text-info transition-colors hover:text-up">
+        <Link href="/login" className="inline-flex items-center gap-2 text-sm font-medium text-info transition-colors hover:text-primary">
           <ArrowLeft className="h-4 w-4" />
           Proceed to sign in
         </Link>
@@ -119,7 +119,7 @@ function ResetForm() {
             {PASSWORD_RULES.map((rule) => {
               const ok = rule.test(password);
               return (
-                <li key={rule.label} className={`flex items-center gap-2 text-[11px] ${ok ? "text-up" : "text-muted-foreground"}`}>
+                <li key={rule.label} className={`flex items-center gap-2 text-[11px] ${ok ? "text-primary" : "text-muted-foreground"}`}>
                   {ok ? <Check className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
                   {rule.label}
                 </li>
@@ -158,20 +158,18 @@ function ResetForm() {
 export default function ResetPasswordPage() {
   return (
     <div>
-      <div className="mb-8 text-center">
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground">Set a new password</h1>
+      <div className="fade-up">
+        <h1 className="font-display text-[1.75rem] font-semibold tracking-tight text-foreground">Set a new password</h1>
         <p className="mt-1.5 text-sm text-muted-foreground">Choose a strong password for your account</p>
       </div>
 
-      <div className="pulse-shell">
-        <div className="p-7">
-          <Suspense fallback={<p className="text-center text-sm text-muted-foreground">Loading…</p>}>
-            <ResetForm />
-          </Suspense>
-        </div>
+      <div className="fade-up mt-8" style={{ animationDelay: "80ms" }}>
+        <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
+          <ResetForm />
+        </Suspense>
       </div>
 
-      <p className="mt-6 text-center">
+      <p className="fade-up mt-7" style={{ animationDelay: "160ms" }}>
         <Link href="/login" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
           <ArrowLeft className="h-3.5 w-3.5" />
           Back to sign in
