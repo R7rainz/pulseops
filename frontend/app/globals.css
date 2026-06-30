@@ -129,79 +129,79 @@
   --sidebar-ring: oklch(0.547 0.021 43.1);
 }
 
-/* ── PulseOps brand — Cream + Amber LIGHT theme (default) ──────────────
-   Warm, calm (Claude/Zen-ish). Amber = brand/accent. Green/amber/red = status. */
+/* ── PulseOps — LIGHT pastel theme (toggle alternative) ──────────────
+   Lavender = brand/accent · cyan/pink accents · green/amber/red = status. */
 :root {
-  --background: #f8f5ee;
-  --foreground: #2a2620;
+  --background: #f4f4f6;
+  --foreground: #2c2c2c;
   --card: #ffffff;
-  --card-foreground: #2a2620;
+  --card-foreground: #2c2c2c;
   --popover: #ffffff;
-  --popover-foreground: #2a2620;
-  --surface: #fffdf9;
-  --surface-raised: #f3efe6;
-  --muted: #f1ece2;
-  --muted-foreground: #6e665e;
-  --primary: #9e6a12;
+  --popover-foreground: #2c2c2c;
+  --surface: #ffffff;
+  --surface-raised: #ececef;
+  --muted: #ececef;
+  --muted-foreground: #5e5e66;
+  --primary: #7e62a8;
   --primary-foreground: #ffffff;
-  --secondary: #f1ece2;
-  --secondary-foreground: #2a2620;
-  --accent: #f1ece2;
-  --accent-foreground: #2a2620;
-  --destructive: #c1352b;
-  --border: #e7e0d3;
-  --input: #ded6c7;
-  --ring: #9e6a12;
+  --secondary: #ececef;
+  --secondary-foreground: #2c2c2c;
+  --accent: #ececef;
+  --accent-foreground: #2c2c2c;
+  --destructive: #d64550;
+  --border: #e3e3e7;
+  --input: #d7d7dc;
+  --ring: #7e62a8;
 
-  /* semantic status (warm-tuned for contrast on cream) */
-  --up: #198754;
+  --up: #1f9d63;
   --up-foreground: #ffffff;
-  --degraded: #c2710c;
+  --degraded: #b9740c;
   --degraded-foreground: #ffffff;
-  --down: #c1352b;
+  --down: #d64550;
   --down-foreground: #ffffff;
-  --info: #a9714c;
-  --paused: #8a8178;
+  --info: #357578;
+  --paused: #6c6c73;
 
   --radius: 0.875rem;
-  --shadow-card: 0 1px 2px rgba(60, 40, 16, 0.06), 0 2px 6px rgba(90, 64, 20, 0.06),
-    0 20px 46px -22px rgba(120, 86, 28, 0.3);
+  --shadow-card: 0 1px 2px rgba(40, 40, 50, 0.06), 0 2px 6px rgba(40, 40, 50, 0.05),
+    0 20px 46px -22px rgba(80, 70, 110, 0.22);
 }
 
-/* ── PulseOps DARK theme — warm espresso + glowing amber (toggle) ── */
+/* ── PulseOps — Slate + Pastel theme (DEFAULT) ──────────────
+   #2C2C2C base · #E4E4E4 text · lavender CTA · cyan + pink accents. */
 .dark {
-  --background: #161109;
-  --foreground: #f1e9db;
-  --card: #221a10;
-  --card-foreground: #f1e9db;
-  --popover: #221a10;
-  --popover-foreground: #f1e9db;
-  --surface: #211910;
-  --surface-raised: #2d2416;
-  --muted: #2a2115;
-  --muted-foreground: #b8ab97;
-  --primary: #eaad53;
-  --primary-foreground: #161109;
-  --secondary: #2a2115;
-  --secondary-foreground: #f1e9db;
-  --accent: #2a2115;
-  --accent-foreground: #f1e9db;
-  --destructive: #ec8073;
-  --border: rgba(241, 233, 219, 0.1);
-  --input: rgba(241, 233, 219, 0.14);
-  --ring: #eaad53;
+  --background: #2c2c2c;
+  --foreground: #e4e4e4;
+  --card: #353537;
+  --card-foreground: #e4e4e4;
+  --popover: #353537;
+  --popover-foreground: #e4e4e4;
+  --surface: #333335;
+  --surface-raised: #3d3d40;
+  --muted: #3a3a3c;
+  --muted-foreground: #adadb2;
+  --primary: #b39cd0;
+  --primary-foreground: #241f2e;
+  --secondary: #3a3a3c;
+  --secondary-foreground: #e4e4e4;
+  --accent: #3a3a3c;
+  --accent-foreground: #e4e4e4;
+  --destructive: #f4707e;
+  --border: rgba(228, 228, 228, 0.12);
+  --input: rgba(228, 228, 228, 0.16);
+  --ring: #b39cd0;
 
-  --up: #5fc890;
+  --up: #86d9ad;
   --up-foreground: #06140c;
-  --degraded: #eeae47;
-  --degraded-foreground: #1a1206;
-  --down: #ec8073;
-  --down-foreground: #1a0806;
-  --info: #d6ab83;
-  --paused: #b8ab97;
+  --degraded: #f2c879;
+  --degraded-foreground: #2a1f06;
+  --down: #f4707e;
+  --down-foreground: #2a0608;
+  --info: #a8dadc;
+  --paused: #adadb2;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35),
-    0 22px 50px -22px rgba(0, 0, 0, 0.75);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3),
+    0 22px 50px -22px rgba(0, 0, 0, 0.6);
 }
 
 @layer components {
@@ -370,12 +370,72 @@
   animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Flowing gradient (background) */
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.gradient-flow {
+  animation: gradientFlow 22s ease-in-out infinite;
+  will-change: background-position;
+}
+
+/* Scroll reveal — pop + slide in when entering the viewport */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px) scale(0.96);
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Mouse spotlight + lift for interactive cards */
+.spotlight {
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in oklab, var(--primary) 26%, transparent),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.spotlight:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in oklab, var(--primary) 45%, transparent);
+}
+.spotlight:hover::before {
+  opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-float,
   .animate-drift,
   .animate-sway,
-  .fade-up {
+  .fade-up,
+  .gradient-flow {
     animation: none !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .spotlight:hover {
+    transform: none;
   }
 }
 

@@ -6,6 +6,11 @@ import AmbientGlow from "@/components/AmbientGlow";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Brand } from "@/components/Brand";
 import { StatusDot } from "@/components/ui/status-badge";
+import Reveal from "@/components/Reveal";
+import SpotlightCard from "@/components/SpotlightCard";
+import AnimatedHeadline from "@/components/AnimatedHeadline";
+import MagneticButton from "@/components/MagneticButton";
+import CountUp from "@/components/CountUp";
 import {
   ArrowRight,
   Activity,
@@ -17,6 +22,21 @@ import {
   GitPullRequest,
   Check,
 } from "lucide-react";
+
+const FEATURES = [
+  { icon: <Activity className="h-5 w-5 text-up" />, accent: "border-up/30 bg-up/10", title: "Real-time dashboard", body: "Live status, latency and uptime for every monitor, refreshed every few seconds." },
+  { icon: <Siren className="h-5 w-5 text-down" />, accent: "border-down/30 bg-down/10", title: "Incident management", body: "Incidents open automatically on threshold breach, with a full timeline and acknowledge / resolve flow." },
+  { icon: <Bell className="h-5 w-5 text-degraded" />, accent: "border-degraded/30 bg-degraded/10", title: "Webhook alerts", body: "Fire notifications on status changes with delivery logs, retries and per-endpoint config." },
+  { icon: <Globe className="h-5 w-5 text-info" />, accent: "border-info/30 bg-info/10", title: "Public status pages", body: "Shareable status pages with a 90-day uptime history and live system state for customers." },
+  { icon: <ShieldCheck className="h-5 w-5 text-up" />, accent: "border-up/30 bg-up/10", title: "SSL & TLS monitoring", body: "Automatic certificate inspection with expiry warnings before anything goes down." },
+  { icon: <Workflow className="h-5 w-5 text-primary" />, accent: "border-primary/30 bg-primary/10", title: "Built to scale", body: "A Kafka-driven scheduler and worker pool run checks in parallel — decoupled and resilient." },
+];
+
+const ROADMAP = [
+  { when: "Q3 2026", active: true, title: "Multi-region checks", body: "Run probes from US-East, EU-Central and AP-South for global latency coverage." },
+  { when: "Q4 2026", active: false, title: "Slack & Discord alerts", body: "Native messaging integrations with rich incident payloads and acknowledge-from-chat." },
+  { when: "2027", active: false, title: "Custom alert rules", body: "Threshold-based escalation policies per monitor with on-call rotation." },
+];
 
 export default async function RootPage() {
   const cookieStore = await cookies();
@@ -82,12 +102,11 @@ export default async function RootPage() {
           Calm, dependable monitoring
         </div>
 
-        <h1
-          className="fade-up mt-7 font-display font-semibold leading-[1.05] tracking-tight text-[clamp(2.5rem,6.4vw,4.5rem)]"
-          style={{ animationDelay: "60ms" }}
-        >
-          Know the moment <span className="text-primary">something breaks.</span>
-        </h1>
+        <AnimatedHeadline
+          lead="Know the moment"
+          accent="something breaks."
+          className="mt-7 font-display font-semibold leading-[1.05] tracking-tight text-[clamp(2.5rem,6.4vw,4.5rem)]"
+        />
 
         <p
           className="fade-up mx-auto mt-6 max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground"
@@ -101,13 +120,27 @@ export default async function RootPage() {
           className="fade-up mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
           style={{ animationDelay: "180ms" }}
         >
-          <Link href="/signup" className="btn btn-primary group px-7 py-3.5 text-base">
+          <MagneticButton href="/signup" className="btn btn-primary group px-7 py-3.5 text-base">
             Start monitoring
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-          <a href="#features" className="btn btn-ghost bg-surface/60 px-7 py-3.5 text-base backdrop-blur">
+          </MagneticButton>
+          <MagneticButton href="#features" className="btn btn-ghost bg-surface/60 px-7 py-3.5 text-base backdrop-blur">
             See how it works
-          </a>
+          </MagneticButton>
+        </div>
+
+        {/* INFO STATS */}
+        <div className="fade-up mx-auto mt-14 grid max-w-lg grid-cols-3 gap-px overflow-hidden rounded-2xl border border-border bg-border shadow-sm" style={{ animationDelay: "260ms" }}>
+          {[
+            { node: <CountUp to={99.97} decimals={2} suffix="%" />, label: "Uptime tracked" },
+            { node: <CountUp to={12} suffix="ms" />, label: "Median check" },
+            { node: <CountUp to={24} suffix="/7" />, label: "Monitoring" },
+          ].map((s, i) => (
+            <div key={i} className="bg-surface px-4 py-5">
+              <p className="font-display text-2xl font-semibold tabular-nums text-primary">{s.node}</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">{s.label}</p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -116,7 +149,7 @@ export default async function RootPage() {
         <div className="fade-up" style={{ animationDelay: "240ms" }}>
           <PreviewCard />
         </div>
-        <p className="mt-8 text-center text-sm text-muted-foreground/80">Trusted by teams shipping at scale.</p>
+        <p className="mt-8 text-center text-sm text-muted-foreground">Trusted by teams shipping at scale.</p>
       </section>
 
       {/* FEATURES */}
@@ -130,42 +163,15 @@ export default async function RootPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-            <Feature
-              icon={<Activity className="h-5 w-5 text-up" />}
-              accent="border-up/30 bg-up/10"
-              title="Real-time dashboard"
-              body="Live status, latency and uptime for every monitor, refreshed every few seconds."
-            />
-            <Feature
-              icon={<Siren className="h-5 w-5 text-down" />}
-              accent="border-down/30 bg-down/10"
-              title="Incident management"
-              body="Incidents open automatically on threshold breach, with a full timeline and acknowledge / resolve flow."
-            />
-            <Feature
-              icon={<Bell className="h-5 w-5 text-degraded" />}
-              accent="border-degraded/30 bg-degraded/10"
-              title="Webhook alerts"
-              body="Fire notifications on status changes with delivery logs, retries and per-endpoint config."
-            />
-            <Feature
-              icon={<Globe className="h-5 w-5 text-info" />}
-              accent="border-info/30 bg-info/10"
-              title="Public status pages"
-              body="Shareable status pages with a 90-day uptime history and live system state for customers."
-            />
-            <Feature
-              icon={<ShieldCheck className="h-5 w-5 text-up" />}
-              accent="border-up/30 bg-up/10"
-              title="SSL & TLS monitoring"
-              body="Automatic certificate inspection with expiry warnings before anything goes down."
-            />
-            <Feature
-              icon={<Workflow className="h-5 w-5 text-primary" />}
-              accent="border-primary/30 bg-primary/10"
-              title="Built to scale"
-              body="A Kafka-driven scheduler and worker pool run checks in parallel — decoupled and resilient."
-            />
+            {FEATURES.map((f, i) => (
+              <Reveal key={f.title} className="h-full" delay={(i % 3) * 80}>
+                <SpotlightCard className="glass h-full rounded-2xl p-6">
+                  <div className={`mb-5 grid h-11 w-11 place-items-center rounded-xl border ${f.accent}`}>{f.icon}</div>
+                  <h3 className="font-display text-base font-semibold tracking-tight">{f.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+                </SpotlightCard>
+              </Reveal>
+            ))}
           </div>
         </div>
       </section>
@@ -178,33 +184,48 @@ export default async function RootPage() {
               <GitPullRequest className="h-5 w-5 text-primary" />
               On the roadmap
             </h2>
-            <ol className="relative space-y-8 border-l border-border pl-7">
-              <RoadmapItem when="Q3 2026" active title="Multi-region checks" body="Run probes from US-East, EU-Central and AP-South for global latency coverage." />
-              <RoadmapItem when="Q4 2026" title="Slack & Discord alerts" body="Native messaging integrations with rich incident payloads and acknowledge-from-chat." />
-              <RoadmapItem when="2027" title="Custom alert rules" body="Threshold-based escalation policies per monitor with on-call rotation." />
-            </ol>
+            <div className="relative space-y-8 border-l border-border pl-7">
+              {ROADMAP.map((r, i) => (
+                <Reveal key={r.when} delay={i * 90}>
+                  <span
+                    className={`absolute -left-[31px] top-1 h-2.5 w-2.5 rounded-full ${r.active ? "bg-primary" : "bg-border"}`}
+                    aria-hidden="true"
+                  />
+                  <p className={`flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wider ${r.active ? "text-primary" : "text-muted-foreground"}`}>
+                    {r.active && <Check className="h-3 w-3" />}
+                    {r.when}
+                  </p>
+                  <p className="mt-1 font-display text-sm font-medium text-foreground">{r.title}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{r.body}</p>
+                </Reveal>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-5">
             <h2 className="mb-8 font-display text-xl font-semibold tracking-tight">What teams say</h2>
-            <figure className="glass rounded-2xl p-6">
-              <blockquote className="text-[15px] leading-relaxed text-foreground/90">
-                “Finally a monitoring tool that feels calm instead of noisy. It tells us what matters and gets out of the way.”
-              </blockquote>
-              <figcaption className="mt-5 border-t border-border pt-4">
-                <p className="text-sm font-medium text-primary">Platform Engineer</p>
-                <p className="text-xs text-muted-foreground">Fintech core infrastructure</p>
-              </figcaption>
-            </figure>
-            <figure className="glass rounded-2xl p-6">
-              <blockquote className="text-[15px] leading-relaxed text-foreground/90">
-                “Replaced three separate tools. On-call alerts, status page and uptime checks all in one place.”
-              </blockquote>
-              <figcaption className="mt-5 border-t border-border pt-4">
-                <p className="text-sm font-medium text-info">DevOps Lead</p>
-                <p className="text-xs text-muted-foreground">SaaS infrastructure · 200+ monitors</p>
-              </figcaption>
-            </figure>
+            <Reveal delay={60}>
+              <SpotlightCard className="glass rounded-2xl p-6">
+                <blockquote className="text-[15px] leading-relaxed text-foreground/90">
+                  “Finally a monitoring tool that feels calm instead of noisy. It tells us what matters and gets out of the way.”
+                </blockquote>
+                <figcaption className="mt-5 border-t border-border pt-4">
+                  <p className="text-sm font-medium text-primary">Platform Engineer</p>
+                  <p className="text-xs text-muted-foreground">Fintech core infrastructure</p>
+                </figcaption>
+              </SpotlightCard>
+            </Reveal>
+            <Reveal delay={140}>
+              <SpotlightCard className="glass rounded-2xl p-6">
+                <blockquote className="text-[15px] leading-relaxed text-foreground/90">
+                  “Replaced three separate tools. On-call alerts, status page and uptime checks all in one place.”
+                </blockquote>
+                <figcaption className="mt-5 border-t border-border pt-4">
+                  <p className="text-sm font-medium text-info">DevOps Lead</p>
+                  <p className="text-xs text-muted-foreground">SaaS infrastructure · 200+ monitors</p>
+                </figcaption>
+              </SpotlightCard>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -212,18 +233,20 @@ export default async function RootPage() {
       {/* CTA */}
       <section className="border-t border-border/70 py-24">
         <div className="mx-auto max-w-3xl px-6">
-          <div className="pulse-shell">
-            <div className="rounded-[calc(var(--radius)-1px)] px-8 py-14 text-center">
-              <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Ready to stop guessing?</h2>
-              <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-                Create your first workspace in under a minute. No credit card required.
-              </p>
-              <Link href="/signup" className="btn btn-primary group mt-8 px-7 py-3.5 text-base">
-                Get started free
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+          <Reveal>
+            <div className="pulse-shell">
+              <div className="rounded-[calc(var(--radius)-1px)] px-8 py-14 text-center">
+                <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Ready to stop guessing?</h2>
+                <p className="mx-auto mt-3 max-w-md text-muted-foreground">
+                  Create your first workspace in under a minute. No credit card required.
+                </p>
+                <Link href="/signup" className="btn btn-primary group mt-8 px-7 py-3.5 text-base">
+                  Get started free
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </Link>
+              </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -282,32 +305,5 @@ function PreviewCard() {
         ))}
       </div>
     </div>
-  );
-}
-
-function Feature({ icon, accent, title, body }: { icon: React.ReactNode; accent: string; title: string; body: string }) {
-  return (
-    <div className="glass group rounded-2xl p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25">
-      <div className={`mb-5 grid h-11 w-11 place-items-center rounded-xl border ${accent}`}>{icon}</div>
-      <h3 className="font-display text-base font-semibold tracking-tight">{title}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
-    </div>
-  );
-}
-
-function RoadmapItem({ when, title, body, active = false }: { when: string; title: string; body: string; active?: boolean }) {
-  return (
-    <li className="relative">
-      <span
-        className={`absolute -left-[31px] top-1 h-2.5 w-2.5 rounded-full ${active ? "bg-primary" : "bg-border"}`}
-        aria-hidden="true"
-      />
-      <p className={`flex items-center gap-1.5 font-mono text-xs font-medium uppercase tracking-wider ${active ? "text-primary" : "text-muted-foreground"}`}>
-        {active && <Check className="h-3 w-3" />}
-        {when}
-      </p>
-      <p className="mt-1 font-display text-sm font-medium text-foreground">{title}</p>
-      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{body}</p>
-    </li>
   );
 }

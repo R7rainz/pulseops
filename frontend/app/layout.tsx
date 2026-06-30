@@ -33,8 +33,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Light is the default; dark is opt-in via the theme toggle (cookie-driven, SSR — no flash).
-  const isDark = (await cookies()).get("pulseops_theme")?.value === "dark";
+  // Slate (dark) is the default; light is opt-in via the toggle (cookie-driven, SSR — no flash).
+  const isDark = (await cookies()).get("pulseops_theme")?.value !== "light";
 
   return (
     <html

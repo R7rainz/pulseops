@@ -14,20 +14,20 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="relative min-h-dvh text-foreground selection:bg-primary/20 lg:grid lg:grid-cols-[1.05fr_1fr]">
       {/* LEFT — warm brand panel (desktop only) */}
       <aside className="relative hidden overflow-hidden text-white lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
-        {/* warm fluid gradient field */}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(150deg,#5c3a0d_0%,#9e6a12_46%,#c98a2b_100%)]" />
+        {/* slate → lavender fluid gradient field */}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(150deg,#2c2c2c_0%,#4a3f63_48%,#7e62a8_100%)]" />
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="animate-drift absolute -left-1/4 -top-10 h-[65%] w-[70%] rounded-full bg-[#f5d9a0]/25 blur-3xl" />
+          <div className="animate-drift absolute -left-1/4 -top-10 h-[65%] w-[70%] rounded-full bg-[#a8dadc]/25 blur-3xl" />
           <div
-            className="animate-float absolute -bottom-10 right-0 h-[55%] w-[60%] rounded-full bg-[#e8b563]/30 blur-3xl"
+            className="animate-float absolute -bottom-10 right-0 h-[55%] w-[60%] rounded-full bg-[#ffc1cc]/25 blur-3xl"
             style={{ animationDelay: "1.5s" }}
           />
           <div
-            className="animate-drift absolute left-1/3 top-1/3 h-[45%] w-[50%] rounded-full bg-white/15 blur-3xl"
+            className="animate-sway absolute left-1/3 top-1/3 h-[45%] w-[50%] rounded-full bg-[#b39cd0]/30 blur-3xl"
             style={{ animationDelay: "3s" }}
           />
         </div>
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(130%_120%_at_50%_0%,transparent_55%,rgba(40,24,4,0.4)_100%)]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(130%_120%_at_50%_0%,transparent_55%,rgba(20,18,28,0.42)_100%)]" />
 
         {/* brand */}
         <Link href="/" className="inline-flex items-center gap-2.5">
