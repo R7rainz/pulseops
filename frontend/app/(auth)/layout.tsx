@@ -65,7 +65,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <main className="relative flex min-h-dvh items-center justify-center overflow-hidden p-6 sm:p-10">
         <div className="pointer-events-none absolute inset-0 -z-10">
           <div className="absolute inset-0 bg-background" />
-          <Aurora className="opacity-80 lg:opacity-50" />
+          <Aurora className="opacity-95 lg:opacity-80" />
         </div>
 
         {/* mobile brand */}

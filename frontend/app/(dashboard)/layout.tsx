@@ -49,7 +49,7 @@ export default async function DashboardLayout({
       {/* subtle warm ambient glow behind everything */}
       <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute inset-0 bg-background" />
-        <Aurora className="opacity-60" />
+        <Aurora className="opacity-90" />
       </div>
 
       <Sidebar workspaces={workspaces} user={currentUser} />
