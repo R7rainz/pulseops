@@ -10,21 +10,25 @@ import { scheduleMaintenance } from "../actions";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { statusMeta } from "@/lib/status";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Settings2, Lock, ShieldCheck, ShieldAlert, Wrench } from "lucide-react";
+import { ArrowLeft, Settings2, Lock, ShieldCheck, ShieldAlert, Wrench, HeartPulse } from "lucide-react";
+import HeartbeatSetup from "./heartbeat-setup";
 
 interface MonitorDiag {
   id: number;
   name: string;
+  type: "HTTP" | "HEARTBEAT";
   url: string;
   method: string;
   status: "UP" | "DOWN" | "PAUSED" | "DEGRADED";
   intervalSeconds: number;
+  gracePeriodSeconds: number;
   consecutiveFailures: number;
   graceThreshold: number;
   tlsIssuer: string | null;
   tlsValidTo: string | null;
   tlsDaysRemaining: number | null;
   lastCheckedAt: string | null;
+  lastHeartbeatAt: string | null;
   maintenanceStartAt: string | null;
   maintenanceEndAt: string | null;
 }
@@ -129,6 +133,9 @@ export default async function MonitorDiagnosticsPage({
   const StatusIcon = meta.icon;
   const isSslExpiring = monitor.tlsDaysRemaining !== null && monitor.tlsDaysRemaining <= 7;
   const uptime = analytics ? Number(analytics.uptime30Day) : null;
+  const isHeartbeat = monitor.type === "HEARTBEAT";
+  const publicApiUrl = process.env.NEXT_PUBLIC_API_URL || API_URL;
+  const pingUrl = `${publicApiUrl}/api/v1/monitors/${monitor.id}/heartbeat`;
 
   return (
     <main className="min-h-dvh p-6 md:p-10">
@@ -149,7 +156,13 @@ export default async function MonitorDiagnosticsPage({
             </div>
             <div className="min-w-0">
               <h1 className="truncate font-display text-2xl font-semibold tracking-tight text-foreground">{monitor.name}</h1>
-              <p className="mt-0.5 truncate font-mono text-sm text-muted-foreground">{monitor.url}</p>
+              {isHeartbeat ? (
+                <p className="mt-0.5 flex items-center gap-1.5 truncate font-mono text-sm text-muted-foreground">
+                  <HeartPulse className="h-3.5 w-3.5 text-primary" /> Heartbeat · expects a ping every {monitor.intervalSeconds}s
+                </p>
+              ) : (
+                <p className="mt-0.5 truncate font-mono text-sm text-muted-foreground">{monitor.url}</p>
+              )}
             </div>
           </div>
           <StatusBadge status={monitor.status} />
@@ -161,18 +174,39 @@ export default async function MonitorDiagnosticsPage({
             <h2 className="mb-4 flex items-center gap-2 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">
               <Settings2 className="h-4 w-4 text-info" /> Configuration
             </h2>
-            <dl className="grid grid-cols-2 gap-4">
-              <Detail label="Method" value={monitor.method} />
-              <Detail label="Interval" value={`${monitor.intervalSeconds}s`} />
-              <Detail label="Failures" value={`${monitor.consecutiveFailures} / ${monitor.graceThreshold}`} />
-              <Detail
-                label="Last check"
-                value={monitor.lastCheckedAt ? new Date(monitor.lastCheckedAt).toLocaleTimeString() : "Pending…"}
-              />
-            </dl>
+            {isHeartbeat ? (
+              <dl className="grid grid-cols-2 gap-4">
+                <Detail label="Type" value="Heartbeat" />
+                <Detail label="Expected every" value={`${monitor.intervalSeconds}s`} />
+                <Detail label="Grace period" value={`${monitor.gracePeriodSeconds}s`} />
+                <Detail
+                  label="Last heartbeat"
+                  value={monitor.lastHeartbeatAt ? new Date(monitor.lastHeartbeatAt).toLocaleTimeString() : "Never"}
+                />
+              </dl>
+            ) : (
+              <dl className="grid grid-cols-2 gap-4">
+                <Detail label="Method" value={monitor.method} />
+                <Detail label="Interval" value={`${monitor.intervalSeconds}s`} />
+                <Detail label="Failures" value={`${monitor.consecutiveFailures} / ${monitor.graceThreshold}`} />
+                <Detail
+                  label="Last check"
+                  value={monitor.lastCheckedAt ? new Date(monitor.lastCheckedAt).toLocaleTimeString() : "Pending…"}
+                />
+              </dl>
+            )}
           </section>
 
-          {/* TLS */}
+          {/* TLS (HTTP) / HEARTBEAT SETUP */}
+          {isHeartbeat ? (
+            <HeartbeatSetup
+              workspaceId={workspaceId}
+              pingUrl={pingUrl}
+              intervalSeconds={monitor.intervalSeconds}
+              gracePeriodSeconds={monitor.gracePeriodSeconds}
+              lastHeartbeatAt={monitor.lastHeartbeatAt}
+            />
+          ) : (
           <section className={cn("glass rounded-lg p-6", isSslExpiring && "border-degraded/40")}>
             <h2 className="mb-4 flex items-center gap-2 border-b border-border pb-3 font-display text-sm font-semibold text-foreground">
               <Lock className={cn("h-4 w-4", isSslExpiring ? "text-degraded" : "text-up")} /> TLS certificate
@@ -208,6 +242,7 @@ export default async function MonitorDiagnosticsPage({
               <div className="py-8 text-center text-sm text-muted-foreground">No TLS certificate — plain HTTP endpoint.</div>
             )}
           </section>
+          )}
         </div>
 
         {/* 30-DAY SLA */}
@@ -284,7 +319,7 @@ export default async function MonitorDiagnosticsPage({
         </section>
 
         {/* CHARTS */}
-        <MonitorCharts checks={checks} stats={stats} />
+        <MonitorCharts checks={checks} stats={stats} isHeartbeat={isHeartbeat} />
 
         {/* CHECK LOG */}
         <MonitorCheckLog workspaceId={workspaceId} monitorId={monitor.id} token={token} />

@@ -12,6 +12,7 @@ import MonitorGrid from "@/components/MonitorGrid";
 interface Monitor {
   id: number;
   name: string;
+  type?: "HTTP" | "HEARTBEAT";
   url: string;
   method: string;
   intervalSeconds: number;
@@ -128,13 +129,19 @@ export default function MonitorView({
                       </Link>
                     </td>
                     <td className="max-w-[280px] px-5 py-3.5">
-                      <span className="block truncate font-mono text-xs text-muted-foreground">{node.url}</span>
+                      <span className="block truncate font-mono text-xs text-muted-foreground">
+                        {node.type === "HEARTBEAT" ? "Heartbeat (push)" : node.url}
+                      </span>
                     </td>
                     <td className="px-5 py-3.5">
                       <span className="inline-flex items-center gap-2 font-mono text-xs">
-                        <span className={node.method === "GET" ? "text-info" : "text-degraded"}>
-                          {node.method || "GET"}
-                        </span>
+                        {node.type === "HEARTBEAT" ? (
+                          <span className="text-primary">PING</span>
+                        ) : (
+                          <span className={node.method === "GET" ? "text-info" : "text-degraded"}>
+                            {node.method || "GET"}
+                          </span>
+                        )}
                         <span className="text-muted-foreground">{node.intervalSeconds || 60}s</span>
                       </span>
                     </td>
@@ -175,13 +182,15 @@ export default function MonitorView({
                               </button>
                             </form>
                           )}
-                          <form action={triggerCheck}>
-                            <input type="hidden" name="workspaceId" value={workspaceId} />
-                            <input type="hidden" name="monitorId" value={node.id} />
-                            <button type="submit" className="icon-btn h-8 w-8 hover:text-info hover:border-info/40" title="Run check now" aria-label="Run check now">
-                              <RefreshCw className="h-3.5 w-3.5" />
-                            </button>
-                          </form>
+                          {node.type !== "HEARTBEAT" && (
+                            <form action={triggerCheck}>
+                              <input type="hidden" name="workspaceId" value={workspaceId} />
+                              <input type="hidden" name="monitorId" value={node.id} />
+                              <button type="submit" className="icon-btn h-8 w-8 hover:text-info hover:border-info/40" title="Run check now" aria-label="Run check now">
+                                <RefreshCw className="h-3.5 w-3.5" />
+                              </button>
+                            </form>
+                          )}
                           <form action={deleteMonitor}>
                             <input type="hidden" name="workspaceId" value={workspaceId} />
                             <input type="hidden" name="monitorId" value={node.id} />

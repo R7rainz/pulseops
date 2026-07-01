@@ -16,6 +16,8 @@ export async function createMonitor(formData: FormData) {
   const name = formData.get("name") as string;
   const url = formData.get("url") as string;
   const workspaceId = formData.get("workspaceId") as string;
+  const type = (formData.get("type") as string) === "HEARTBEAT" ? "HEARTBEAT" : "HTTP";
+  const isHeartbeat = type === "HEARTBEAT";
   const method = (formData.get("method") as string) || undefined;
   const intervalSeconds = formData.get("intervalSeconds")
     ? Number(formData.get("intervalSeconds"))
@@ -26,13 +28,34 @@ export async function createMonitor(formData: FormData) {
   const expectedStatus = formData.get("expectedStatus")
     ? Number(formData.get("expectedStatus"))
     : undefined;
+  const gracePeriodSeconds = formData.get("gracePeriodSeconds")
+    ? Number(formData.get("gracePeriodSeconds"))
+    : undefined;
 
-  if (!name || !url || !workspaceId) return;
+  // HTTP monitors need a URL to ping; heartbeat monitors do not.
+  if (!name || !workspaceId || (!isHeartbeat && !url)) return;
 
   const cookieStore = await cookies();
   const token = cookieStore.get("pulseops_token")?.value;
 
   if (!token) return;
+
+  const payload: Record<string, unknown> = isHeartbeat
+    ? {
+        name,
+        type,
+        intervalSeconds: intervalSeconds || 60,
+        gracePeriodSeconds: gracePeriodSeconds ?? 60,
+      }
+    : {
+        name,
+        type,
+        url: normalizeUrl(url),
+        method,
+        intervalSeconds: intervalSeconds || 60,
+        timeoutMs: timeoutMs || 5000,
+        expectedStatus: expectedStatus || 200,
+      };
 
   try {
     const res = await fetch(
@@ -43,14 +66,7 @@ export async function createMonitor(formData: FormData) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name,
-          url: normalizeUrl(url),
-          method,
-          intervalSeconds: intervalSeconds || 60,
-          timeoutMs: timeoutMs || 5000,
-          expectedStatus: expectedStatus || 200,
-        }),
+        body: JSON.stringify(payload),
       },
     );
 

@@ -2,8 +2,8 @@ import { cookies } from "next/headers";
 import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
-import { createMonitor } from "./actions";
 import { Plus, Crown, Zap } from "lucide-react";
+import CreateMonitorForm from "./create-monitor-form";
 import MonitorView from "./monitor-view";
 import MembersPanel from "@/components/MembersPanel";
 
@@ -91,45 +91,7 @@ export default async function MonitorsPage({
               <Plus className="h-4 w-4 text-up" />
               Add a monitor
             </h2>
-            <form action={createMonitor} className="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
-              <input type="hidden" name="workspaceId" value={workspaceId} />
-              <div className="space-y-1.5 md:col-span-4">
-                <label htmlFor="name" className="block text-sm font-medium text-foreground">Name</label>
-                <input id="name" name="name" type="text" placeholder="e.g. API Gateway" required className="field" />
-              </div>
-              <div className="space-y-1.5 md:col-span-8">
-                <label htmlFor="url" className="block text-sm font-medium text-foreground">URL</label>
-                <input id="url" name="url" type="text" placeholder="api.example.com" required className="field" />
-              </div>
-              <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="method" className="block text-sm font-medium text-foreground">Method</label>
-                <select id="method" name="method" defaultValue="GET" className="field">
-                  <option value="GET">GET</option>
-                  <option value="POST">POST</option>
-                  <option value="PUT">PUT</option>
-                  <option value="PATCH">PATCH</option>
-                  <option value="DELETE">DELETE</option>
-                </select>
-              </div>
-              <div className="space-y-1.5 md:col-span-2">
-                <label htmlFor="intervalSeconds" className="block text-sm font-medium text-foreground">Interval (s)</label>
-                <input id="intervalSeconds" name="intervalSeconds" type="number" min={30} defaultValue={60} className="field" />
-              </div>
-              <div className="space-y-1.5 md:col-span-3">
-                <label htmlFor="timeoutMs" className="block text-sm font-medium text-foreground">Timeout (ms)</label>
-                <input id="timeoutMs" name="timeoutMs" type="number" min={1000} max={30000} defaultValue={5000} className="field" />
-              </div>
-              <div className="space-y-1.5 md:col-span-3">
-                <label htmlFor="expectedStatus" className="block text-sm font-medium text-foreground">Expected status</label>
-                <input id="expectedStatus" name="expectedStatus" type="number" min={100} max={500} defaultValue={200} className="field" />
-              </div>
-              <div className="md:col-span-2">
-                <button type="submit" className="btn btn-primary h-11 w-full">
-                  <Plus className="h-4 w-4" />
-                  Add monitor
-                </button>
-              </div>
-            </form>
+            <CreateMonitorForm workspaceId={workspaceId} />
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
