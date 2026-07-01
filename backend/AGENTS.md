@@ -17,15 +17,14 @@ Routes → Controller → Service → Prisma
 - Each module self-contained in `src/modules/<name>/`
 
 ## Project Structure
-- `prisma/schema.prisma` — database schema (User, Workspace, WorkspaceMember, Monitor, MonitorCheck, Incident, ApiKey, WebhookEndpoint, WebhookDeliveryLog, WorkspaceInvite, Subscription)
+- `prisma/schema.prisma` — database schema (User, Workspace, WorkspaceMember, Monitor, MonitorCheck, Incident, ApiKey, WebhookEndpoint, WebhookDeliveryLog, WorkspaceInvite). Billing fields live inline on `Workspace` (`planTier`, `razorpayCustomerId`, `razorpaySubId`, `subscriptionStatus`) — there is no separate `Subscription` model.
 - `prisma.config.ts` — Prisma v7 config (loads dotenv, exports datasource URL)
 - `src/server.ts` — entry point (loads dotenv, calls buildApp, listens)
-- `src/app.ts` — Fastify bootstrap: CORS, register all routes, start ping engine
-- `src/lib/` — db.ts (PrismaClient), jwt.ts (sign/verify HS256), password.ts (bcrypt)
-- `src/middleware/` — auth.middleware.ts (Bearer JWT), api-key.middleware.ts (x-api-key header)
-- `src/modules/` — auth, workspaces, monitors, incidents, webhooks, status
-- `src/workers/` — BullMQ consumers (monitor.worker.ts, webhook.worker.ts)
-- `src/schedulers/` — poll-for-due-monitors standalone process
+- `src/app.ts` — Fastify bootstrap: CORS, rate limiting, global error handler, health check, registers all routes, starts the ping engine + webhook retry worker
+- `src/lib/` — db.ts (PrismaClient), jwt.ts (sign/verify HS256), password.ts (bcrypt), redis.ts (ioredis client)
+- `src/middleware/` — auth.middleware.ts (Bearer JWT), api-key.middleware.ts (x-api-key header), rbac.middleware.ts (workspace role checks)
+- `src/modules/` — auth, workspaces, monitors, incidents, webhooks, billing, status
+- `src/workers/` — `webhook.worker.ts` exports `startWebhookRetryWorker()`, a BullMQ consumer for failed webhook delivery retries. Started automatically from `app.ts` — no separate process needed.
 
 ## Auth
 - JWT: HS256, 15min expiry, secret from `JWT_SECRET` env var
@@ -36,8 +35,10 @@ Routes → Controller → Service → Prisma
 - API key auth via `x-api-key` header (for heartbeat endpoint)
 
 ## Ping Engine (`src/modules/monitors/monitor.engine.ts`)
-- Runs every 60s via node-cron (`* * * * *`)
-- Fetches all active monitors, pings each in parallel via `Promise.all`
+This is the single source of truth for monitor checks — there is no separate queue/broker pipeline.
+- `checkMonitor(monitor)` — runs one full check (HTTP + TLS + state machine + incidents + webhooks + Redis live-state) for a single monitor. Exported so it can be reused.
+- `startPingEngine()` — node-cron job (`* * * * *`, every 60s) that fetches all active monitors and calls `checkMonitor` on each in parallel via `Promise.all`. Started from `app.ts`.
+- The "run check now" button (`POST /workspaces/:wsId/monitors/:monitorId/check`) calls `checkMonitor` directly and returns the result synchronously — no queue involved.
 - HTTP ping: native `fetch()` with AbortController timeout
 - SSL inspection: parallel `tls.connect()` via `tls.inspector.ts`
 - State machine: consecutiveFailures >= graceThreshold → DOWN/DEGRADED
@@ -83,8 +84,13 @@ Routes → Controller → Service → Prisma
 ### Status (no auth)
 - `GET /status/:slug` — public page data + 90-day uptime heatmap
 
+### Billing
+- `POST /workspaces/:wsId/subscription` — create Razorpay subscription (OWNER only)
+- `POST /workspaces/:wsId/subscription/verify` — verify payment signature, upgrades workspace to PRO (OWNER only)
+- `POST /billing/webhook` — Razorpay webhook receiver (HMAC-verified against the raw request body, no auth middleware)
+
 ## Prisma Models
-- `User`, `Workspace`, `WorkspaceMember`, `Monitor`, `MonitorCheck`, `Incident`, `ApiKey`, `WebhookEndpoint`, `WebhookDeliveryLog`, `WorkspaceInvite`, `Subscription`
+- `User`, `Workspace`, `WorkspaceMember`, `Monitor`, `MonitorCheck`, `Incident`, `ApiKey`, `WebhookEndpoint`, `WebhookDeliveryLog`, `WorkspaceInvite`
 - All foreign keys cascade on delete
 
 ## Environment Variables
@@ -100,10 +106,10 @@ Routes → Controller → Service → Prisma
 | `SMTP_PORT` | 587 |
 | `SMTP_USER` | Gmail address |
 | `SMTP_PASS` | Gmail App Password |
-| `KAFKA_BROKER` | localhost:29092 |
 | `RAZORPAY_KEY_ID` | — |
 | `RAZORPAY_KEY_SECRET` | — |
-| `FRONTEND_URL` | http://localhost:3000 |
+| `RAZORPAY_WEBHOOK_SECRET` | — (required for `/billing/webhook` to verify signatures) |
+| `FRONTEND_URL` | `http://localhost:3000` — also used as the CORS allowlist (comma-separated for multiple origins) |
 
 ## Scripts
 - `pnpm dev` — `tsx watch src/server.ts` (hot-reload)
@@ -111,10 +117,9 @@ Routes → Controller → Service → Prisma
 - `pnpm start` — `node dist/server.js`
 - `pnpm prisma:dev` — `prisma migrate dev`
 - `pnpm prisma:studio` — Prisma Studio GUI
-- `pnpm worker:monitor:dev` — BullMQ monitor worker
-- `pnpm worker:webhook:dev` — BullMQ webhook worker
-- `pnpm scheduler:dev` — interval-based scheduler
 - After Prisma schema changes: `prisma db push` (uses `prisma.config.ts`)
+- Single process — `pnpm dev` / `pnpm start` is all you need. The ping engine and webhook retry worker start in-process; there are no separate worker/scheduler processes to run.
+- Deploys: run `npx prisma migrate deploy` against `DATABASE_URL` as a release step (CI/CD) before rolling out a new image — it is not run automatically by the Dockerfile or at container start.
 
 ## Frontend repo (`../frontend/`)
 - Next.js 16 App Router, React 19, Tailwind v4
