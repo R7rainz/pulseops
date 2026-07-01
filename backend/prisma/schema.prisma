@@ -4,8 +4,9 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
@@ -70,20 +71,28 @@ enum MonitorStatus {
   PAUSED
 }
 
+enum MonitorType {
+  HTTP
+  HEARTBEAT
+}
+
 model Monitor {
   id                  Int           @id @default(autoincrement())
   workspaceId         Int
   name                String
+  type                MonitorType   @default(HTTP)
   url                 String
   method              String        @default("GET")
   intervalSeconds     Int           @default(60)
   timeoutMs           Int           @default(5000)
   expectedStatus      Int           @default(200)
+  gracePeriodSeconds  Int           @default(60)
   status              MonitorStatus @default(UP)
   consecutiveFailures Int           @default(0)
   graceThreshold      Int           @default(3)
   isActive            Boolean       @default(true)
   lastCheckedAt       DateTime?
+  lastHeartbeatAt     DateTime?
   tlsIssuer           String?
   tlsValidTo          DateTime?
   tlsDaysRemaining    Int?

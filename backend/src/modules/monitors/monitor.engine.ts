@@ -215,3 +215,124 @@ export async function checkMonitor(monitor: Monitor) {
   const pingResult = await performPing(monitor);
   return applyCheckResult(monitor, pingResult);
 }
+
+// ---------------------------------------------------------------------------
+// Heartbeat (push) monitors
+//
+// Unlike HTTP monitors — which PulseOps actively pings — a heartbeat monitor
+// waits for the target to check in. The target POSTs to /monitors/:id/heartbeat
+// at least every `intervalSeconds`. If a beat fails to arrive within
+// `intervalSeconds + gracePeriodSeconds`, the monitor is considered DOWN.
+// ---------------------------------------------------------------------------
+
+// The instant a heartbeat monitor is considered overdue. Before any beat has
+// been received we measure from createdAt, so a monitor that never checks in
+// still flips DOWN once its first window elapses.
+export function heartbeatDeadline(monitor: Monitor): Date {
+  const baseline = monitor.lastHeartbeatAt ?? monitor.createdAt;
+  return new Date(
+    baseline.getTime() + (monitor.intervalSeconds + monitor.gracePeriodSeconds) * 1000,
+  );
+}
+
+export function isHeartbeatOverdue(monitor: Monitor, now = new Date()): boolean {
+  return now.getTime() > heartbeatDeadline(monitor).getTime();
+}
+
+// A beat arrived: record it and run it through the shared state machine as an
+// UP result. This resets consecutiveFailures, resolves any open incident, fires
+// the incident.resolved webhook, and updates Redis live-state — exactly like a
+// successful HTTP check.
+export async function recordHeartbeat(monitor: Monitor) {
+  const now = new Date();
+
+  await prisma.monitor.update({
+    where: { id: monitor.id },
+    data: { lastHeartbeatAt: now },
+  });
+
+  return applyCheckResult(
+    { ...monitor, lastHeartbeatAt: now },
+    {
+      isUp: true,
+      statusCode: 200,
+      latencyMs: 0,
+      tlsIssuer: monitor.tlsIssuer,
+      tlsValidTo: monitor.tlsValidTo,
+      tlsDaysRemaining: monitor.tlsDaysRemaining,
+    },
+  );
+}
+
+// A beat is overdue: transition the monitor to DOWN and open an incident. This
+// is time-based rather than counter-based (there are no "attempts" to count for
+// a push monitor), so it mirrors the incident-open branch of applyCheckResult
+// rather than reusing its grace-threshold logic. Idempotent: a monitor already
+// DOWN is left untouched, so the sweep won't open duplicate incidents.
+export async function applyHeartbeatMiss(monitor: Monitor) {
+  const now = new Date();
+
+  const isUnderMaintenance =
+    monitor.maintenanceStartAt &&
+    monitor.maintenanceEndAt &&
+    now >= monitor.maintenanceStartAt &&
+    now <= monitor.maintenanceEndAt;
+
+  // During a maintenance window we suppress incidents and just hold PAUSED.
+  if (isUnderMaintenance) {
+    if (monitor.status !== "PAUSED") {
+      await prisma.monitor.update({
+        where: { id: monitor.id },
+        data: { status: "PAUSED", lastCheckedAt: now },
+      });
+    }
+    return;
+  }
+
+  // Already flagged — nothing to do (avoids duplicate incidents each sweep).
+  if (monitor.status === "DOWN") return;
+
+  const overdueSeconds = Math.round((now.getTime() - heartbeatDeadline(monitor).getTime()) / 1000);
+  const title = `Heartbeat missed: no check-in for ${monitor.intervalSeconds + monitor.gracePeriodSeconds + overdueSeconds}s`;
+
+  const [, , createdIncident] = await prisma.$transaction([
+    prisma.monitorCheck.create({
+      data: {
+        monitorId: monitor.id,
+        status: "DOWN",
+        statusCode: null,
+        responseTimeMs: null,
+        errorMessage: title,
+      },
+    }),
+    prisma.monitor.update({
+      where: { id: monitor.id },
+      data: {
+        status: "DOWN",
+        consecutiveFailures: monitor.graceThreshold,
+        lastCheckedAt: now,
+      },
+    }),
+    prisma.incident.create({
+      data: { monitorId: monitor.id, status: "OPEN", title },
+    }),
+  ]);
+
+  redis
+    .set(
+      `monitor:${monitor.id}:live`,
+      JSON.stringify({ status: "DOWN", latency: null, statusCode: null, lastChecked: now.toISOString() }),
+      "EX",
+      300,
+    )
+    .catch((err: any) => console.error("[HEARTBEAT] Redis live write failed:", err));
+
+  sendWebhookNotifications(monitor.workspaceId, {
+    event: "incident.opened",
+    incidentId: createdIncident.id,
+    monitorId: monitor.id,
+    workspaceId: monitor.workspaceId,
+    message: `CRITICAL ALERT: Heartbeat monitor [${monitor.name}] missed its check-in window.`,
+    timestamp: now.toISOString(),
+  }).catch((err) => console.error("[HEARTBEAT] Webhook open failed:", err));
+}

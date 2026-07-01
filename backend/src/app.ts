@@ -14,6 +14,7 @@ import { startWebhookRetryWorker } from "./workers/webhook.worker";
 import { connectKafka, kafkaProducer, kafkaConsumer } from "./lib/kafka";
 import { startMetricsConsumer } from "./modules/telemetry/metrics.consumer";
 import { startMonitorDispatchScheduler, stopMonitorDispatchScheduler } from "./modules/monitors/monitor.scheduler";
+import { startHeartbeatScheduler, stopHeartbeatScheduler } from "./modules/monitors/heartbeat.scheduler";
 import { prisma } from "./lib/db";
 import { redis } from "./lib/redis";
 
@@ -109,6 +110,7 @@ export async function start(app: FastifyInstance) {
         await connectKafka();
         await startMetricsConsumer();
         startMonitorDispatchScheduler();
+        startHeartbeatScheduler();
         startWebhookRetryWorker();
 
         const port = Number(process.env.PORT) || 4000;
@@ -127,6 +129,7 @@ export function setupShutdownHandlers(app: FastifyInstance) {
         process.on(signal, async () => {
             app.log.info(`[SHUTDOWN] Intercepted ${signal}. Powering down tracking engines...`);
             stopMonitorDispatchScheduler();
+            stopHeartbeatScheduler();
             try { await kafkaProducer.disconnect(); } catch {}
             try { await kafkaConsumer.disconnect(); } catch {}
             await app.close();
