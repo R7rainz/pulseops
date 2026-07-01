@@ -49,6 +49,9 @@
   --color-down-foreground: var(--down-foreground);
   --color-info: var(--info);
   --color-paused: var(--paused);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-mid: var(--accent-mid);
+  --color-accent-light: var(--accent-light);
   --font-display: var(--font-display);
   --font-heading: var(--font-display);
   --radius-sm: calc(var(--radius) * 0.6);
@@ -142,7 +145,7 @@
   --surface-raised: #ececef;
   --muted: #ececef;
   --muted-foreground: #5e5e66;
-  --primary: #7e62a8;
+  --primary: #2f3237;
   --primary-foreground: #ffffff;
   --secondary: #ececef;
   --secondary-foreground: #2c2c2c;
@@ -151,7 +154,7 @@
   --destructive: #d64550;
   --border: #e3e3e7;
   --input: #d7d7dc;
-  --ring: #7e62a8;
+  --ring: #2f3237;
 
   --up: #1f9d63;
   --up-foreground: #ffffff;
@@ -162,35 +165,61 @@
   --info: #357578;
   --paused: #6c6c73;
 
+  /* Metallic accent scale (v2) — graphite → steel → silver, legible on white */
+  --accent-deep: #33363b;
+  --accent-mid: #6b6f76;
+  --accent-light: #9aa0aa;
+  --gradient-signal: linear-gradient(135deg, #2f3237 0%, #6b6f76 50%, #9aa0aa 100%);
+  --gradient-glow: radial-gradient(circle at 30% 0%, rgba(51, 54, 59, 0.12), transparent 60%);
+
+  /* Metallic sheen — decorative background gradients (steel, visible on light bg) */
+  --sheen-deep: #5c6069;
+  --sheen-mid: #8b909a;
+  --sheen-light: #c2c6cd;
+
   --radius: 0.875rem;
   --shadow-card: 0 1px 2px rgba(40, 40, 50, 0.06), 0 2px 6px rgba(40, 40, 50, 0.05),
     0 20px 46px -22px rgba(80, 70, 110, 0.22);
 }
 
-/* ── PulseOps — Slate + Pastel theme (DEFAULT) ──────────────
-   #2C2C2C base · #E4E4E4 text · lavender CTA · cyan + pink accents. */
+/* ── PulseOps — Sleek dark palette v2 (DEFAULT) ─────────────
+   Black-dominant (Pot Black → Onyx → Dark Elf) with a metallic
+   gray→white accent gradient. Status colours stay semantic. */
 .dark {
-  --background: #2c2c2c;
-  --foreground: #e4e4e4;
-  --card: #353537;
-  --card-foreground: #e4e4e4;
-  --popover: #353537;
-  --popover-foreground: #e4e4e4;
-  --surface: #333335;
-  --surface-raised: #3d3d40;
-  --muted: #3a3a3c;
-  --muted-foreground: #adadb2;
-  --primary: #b39cd0;
-  --primary-foreground: #241f2e;
-  --secondary: #3a3a3c;
-  --secondary-foreground: #e4e4e4;
-  --accent: #3a3a3c;
-  --accent-foreground: #e4e4e4;
-  --destructive: #f4707e;
-  --border: rgba(228, 228, 228, 0.12);
-  --input: rgba(228, 228, 228, 0.16);
-  --ring: #b39cd0;
+  /* Base / neutral scale */
+  --background: #161516;         /* Pot Black — app background */
+  --foreground: #ece7ea;
+  --card: #2c282c;               /* Black Onyx — cards / panels / modals */
+  --card-foreground: #ece7ea;
+  --popover: #2c282c;
+  --popover-foreground: #ece7ea;
+  --surface: #1e1b1e;            /* subtle raise off the base */
+  --surface-raised: #2c282c;     /* Onyx */
+  --muted: #2c282c;
+  --muted-foreground: #a79fa5;
+  --secondary: #2c282c;
+  --secondary-foreground: #ece7ea;
+  --accent: #2c282c;
+  --accent-foreground: #ece7ea;
+  --border: #3d3f43;             /* Dark Elf — clean 1px borders / dividers */
+  --input: #3d3f43;
 
+  /* Accent scale (dark → light) — gradients, highlights, active states */
+  --accent-deep: #565961;        /* Steel */
+  --accent-mid: #9aa0aa;         /* Silver */
+  --accent-light: #e8eaee;       /* Near-white */
+
+  /* Metallic sheen — decorative background gradients (steel → silver → white) */
+  --sheen-deep: #565961;
+  --sheen-mid: #9aa0aa;
+  --sheen-light: #f2f3f5;
+
+  --primary: #cbd0d7;            /* brand accent = brushed silver */
+  --primary-foreground: #17171a;
+  --ring: #aab0b8;
+  --destructive: #f4707e;
+
+  /* Status — semantic, tuned for black surfaces (unchanged meaning) */
   --up: #86d9ad;
   --up-foreground: #06140c;
   --degraded: #f2c879;
@@ -198,10 +227,23 @@
   --down: #f4707e;
   --down-foreground: #2a0608;
   --info: #a8dadc;
-  --paused: #adadb2;
+  --paused: #a79fa5;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3),
-    0 22px 50px -22px rgba(0, 0, 0, 0.6);
+  /* Gradient system (see DESIGN.md — Sleek Palette v2) */
+  --gradient-signal: linear-gradient(
+    135deg,
+    var(--accent-deep) 0%,
+    var(--accent-mid) 50%,
+    var(--accent-light) 100%
+  );
+  --gradient-glow: radial-gradient(
+    circle at 30% 0%,
+    color-mix(in oklab, var(--accent-light) 30%, transparent),
+    transparent 60%
+  );
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35),
+    0 24px 54px -24px rgba(0, 0, 0, 0.72);
 }
 
 @layer components {
@@ -330,6 +372,54 @@
     outline: none;
     border-color: color-mix(in oklab, var(--primary) 55%, transparent);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
+  }
+
+  /* ── Sleek accent gradient system (v2) ────────────────────────
+     Reusable pink→purple gradient for hero/header backdrops, stat
+     card washes, key metric numbers, active states and chart fills.
+     Gradients sit on neutral surfaces only — never stacked. */
+
+  /* Fill: diagonal gradient background (hero/header, stat backdrops). */
+  .gradient-signal {
+    background-image: var(--gradient-signal);
+  }
+
+  /* Text: clip the gradient into glyphs — key metric numbers. */
+  .text-gradient-signal {
+    background-image: var(--gradient-signal);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Border: 1px gradient frame around a card/panel (active/selected). */
+  .border-gradient-signal {
+    border: 1px solid transparent;
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      var(--gradient-signal) border-box;
+  }
+
+  /* Glow: soft radial accent wash layered behind content (behind stats). */
+  .gradient-glow {
+    position: relative;
+    isolation: isolate;
+  }
+  .gradient-glow::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--gradient-glow);
+    pointer-events: none;
+  }
+
+  /* Active/selected surface — gradient-glow wash + accent border,
+     not a solid accent fill (per DESIGN.md component rules). */
+  .card-active {
+    border-color: color-mix(in oklab, var(--accent-mid) 55%, transparent);
+    background-image: var(--gradient-glow);
   }
 }
 

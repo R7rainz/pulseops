@@ -1,11 +1,14 @@
 import { cn } from "@/lib/utils";
 
 /**
- * AmbientGlow — a soft, flowing pastel gradient background (pure CSS).
+ * AmbientGlow — black-dominant background with a metallic sheen (pure CSS).
  *
- * Two large blurred gradient layers (cyan / lavender / pink) that flow in
- * opposite directions, giving a calm liquid motion over the slate base.
- * No canvas, no particles. Animation pauses under prefers-reduced-motion.
+ * The base stays black; the metallic scale (steel → silver → white) appears
+ * only as corner-anchored radial blobs that fall off to transparent well
+ * before mid-screen, giving a subtle shiny sheen — not a page-wide wash. Two
+ * layers drift in opposite directions for slow motion. Theme-driven via the
+ * --sheen-* tokens. No canvas, no particles.
+ * Animation pauses under prefers-reduced-motion.
  *
  * `tone="vivid"` is stronger (hero); default is subtle (ambient surfaces).
  */
@@ -16,26 +19,28 @@ export default function AmbientGlow({
   className?: string;
   tone?: "subtle" | "vivid";
 }) {
-  const op = tone === "vivid" ? 0.55 : 0.32;
+  const op = tone === "vivid" ? 0.26 : 0.12;
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} aria-hidden="true">
-      <div
-        className="gradient-flow absolute inset-[-30%]"
-        style={{
-          background: "linear-gradient(120deg, #A8DADC 0%, #B39CD0 38%, #FFC1CC 68%, #A8DADC 100%)",
-          backgroundSize: "300% 300%",
-          filter: "blur(90px)",
-          opacity: op,
-        }}
-      />
+      {/* Corner-anchored glows — steel + silver read on both black and white. */}
       <div
         className="gradient-flow absolute inset-[-30%]"
         style={{
           background:
-            "radial-gradient(60% 60% at 28% 30%, #B39CD0, transparent 60%), radial-gradient(55% 55% at 80% 72%, #FFC1CC, transparent 60%)",
+            "radial-gradient(50% 45% at 12% 8%, var(--sheen-deep), transparent 60%), radial-gradient(45% 45% at 88% 92%, var(--sheen-mid), transparent 60%)",
+          backgroundSize: "220% 220%",
+          filter: "blur(90px)",
+          opacity: op,
+        }}
+      />
+      {/* Smaller bright specular, reverse drift — the "shiny, metallic" layer. */}
+      <div
+        className="gradient-flow absolute inset-[-30%]"
+        style={{
+          background: "radial-gradient(38% 38% at 72% 22%, var(--sheen-light), transparent 62%)",
           backgroundSize: "200% 200%",
           filter: "blur(80px)",
-          opacity: op * 0.85,
+          opacity: op * 0.8,
           animationDirection: "reverse",
           animationDuration: "28s",
         }}

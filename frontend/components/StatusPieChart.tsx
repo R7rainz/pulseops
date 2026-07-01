@@ -2,22 +2,20 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import type { MonitorStats } from "@/lib/types";
+import { useThemeColors } from "@/lib/useThemeColors";
 
 interface Props {
   stats: MonitorStats;
 }
 
-const UP = "#9FD8BD";
-const DOWN = "#F0584B";
-const DEGRADED = "#F2C879";
-
 export default function StatusPieChart({ stats }: Props) {
+  const c = useThemeColors();
   const data = [
     { name: "Up", value: stats.upChecks },
     { name: "Degraded", value: stats.degradedChecks },
     { name: "Down", value: stats.downChecks },
   ];
-  const colors = [UP, DEGRADED, DOWN];
+  const colors = [c.up, c.degraded, c.down];
 
   if (stats.totalChecks === 0) {
     return <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">No data</div>;
