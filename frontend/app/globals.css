@@ -129,52 +129,52 @@
   --sidebar-ring: oklch(0.547 0.021 43.1);
 }
 
-/* ── PulseOps — LIGHT pastel theme (toggle alternative) ──────────────
-   Lavender = brand/accent · cyan/pink accents · green/amber/red = status. */
+/* ── PulseOps — Daylight theme (Apple-clean, light counterpart of Midnight) ──
+   #F5F5F7 base · #1D1D1F text · iris-indigo brand · system-colour status. */
 :root {
-  --background: #f4f4f6;
-  --foreground: #2c2c2c;
+  --background: #f5f5f7;
+  --foreground: #1d1d1f;
   --card: #ffffff;
-  --card-foreground: #2c2c2c;
+  --card-foreground: #1d1d1f;
   --popover: #ffffff;
-  --popover-foreground: #2c2c2c;
+  --popover-foreground: #1d1d1f;
   --surface: #ffffff;
-  --surface-raised: #ececef;
-  --muted: #ececef;
-  --muted-foreground: #5e5e66;
-  --primary: #7e62a8;
+  --surface-raised: #eceef3;
+  --muted: #eceef3;
+  --muted-foreground: #6e6e73;
+  --primary: #5b63f0;
   --primary-foreground: #ffffff;
-  --secondary: #ececef;
-  --secondary-foreground: #2c2c2c;
-  --accent: #ececef;
-  --accent-foreground: #2c2c2c;
-  --destructive: #d64550;
-  --border: #e3e3e7;
-  --input: #d7d7dc;
-  --ring: #7e62a8;
+  --secondary: #eceef3;
+  --secondary-foreground: #1d1d1f;
+  --accent: #eceef3;
+  --accent-foreground: #1d1d1f;
+  --destructive: #e0342b;
+  --border: rgba(0, 0, 0, 0.09);
+  --input: rgba(0, 0, 0, 0.12);
+  --ring: #5b63f0;
 
-  --up: #1f9d63;
+  --up: #248a3d;
   --up-foreground: #ffffff;
-  --degraded: #b9740c;
+  --degraded: #b25e00;
   --degraded-foreground: #ffffff;
-  --down: #d64550;
+  --down: #d70015;
   --down-foreground: #ffffff;
-  --info: #357578;
-  --paused: #6c6c73;
+  --info: #0071e3;
+  --paused: #6e6e73;
 
   --radius: 0.875rem;
-  --shadow-card: 0 1px 2px rgba(40, 40, 50, 0.06), 0 2px 6px rgba(40, 40, 50, 0.05),
-    0 20px 46px -22px rgba(80, 70, 110, 0.22);
-  --edge-highlight: rgba(255, 255, 255, 0.85);
+  --shadow-card: 0 1px 2px rgba(16, 18, 40, 0.05), 0 4px 12px -4px rgba(16, 18, 40, 0.08),
+    0 24px 48px -24px rgba(30, 30, 70, 0.16);
+  --edge-highlight: rgba(255, 255, 255, 0.9);
 
   /* Ambient gradient mesh painted behind everything (always visible). */
   --bg-gradient:
-    radial-gradient(42% 52% at 16% 10%, rgba(120, 150, 255, 0.16), transparent 72%),
-    radial-gradient(40% 46% at 86% 14%, rgba(120, 210, 255, 0.13), transparent 72%),
-    radial-gradient(46% 52% at 80% 88%, rgba(170, 130, 230, 0.15), transparent 72%);
+    radial-gradient(42% 52% at 16% 10%, rgba(91, 99, 240, 0.14), transparent 72%),
+    radial-gradient(40% 46% at 86% 14%, rgba(0, 113, 227, 0.11), transparent 72%),
+    radial-gradient(46% 52% at 80% 88%, rgba(150, 120, 235, 0.13), transparent 72%);
   --bg-gradient-2:
-    radial-gradient(44% 50% at 56% 34%, rgba(150, 130, 235, 0.12), transparent 72%),
-    radial-gradient(40% 46% at 12% 64%, rgba(120, 200, 255, 0.1), transparent 72%);
+    radial-gradient(44% 50% at 56% 34%, rgba(120, 110, 240, 0.11), transparent 72%),
+    radial-gradient(40% 46% at 12% 64%, rgba(0, 150, 235, 0.09), transparent 72%);
 }
 
 /* ── PulseOps — Midnight theme (DEFAULT) ──────────────────────────────
@@ -358,6 +358,27 @@
     outline: none;
     border-color: color-mix(in oklab, var(--primary) 55%, transparent);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 18%, transparent);
+  }
+
+  /* Editorial underline input — minimal, for the immersive auth screens. */
+  .field-line {
+    width: 100%;
+    border: 0;
+    border-bottom: 1.5px solid var(--input);
+    border-radius: 0;
+    background: transparent;
+    padding: 0.6rem 0.15rem;
+    font-size: 1.0625rem;
+    color: var(--foreground);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .field-line::placeholder {
+    color: color-mix(in oklab, var(--muted-foreground) 75%, transparent);
+  }
+  .field-line:focus {
+    outline: none;
+    border-bottom-color: var(--primary);
+    box-shadow: 0 1px 0 0 var(--primary);
   }
 }
 

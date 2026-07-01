@@ -60,11 +60,11 @@ function ResetForm() {
   if (!token) {
     return (
       <div className="text-center">
-        <div role="alert" className="mb-6 flex items-start gap-2.5 rounded-lg border border-down/40 bg-down/10 p-3 text-left text-sm text-down">
+        <div role="alert" className="mb-6 flex items-start gap-2 text-left text-sm text-down">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>Invalid reset link. No token provided.</p>
         </div>
-        <Link href="/forgot-password" className="text-sm font-medium text-info transition-colors hover:text-primary">
+        <Link href="/forgot-password" className="text-sm font-medium text-primary transition-colors hover:underline">
           Request a new reset link
         </Link>
       </div>
@@ -74,11 +74,11 @@ function ResetForm() {
   if (state?.success) {
     return (
       <div className="text-center">
-        <div role="status" className="mb-6 flex items-start gap-2.5 rounded-lg border border-primary/40 bg-primary/10 p-3 text-left text-sm text-primary">
+        <div role="status" className="mb-6 flex items-start gap-2 text-left text-sm text-primary">
           <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{state.success}</p>
         </div>
-        <Link href="/login" className="inline-flex items-center gap-2 text-sm font-medium text-info transition-colors hover:text-primary">
+        <Link href="/login" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-primary">
           <ArrowLeft className="h-4 w-4" />
           Proceed to sign in
         </Link>
@@ -87,9 +87,9 @@ function ResetForm() {
   }
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-6">
       {state?.error && (
-        <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-down/40 bg-down/10 p-3 text-sm text-down">
+        <div role="alert" className="flex items-start gap-2 text-sm text-down">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{state.error}</p>
         </div>
@@ -108,6 +108,7 @@ function ResetForm() {
           id="password"
           name="password"
           label="New password"
+          variant="line"
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -134,6 +135,7 @@ function ResetForm() {
           id="confirmPassword"
           name="confirmPassword"
           label="Confirm new password"
+          variant="line"
           autoComplete="new-password"
           value={confirmPwd}
           onChange={(e) => setConfirmPwd(e.target.value)}
@@ -159,11 +161,14 @@ export default function ResetPasswordPage() {
   return (
     <div>
       <div className="fade-up">
-        <h1 className="font-display text-[1.75rem] font-semibold tracking-tight text-foreground">Set a new password</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">Choose a strong password for your account</p>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Reset</p>
+        <h1 className="mt-3 font-display font-semibold leading-[1.05] tracking-tight text-[clamp(2.25rem,5vw,3.25rem)]">
+          Set a new <span className="text-primary">password.</span>
+        </h1>
+        <p className="mt-3 text-[15px] text-muted-foreground">Choose a strong password for your account.</p>
       </div>
 
-      <div className="fade-up mt-8" style={{ animationDelay: "80ms" }}>
+      <div className="fade-up mt-9" style={{ animationDelay: "80ms" }}>
         <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
           <ResetForm />
         </Suspense>

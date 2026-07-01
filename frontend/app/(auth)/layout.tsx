@@ -1,73 +1,57 @@
 import Link from "next/link";
-import { Activity, Radio, Bell, Globe } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Brand } from "@/components/Brand";
+import ThemeToggle from "@/components/ThemeToggle";
+import { StatusDot } from "@/components/ui/status-badge";
 
-const POINTS = [
-  { icon: Radio, text: "Real-time monitoring across regions" },
-  { icon: Bell, text: "Incident alerts before customers notice" },
-  { icon: Globe, text: "Shareable public status pages" },
-];
+// tiny decorative uptime sparkline (self-contained, no data)
+function Spark() {
+  const pts = [10, 8, 12, 7, 9, 6, 11, 5, 8, 4, 7, 3];
+  const w = 132;
+  const h = 34;
+  const max = Math.max(...pts);
+  const d = pts
+    .map((p, i) => `${(i / (pts.length - 1)) * w},${h - (p / max) * (h - 4) - 2}`)
+    .join(" ");
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="mt-2 overflow-visible" aria-hidden="true">
+      <polyline points={d} fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-dvh text-foreground selection:bg-primary/20 lg:grid lg:grid-cols-[1.05fr_1fr]">
-      {/* LEFT — warm brand panel (desktop only) */}
-      <aside className="relative hidden overflow-hidden text-white lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
-        {/* slate → lavender fluid gradient field */}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(150deg,#2c2c2c_0%,#4a3f63_48%,#7e62a8_100%)]" />
-        <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="animate-drift absolute -left-1/4 -top-10 h-[65%] w-[70%] rounded-full bg-[#a8dadc]/25 blur-3xl" />
-          <div
-            className="animate-float absolute -bottom-10 right-0 h-[55%] w-[60%] rounded-full bg-[#ffc1cc]/25 blur-3xl"
-            style={{ animationDelay: "1.5s" }}
-          />
-          <div
-            className="animate-sway absolute left-1/3 top-1/3 h-[45%] w-[50%] rounded-full bg-[#b39cd0]/30 blur-3xl"
-            style={{ animationDelay: "3s" }}
-          />
+    <div className="relative flex min-h-dvh flex-col text-foreground selection:bg-primary/20">
+      {/* TOP BAR */}
+      <header className="flex items-center justify-between px-6 py-5 sm:px-10">
+        <Brand href="/" />
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="hidden items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+          >
+            <ArrowLeft className="h-4 w-4" /> Back to site
+          </Link>
+          <ThemeToggle className="h-9 w-9" />
         </div>
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(130%_120%_at_50%_0%,transparent_55%,rgba(20,18,28,0.42)_100%)]" />
+      </header>
 
-        {/* brand */}
-        <Link href="/" className="inline-flex items-center gap-2.5">
-          <span className="grid h-8 w-8 place-items-center rounded-lg border border-white/30 bg-white/15 backdrop-blur">
-            <Activity className="h-[18px] w-[18px]" />
-          </span>
-          <span className="font-display text-lg font-semibold tracking-tight">PulseOps</span>
-        </Link>
-
-        {/* headline + value points */}
-        <div className="fade-up max-w-md">
-          <h2 className="font-display text-3xl font-semibold leading-[1.15] tracking-tight xl:text-[2.6rem]">
-            Calm visibility for everything you run.
-          </h2>
-          <p className="mt-4 text-[15px] leading-relaxed text-white/80">
-            Uptime, latency, SSL and incidents — watched around the clock and surfaced the moment something moves.
-          </p>
-          <ul className="mt-9 space-y-4">
-            {POINTS.map(({ icon: Icon, text }) => (
-              <li key={text} className="flex items-center gap-3 text-sm text-white/90">
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/20 bg-white/10">
-                  <Icon className="h-4 w-4" />
-                </span>
-                {text}
-              </li>
-            ))}
-          </ul>
+      {/* CONTENT — full-bleed over the global mesh, editorial left column */}
+      <main className="relative flex flex-1 items-center px-6 pb-16 sm:px-10">
+        {/* floating product motifs (desktop only, decorative) */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden lg:block">
+          <div className="glass fade-up absolute right-[9%] top-[26%] flex items-center gap-2 rounded-full px-4 py-2 text-xs font-medium">
+            <StatusDot status="UP" /> All systems operational
+          </div>
+          <div className="glass fade-up absolute bottom-[24%] right-[15%] rounded-2xl p-4" style={{ animationDelay: "160ms" }}>
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Uptime · 90d</p>
+            <p className="mt-1 font-display text-2xl font-semibold tabular-nums text-primary">99.98%</p>
+            <Spark />
+          </div>
         </div>
 
-        {/* footer */}
-        <p className="text-xs text-white/55">Trusted by teams shipping at scale.</p>
-      </aside>
-
-      {/* RIGHT — form */}
-      <main className="relative flex min-h-dvh items-center justify-center overflow-hidden p-6 sm:p-10">
-        {/* mobile brand */}
-        <div className="absolute left-6 top-6 lg:hidden">
-          <Brand href="/" />
-        </div>
-
-        <div className="w-full max-w-sm">{children}</div>
+        <div className="relative z-10 mx-auto w-full max-w-md lg:mx-0 lg:ml-[9%] xl:ml-[13%]">{children}</div>
       </main>
     </div>
   );
