@@ -67,9 +67,35 @@ export default async function RootPage() {
 
   return (
     <div className="relative min-h-dvh overflow-hidden text-foreground selection:bg-primary/20">
-      {/* WARM AMBIENT BACKGROUND */}
+      {/* SHINY METALLIC BACKGROUND — black base + silver glow behind the hero */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 bg-background" />
+        {/* silver focal glow behind the headline (reads on both themes) */}
+        <div
+          className="absolute inset-x-0 top-0 h-[75vh]"
+          style={{
+            background:
+              "radial-gradient(60% 55% at 50% -8%, color-mix(in oklab, var(--sheen-mid) 78%, transparent), transparent 68%)",
+            opacity: 0.42,
+          }}
+        />
+        {/* diagonal metallic sheen (steel → silver) for a shiny feel */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(128deg, transparent 6%, color-mix(in oklab, var(--sheen-deep) 60%, transparent) 28%, transparent 50%, color-mix(in oklab, var(--sheen-mid) 55%, transparent) 76%, transparent 96%)",
+            opacity: 0.22,
+          }}
+        />
+        {/* thin luminous top edge */}
+        <div
+          className="absolute inset-x-0 top-0 h-px"
+          style={{
+            background: "linear-gradient(90deg, transparent, var(--sheen-light), transparent)",
+            opacity: 0.5,
+          }}
+        />
         <AmbientGlow tone="vivid" />
       </div>
 

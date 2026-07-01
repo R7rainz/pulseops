@@ -11,7 +11,7 @@ import {
     resumeMonitorService,
     updateMonitorService,
     deleteMonitorService,
-    enqueueMonitorCheckService,
+    runMonitorCheckNowService,
 } from "./monitor.service";
 import { prisma } from "../../lib/db";
 import { redis } from "../../lib/redis"
@@ -111,14 +111,14 @@ export async function runMonitorCheckController(
         });
     }
 
-    const queuedJob = await enqueueMonitorCheckService(
+    const check = await runMonitorCheckNowService(
         request.user.userId,
         monitorId,
     );
 
-    return response.status(202).send({
-        message: "Monitor check queued successfully",
-        data: queuedJob,
+    return response.status(200).send({
+        message: "Monitor check completed",
+        data: check,
     });
 }
 

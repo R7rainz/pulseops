@@ -32,27 +32,22 @@ export interface MonitorCheck {
   checkedAt: string;
 }
 
-export interface MonitorStats {
+interface StatsRange {
   totalChecks: number;
   upChecks: number;
   downChecks: number;
+  degradedChecks: number;
   uptimePercentage: number;
   averageResponseTimeMs: number;
+  p50ResponseTimeMs: number;
+  p95ResponseTimeMs: number;
+  p99ResponseTimeMs: number;
+}
+
+export interface MonitorStats extends StatsRange {
   latestStatus: MonitorStatus;
-  range24h: {
-    totalChecks: number;
-    upChecks: number;
-    downChecks: number;
-    uptimePercentage: number;
-    averageResponseTimeMs: number;
-  };
-  range30d: {
-    totalChecks: number;
-    upChecks: number;
-    downChecks: number;
-    uptimePercentage: number;
-    averageResponseTimeMs: number;
-  };
+  range24h: StatsRange;
+  range30d: StatsRange;
 }
 
 export interface ApiResponse<T> {

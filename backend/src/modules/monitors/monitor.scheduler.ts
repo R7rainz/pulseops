@@ -1,47 +1,81 @@
 import { prisma } from "../../lib/db";
-import { dispatchMonitorsToWorkers } from "./monitor.service";
+import { kafkaProducer } from "../../lib/kafka";
 
-let schedulerInterval: NodeJS.Timeout | null = null;
+let dispatchInterval: NodeJS.Timeout | null = null;
 
-export async function tickScheduler() {
-  try {
-    const activeMonitors = await prisma.monitor.findMany({
-      where: {
-        isActive: true,
-      },
-      select: {
-        id: true,
-        url: true,
-        workspaceId: true,
-      },
+async function dispatchDueMonitors() {
+    const monitors = await prisma.monitor.findMany({
+        where: {
+            isActive: true,
+            OR: [
+                { status: { not: "PAUSED" } },
+                {
+                    status: "PAUSED",
+                    maintenanceStartAt: { lte: new Date() },
+                    maintenanceEndAt: { gte: new Date() },
+                },
+            ],
+        },
+        select: {
+            id: true,
+            url: true,
+            method: true,
+            expectedStatus: true,
+            timeoutMs: true,
+            workspaceId: true,
+            intervalSeconds: true,
+            lastCheckedAt: true,
+        },
     });
 
-    if (activeMonitors.length === 0) return;
+    const nowMs = Date.now();
+    const dueMonitors = monitors.filter((monitor) => {
+        const lastCheckedAtMs = monitor.lastCheckedAt?.getTime();
+        return !lastCheckedAtMs || nowMs - lastCheckedAtMs >= monitor.intervalSeconds * 1000;
+    });
 
-    console.log(`[SCHEDULER] Dispatching ${activeMonitors.length} active monitors to Kafka.`);
+    if (dueMonitors.length === 0) return;
 
-    await dispatchMonitorsToWorkers(activeMonitors);
-  } catch (error) {
-    console.error("[SCHEDULER] Critical error during monitor dispatch tick:", error);
-  }
+    const topic = process.env.KAFKA_TARGETS_TOPIC;
+    if (!topic) {
+        console.error("[SCHEDULER] KAFKA_TARGETS_TOPIC is not set — cannot dispatch monitors");
+        return;
+    }
+
+    await kafkaProducer.send({
+        topic,
+        messages: dueMonitors.map((monitor) => ({
+            key: monitor.workspaceId.toString(), // keeps per-workspace ordering on one partition
+            value: JSON.stringify({
+                id: monitor.id,
+                url: monitor.url,
+                method: monitor.method,
+                expected_status: monitor.expectedStatus,
+                timeout_ms: monitor.timeoutMs,
+                workspace_id: monitor.workspaceId,
+            }),
+        })),
+    });
+
+    console.log(`[SCHEDULER] Dispatched ${dueMonitors.length} due monitor(s) to Kafka`);
 }
 
-export function startScheduler(intervalMs = 60000) {
-  if (schedulerInterval) return;
+export function startMonitorDispatchScheduler(intervalMs = 15000) {
+    if (dispatchInterval) return;
 
-  console.log(`[SCHEDULER] Initializing engine loop with a ${intervalMs / 1000}s check frequency.`);
+    console.log(`[SCHEDULER] Dispatching due monitors to Kafka every ${intervalMs / 1000}s`);
 
-  tickScheduler();
+    dispatchDueMonitors().catch((error) => console.error("[SCHEDULER] Dispatch tick failed:", error));
 
-  schedulerInterval = setInterval(async () => {
-    await tickScheduler();
-  }, intervalMs);
+    dispatchInterval = setInterval(() => {
+        dispatchDueMonitors().catch((error) => console.error("[SCHEDULER] Dispatch tick failed:", error));
+    }, intervalMs);
 }
 
-export function stopScheduler() {
-  if (schedulerInterval) {
-    clearInterval(schedulerInterval);
-    schedulerInterval = null;
-    console.log("[SCHEDULER] Polling loop safely halted.");
-  }
+export function stopMonitorDispatchScheduler() {
+    if (dispatchInterval) {
+        clearInterval(dispatchInterval);
+        dispatchInterval = null;
+        console.log("[SCHEDULER] Dispatch loop stopped.");
+    }
 }

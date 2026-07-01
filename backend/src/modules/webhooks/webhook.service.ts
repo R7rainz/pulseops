@@ -43,6 +43,17 @@ export async function getWorkspaceWebhooksService(
   const webhooks = await prisma.webhookEndpoint.findMany({
     where: { workspaceId },
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      workspaceId: true,
+      name: true,
+      url: true,
+      events: true,
+      isActive: true,
+      lastTestedAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
   });
 
   return webhooks.map((w) => ({
@@ -75,7 +86,8 @@ export async function updateWebhookService(
     data,
   });
 
-  return { ...updated, events: JSON.parse(updated.events) };
+  const { secret: _secret, ...rest } = updated;
+  return { ...rest, events: JSON.parse(updated.events) };
 }
 
 export async function deleteWebhookService(userId: number, webhookId: number) {
@@ -104,7 +116,8 @@ export async function toggleWebhookService(userId: number, webhookId: number) {
     data: { isActive: !webhook.isActive },
   });
 
-  return { ...updated, events: JSON.parse(updated.events) };
+  const { secret: _secret, ...rest } = updated;
+  return { ...rest, events: JSON.parse(updated.events) };
 }
 
 export async function testWebhookService(userId: number, webhookId: number) {

@@ -1,9 +1,6 @@
 import type { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
-import axios from "axios";
-import { monitorCheckQueue } from "../../queues/monitor.queue";
-import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
-import { kafkaProducer } from "../../lib/kafka";
+import { checkMonitor } from "./monitor.engine";
 
 export async function createMonitorService(
     userId: number,
@@ -86,148 +83,32 @@ export async function getWorkspaceMonitorsService(
     return monitors;
 }
 
-async function handleIncidentTransition(
+export async function runMonitorCheckNowService(
+    userId: number,
     monitorId: number,
-    oldStatus: string,
-    newStatus: string,
 ) {
-    // 1. Fetch monitor details needed for the webhook payload
     const monitor = await prisma.monitor.findUnique({
         where: { id: monitorId },
-        select: { workspaceId: true, name: true },
-    });
-
-    if (!monitor) return; // Safeguard in case monitor was deleted
-
-    // 2. Handle Monitor DOWN (Create Incident)
-    if (oldStatus !== "DOWN" && newStatus === "DOWN") {
-        const newIncident = await prisma.incident.create({
-            data: {
-                monitorId,
-                title: `Monitor ${monitor.name} is down`,
-                status: "OPEN",
-            },
-        });
-
-        // Trigger Webhook for New Incident
-        await sendWebhookNotifications(monitor.workspaceId, {
-            event: "incident.opened",
-            incidentId: newIncident.id,
-            monitorId: monitorId,
-            workspaceId: monitor.workspaceId,
-            message: `Monitor is DOWN: ${monitor.name}`,
-            timestamp: new Date().toISOString(),
-        });
-    }
-
-    // 3. Handle Monitor UP (Resolve Incident)
-    if (oldStatus === "DOWN" && newStatus === "UP") {
-        // Find the currently open incident for this monitor
-        const openIncident = await prisma.incident.findFirst({
-            where: {
-                monitorId,
-                status: {
-                    in: ["OPEN", "ACKNOWLEDGED"],
-                },
-            },
-        });
-
-        if (openIncident) {
-            // Update the specific incident so we get the returned data
-            const resolvedIncident = await prisma.incident.update({
-                where: { id: openIncident.id },
-                data: {
-                    status: "RESOLVED",
-                    resolvedAt: new Date(),
-                },
-            });
-
-            // Trigger Webhook for Auto-Resolved Incident
-            await sendWebhookNotifications(monitor.workspaceId, {
-                event: "incident.resolved",
-                incidentId: resolvedIncident.id,
-                monitorId: monitorId,
-                workspaceId: monitor.workspaceId,
-                message: `Monitor is back UP: ${monitor.name}`,
-                timestamp: new Date().toISOString(),
-            });
-        }
-    }
-}
-
-export async function runMonitorCheckService(monitorId: number) {
-    const monitor = await prisma.monitor.findUnique({
-        where: {
-            id: monitorId,
-        },
     });
 
     if (!monitor) {
         throw new Error("Monitor not found");
     }
 
-    const startTime = Date.now();
-
-    try {
-        const response = await axios.request({
-            method: monitor.method,
-            url: monitor.url,
-            timeout: monitor.timeoutMs,
-            validateStatus: () => true,
-        });
-
-        const responseTimeMs = Date.now() - startTime;
-
-        const status = response.status === monitor.expectedStatus ? "UP" : "DOWN";
-
-        await handleIncidentTransition(monitor.id, monitor.status, status);
-
-        const check = await prisma.monitorCheck.create({
-            data: {
-                monitorId: monitor.id,
-                status,
-                statusCode: response.status,
-                responseTimeMs,
+    const membership = await prisma.workspaceMember.findUnique({
+        where: {
+            userId_workspaceId: {
+                userId,
+                workspaceId: monitor.workspaceId,
             },
-        });
+        },
+    });
 
-        await prisma.monitor.update({
-            where: {
-                id: monitor.id,
-            },
-            data: {
-                status,
-                lastCheckedAt: new Date(),
-            },
-        });
-
-        return check;
-    } catch (error) {
-        const responseTimeMs = Date.now() - startTime;
-
-        await handleIncidentTransition(monitor.id, monitor.status, "DOWN");
-
-        const check = await prisma.monitorCheck.create({
-            data: {
-                monitorId: monitor.id,
-                status: "DOWN",
-                responseTimeMs,
-                errorMessage: error instanceof Error ? error.message : "Request failed",
-            },
-        });
-
-        await prisma.monitor.update({
-            where: {
-                id: monitor.id,
-            },
-            data: {
-                status: "DOWN",
-                lastCheckedAt: new Date(),
-            },
-        });
-
-        return check;
+    if (!membership) {
+        throw new Error("You do not have access to this workspace");
     }
+
+    return checkMonitor(monitor);
 }
 
 export async function getMonitorService(
@@ -308,21 +189,40 @@ export async function getMonitorChecksService(
     return { checks, total };
 }
 
+function percentile(sortedAsc: number[], p: number): number {
+    if (sortedAsc.length === 0) return 0;
+    const index = Math.min(sortedAsc.length - 1, Math.ceil((p / 100) * sortedAsc.length) - 1);
+    return sortedAsc[Math.max(0, index)];
+}
+
 function computeStats(checks: { status: string; responseTimeMs: number | null }[]) {
     const totalChecks = checks.length;
     const upChecks = checks.filter((c) => c.status === "UP").length;
     const downChecks = checks.filter((c) => c.status === "DOWN").length;
+    const degradedChecks = checks.filter((c) => c.status === "DEGRADED").length;
     const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
-    const withRt = checks.filter((c) => c.responseTimeMs !== null);
-    const averageResponseTimeMs = withRt.length === 0
+
+    // Only healthy (UP) checks count toward latency — a DOWN/DEGRADED check's timing
+    // reflects a timeout/failure, not real response performance.
+    const upLatencies = checks
+        .filter((c) => c.status === "UP" && c.responseTimeMs !== null)
+        .map((c) => c.responseTimeMs!)
+        .sort((a, b) => a - b);
+
+    const averageResponseTimeMs = upLatencies.length === 0
         ? 0
-        : withRt.reduce((s, c) => s + c.responseTimeMs!, 0) / withRt.length;
+        : upLatencies.reduce((s, v) => s + v, 0) / upLatencies.length;
+
     return {
         totalChecks,
         upChecks,
         downChecks,
+        degradedChecks,
         uptimePercentage: Math.round(uptimePercentage * 100) / 100,
         averageResponseTimeMs: Math.round(averageResponseTimeMs * 100) / 100,
+        p50ResponseTimeMs: Math.round(percentile(upLatencies, 50) * 100) / 100,
+        p95ResponseTimeMs: Math.round(percentile(upLatencies, 95) * 100) / 100,
+        p99ResponseTimeMs: Math.round(percentile(upLatencies, 99) * 100) / 100,
     };
 }
 
@@ -512,56 +412,3 @@ export async function deleteMonitorService(userId: number, monitorId: number) {
     return deletedMonitor;
 }
 
-export async function enqueueMonitorCheckService(
-    userId: number,
-    monitorId: number,
-) {
-    const monitor = await prisma.monitor.findUnique({
-        where: {
-            id: monitorId,
-        },
-    });
-
-    if (!monitor) {
-        throw new Error("Monitor not found");
-    }
-
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
-
-    const job = await monitorCheckQueue.add("run-check", {
-        monitorId,
-    });
-
-    return {
-        jobId: job.id,
-        monitorId,
-        status: "queued",
-    };
-}
-
-export async function dispatchMonitorsToWorkers(monitors: any[]) {
-    const payloads = monitors.map((monitor) => ({
-        key: monitor.workspaceId.toString(), // Enforces in-order execution per workspace partition
-        value: JSON.stringify({
-            id: monitor.id,
-            url: monitor.url,
-            workspace_id: monitor.workspaceId,
-        }),
-    }));
-
-    await kafkaProducer.send({
-        topic: process.env.KAFKA_TARGETS_TOPIC!,
-        messages: payloads,
-    });
-}

@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import axios from "axios";
@@ -9,25 +8,32 @@ const connection = new IORedis({
   maxRetriesPerRequest: null,
 });
 
-const worker = new Worker(
-  "webhook-logs",
-  async (job) => {
-    const { webhookId, url, payload } = job.data;
+let worker: Worker | null = null;
 
-    console.log(`[Retry Attempt ${job.attemptsMade + 1}] Hitting ${url}`);
-    await axios.post(url, payload, { timeout: 5000 });
+export function startWebhookRetryWorker() {
+  if (worker) return worker;
 
-    return { success: true };
-  },
-  { connection },
-);
+  worker = new Worker(
+    "webhook-logs",
+    async (job) => {
+      const { webhookId, url, payload } = job.data;
 
-worker.on("completed", (job) => {
-  console.log(`Webhook retry job ${job.id} completed successfully`);
-});
+      console.log(`[Retry Attempt ${job.attemptsMade + 1}] Hitting ${url}`);
+      await axios.post(url, payload, { timeout: 5000 });
 
-worker.on("failed", (job, error) => {
-  console.log(`Webhook retry job ${job?.id} failed:`, error.message);
-});
+      return { success: true };
+    },
+    { connection },
+  );
 
-console.log("Webhook retry worker started");
+  worker.on("completed", (job) => {
+    console.log(`Webhook retry job ${job.id} completed successfully`);
+  });
+
+  worker.on("failed", (job, error) => {
+    console.log(`Webhook retry job ${job?.id} failed:`, error.message);
+  });
+
+  console.log("[WEBHOOK_RETRY] Worker started");
+  return worker;
+}

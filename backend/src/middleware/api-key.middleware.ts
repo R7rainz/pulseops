@@ -44,6 +44,6 @@ export async function requireApiKey(
 
   request.machineAuth = {
     workspaceId: apiKeyRecord.workspaceId,
-    keyId: Number(apiKeyRecord.key),
+    keyId: apiKeyRecord.id,
   };
 }

@@ -8,20 +8,38 @@ export async function getMonitorAnalyticsController(
   try {
     const monitorId = Number(request.params.monitorId);
 
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const totalWindowMs = 30 * 24 * 60 * 60 * 1000;
+    const monitor = await prisma.monitor.findUnique({
+      where: { id: monitorId },
+      select: { createdAt: true },
+    });
 
+    if (!monitor) {
+      return response.status(404).send({ message: "Monitor not found" });
+    }
+
+    const now = Date.now();
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    // Clamp the window to the monitor's actual age so a monitor created a few
+    // days ago isn't diluted by a full 30-day denominator it hasn't existed for.
+    const windowStartMs = Math.max(monitor.createdAt.getTime(), now - thirtyDaysMs);
+    const totalWindowMs = Math.max(1, now - windowStartMs);
+    const windowStart = new Date(windowStartMs);
+
+    // Any incident overlapping the window counts, even if it started before the
+    // window began — only the portion of its duration inside the window is used.
     const incidents = await prisma.incident.findMany({
       where: {
         monitorId,
-        startedAt: { gte: thirtyDaysAgo },
+        startedAt: { lt: new Date(now) },
+        OR: [{ resolvedAt: null }, { resolvedAt: { gte: windowStart } }],
       },
     });
 
     let totalDowntimeMs = 0;
     for (const inc of incidents) {
-      const end = inc.resolvedAt ? inc.resolvedAt.getTime() : Date.now();
-      totalDowntimeMs += end - inc.startedAt.getTime();
+      const start = Math.max(inc.startedAt.getTime(), windowStartMs);
+      const end = Math.min(inc.resolvedAt ? inc.resolvedAt.getTime() : now, now);
+      totalDowntimeMs += Math.max(0, end - start);
     }
 
     const uptimeDecimal = Math.max(0, (totalWindowMs - totalDowntimeMs) / totalWindowMs);

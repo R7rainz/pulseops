@@ -2,26 +2,26 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import type { MonitorStats } from "@/lib/types";
+import { useThemeColors } from "@/lib/useThemeColors";
 
 interface Props {
   stats: MonitorStats;
 }
 
-const UP = "#9FD8BD";
-const DOWN = "#F0584B";
-
 export default function StatusPieChart({ stats }: Props) {
+  const c = useThemeColors();
   const data = [
     { name: "Up", value: stats.upChecks },
+    { name: "Degraded", value: stats.degradedChecks },
     { name: "Down", value: stats.downChecks },
   ];
-  const colors = [UP, DOWN];
+  const colors = [c.up, c.degraded, c.down];
 
   if (stats.totalChecks === 0) {
     return <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">No data</div>;
   }
 
-  const uptimePct = ((stats.upChecks / stats.totalChecks) * 100).toFixed(1);
+  const uptimePct = stats.uptimePercentage.toFixed(1);
 
   return (
     <div className="flex items-center gap-4">
@@ -56,6 +56,11 @@ export default function StatusPieChart({ stats }: Props) {
           <span className="h-2.5 w-2.5 rounded-full bg-up" />
           <span className="text-muted-foreground">Up</span>
           <span className="ml-auto font-mono tabular-nums text-foreground">{stats.upChecks}</span>
+        </li>
+        <li className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full bg-degraded" />
+          <span className="text-muted-foreground">Degraded</span>
+          <span className="ml-auto font-mono tabular-nums text-foreground">{stats.degradedChecks}</span>
         </li>
         <li className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full bg-down" />

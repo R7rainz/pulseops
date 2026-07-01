@@ -23,10 +23,14 @@ export async function razorpayWebhookController(
       return response.status(401).send({ message: "Missing webhook signature" });
     }
 
-    const body = JSON.stringify(request.body);
+    const rawBody = (request as any).rawBody as Buffer | undefined;
+    if (!rawBody) {
+      return response.status(400).send({ message: "Missing request body" });
+    }
+
     const expectedSignature = crypto
       .createHmac("sha256", webhookSecret)
-      .update(body)
+      .update(rawBody)
       .digest("hex");
 
     if (signature !== expectedSignature) {

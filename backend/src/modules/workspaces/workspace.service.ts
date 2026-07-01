@@ -92,10 +92,10 @@ export async function updateWorkspaceService(
   input: UpdateWorkspaceInput,
 ) {
   const membership = await prisma.workspaceMember.findFirst({
-    where: { userId, workspaceId, role: "OWNER" },
+    where: { userId, workspaceId, role: { in: ["OWNER", "ADMIN"] } },
   });
 
-  if (!membership) throw new Error("Only workspace owners can update settings");
+  if (!membership) throw new Error("Only workspace owners or admins can update settings");
 
   const data: Record<string, string> = {};
   if (input.name) {
