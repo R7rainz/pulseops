@@ -177,29 +177,31 @@
     radial-gradient(40% 46% at 12% 64%, rgba(0, 150, 235, 0.09), transparent 72%);
 }
 
-/* ── PulseOps — Midnight theme (DEFAULT) ──────────────────────────────
-   Apple-grade near-black · #F5F5F7 text · iris CTA · system-colour status.
-   Shiny edges via --edge-highlight, fluid ambient mesh via --bg-gradient. */
+/* ── PulseOps — Obsidian theme (DEFAULT) ──────────────────────────────
+   True-black · #F5F5F7 text · iris CTA (matches light) · system-colour status.
+   Borderless: separation comes from elevated fills, soft shadows and a faint
+   top sheen (--edge-highlight) — neutral borders are effectively invisible.
+   Cool-fresh ambient mesh (iris · cyan · mint) via --bg-gradient. */
 .dark {
-  --background: #0a0b0f;
+  --background: #000000;
   --foreground: #f5f5f7;
-  --card: #16181f;
+  --card: #101013;
   --card-foreground: #f5f5f7;
-  --popover: #16181f;
+  --popover: #141418;
   --popover-foreground: #f5f5f7;
-  --surface: #131520;
-  --surface-raised: #1d2030;
-  --muted: #181a24;
-  --muted-foreground: #8b8b96;
+  --surface: #0b0b0e;
+  --surface-raised: #18181d;
+  --muted: #131317;
+  --muted-foreground: #9a9aa6;
   --primary: #7c8cff;
-  --primary-foreground: #0a0b0f;
-  --secondary: #181a24;
+  --primary-foreground: #05050a;
+  --secondary: #18181d;
   --secondary-foreground: #f5f5f7;
-  --accent: #181a24;
+  --accent: #18181d;
   --accent-foreground: #f5f5f7;
   --destructive: #ff453a;
-  --border: rgba(255, 255, 255, 0.09);
-  --input: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.045);
+  --input: rgba(255, 255, 255, 0.05);
   --ring: #7c8cff;
 
   --up: #30d158;
@@ -211,26 +213,27 @@
   --info: #64d2ff;
   --paused: #98989d;
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.6), 0 8px 24px -8px rgba(0, 0, 0, 0.7),
-    0 30px 60px -30px rgba(0, 0, 0, 0.9);
-  --edge-highlight: rgba(255, 255, 255, 0.1);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.7), 0 10px 30px -10px rgba(0, 0, 0, 0.8),
+    0 34px 64px -30px rgba(0, 0, 0, 0.95);
+  --edge-highlight: rgba(255, 255, 255, 0.08);
 
-  /* Ambient gradient mesh painted behind everything (always visible). */
+  /* Cool-fresh ambient mesh (iris → cyan → mint) — pops on true black. */
   --bg-gradient:
-    radial-gradient(42% 52% at 16% 10%, rgba(108, 124, 255, 0.24), transparent 72%),
-    radial-gradient(38% 46% at 86% 16%, rgba(80, 200, 255, 0.16), transparent 72%),
-    radial-gradient(46% 52% at 78% 86%, rgba(150, 92, 230, 0.22), transparent 72%);
+    radial-gradient(42% 52% at 16% 10%, rgba(108, 124, 255, 0.26), transparent 72%),
+    radial-gradient(38% 46% at 86% 16%, rgba(56, 208, 255, 0.18), transparent 72%),
+    radial-gradient(46% 52% at 78% 86%, rgba(47, 224, 192, 0.16), transparent 72%);
   --bg-gradient-2:
-    radial-gradient(44% 50% at 58% 32%, rgba(124, 92, 240, 0.18), transparent 72%),
-    radial-gradient(40% 46% at 12% 64%, rgba(64, 190, 255, 0.14), transparent 72%);
+    radial-gradient(44% 50% at 58% 32%, rgba(124, 140, 255, 0.18), transparent 72%),
+    radial-gradient(40% 46% at 12% 64%, rgba(56, 208, 255, 0.14), transparent 72%);
 }
 
 @layer components {
-  /* Glass surface — translucent + blur with a shiny top edge (macOS gloss). */
+  /* Glass surface — elevated translucent fill, shiny top edge, no hard border.
+     Uses --card so it reads as a floating panel on true black (and white on light). */
   .glass {
-    background: color-mix(in oklab, var(--surface) 80%, transparent);
-    backdrop-filter: blur(16px) saturate(1.4);
-    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    background: color-mix(in oklab, var(--card) 82%, transparent);
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
     border: 1px solid var(--border);
     box-shadow: var(--shadow-card), inset 0 1px 0 0 var(--edge-highlight);
   }
@@ -343,13 +346,14 @@
   /* ── Inputs ──────────────────────────────────────────────── */
   .field {
     width: 100%;
-    border-radius: 0.5rem;
+    border-radius: 0.625rem;
     border: 1px solid var(--input);
-    background: color-mix(in oklab, var(--surface) 60%, transparent);
+    /* filled input — reads without a border (borderless-friendly) */
+    background: color-mix(in oklab, var(--surface-raised) 88%, transparent);
     padding: 0.625rem 0.875rem;
     font-size: 0.9375rem;
     color: var(--foreground);
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
   }
   .field::placeholder {
     color: color-mix(in oklab, var(--muted-foreground) 80%, transparent);
