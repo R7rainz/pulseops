@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"crypto/tls"
 	"net/http"
 	"time"
@@ -13,6 +14,7 @@ type Target struct {
 	URL            string `json:"url"`
 	Method         string `json:"method"`
 	ExpectedStatus int    `json:"expected_status"`
+	TimeoutMs      int    `json:"timeout_ms"`
 	WorkspaceID    int    `json:"workspace_id"`
 }
 
@@ -27,6 +29,8 @@ type Result struct {
 	Timestamp   time.Time     `json:"timestamp"`
 }
 
+const defaultTimeout = 10 * time.Second
+
 func StartWorker(id int, targetChan <-chan Target, resultChan chan<- Result, log *zap.SugaredLogger) {
 	transport := &http.Transport{
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
@@ -36,7 +40,6 @@ func StartWorker(id int, targetChan <-chan Target, resultChan chan<- Result, log
 	}
 	client := &http.Client{
 		Transport: transport,
-		Timeout:   10 * time.Second,
 	}
 
 	log.Debugf("Worker [%d] initialized and awaiting tasks", id)
@@ -54,8 +57,16 @@ func StartWorker(id int, targetChan <-chan Target, resultChan chan<- Result, log
 			method = "GET"
 		}
 
-		req, err := http.NewRequest(method, target.URL, nil)
+		timeout := defaultTimeout
+		if target.TimeoutMs > 0 {
+			timeout = time.Duration(target.TimeoutMs) * time.Millisecond
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+
+		req, err := http.NewRequestWithContext(ctx, method, target.URL, nil)
 		if err != nil {
+			cancel()
 			result.Latency = 0
 			result.StatusCode = 0
 			resultChan <- result
@@ -64,6 +75,7 @@ func StartWorker(id int, targetChan <-chan Target, resultChan chan<- Result, log
 
 		startTime := time.Now()
 		resp, err := client.Do(req)
+		cancel()
 		if err != nil {
 			result.Latency = time.Since(startTime)
 			result.StatusCode = 0

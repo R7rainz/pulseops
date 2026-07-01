@@ -3,12 +3,12 @@
 ## Stack
 - Fastify v5.8, TypeScript 6 strict, Node 22+
 - Prisma v7 (PostgreSQL via `@prisma/adapter-pg`)
-- BullMQ v5 + ioredis (job queues)
+- BullMQ v5 + ioredis (webhook delivery retry queue)
+- kafkajs (dispatch/consume monitor checks to/from `workers/ping-engine`, the Go worker in this monorepo)
 - Zod v4 for validation
 - jsonwebtoken + bcryptjs for auth
-- node-cron for ping scheduler
 - axios for HTTP requests
-- pnpm (monorepo workspace root at repo base)
+- pnpm (monorepo workspace root at repo base — sibling dirs: `../frontend/` and `../workers/ping-engine/`)
 
 ## Architecture Pattern
 Routes → Controller → Service → Prisma
@@ -20,10 +20,10 @@ Routes → Controller → Service → Prisma
 - `prisma/schema.prisma` — database schema (User, Workspace, WorkspaceMember, Monitor, MonitorCheck, Incident, ApiKey, WebhookEndpoint, WebhookDeliveryLog, WorkspaceInvite). Billing fields live inline on `Workspace` (`planTier`, `razorpayCustomerId`, `razorpaySubId`, `subscriptionStatus`) — there is no separate `Subscription` model.
 - `prisma.config.ts` — Prisma v7 config (loads dotenv, exports datasource URL)
 - `src/server.ts` — entry point (loads dotenv, calls buildApp, listens)
-- `src/app.ts` — Fastify bootstrap: CORS, rate limiting, global error handler, health check, registers all routes, starts the ping engine + webhook retry worker
-- `src/lib/` — db.ts (PrismaClient), jwt.ts (sign/verify HS256), password.ts (bcrypt), redis.ts (ioredis client)
+- `src/app.ts` — Fastify bootstrap: CORS, rate limiting, global error handler, health check, registers all routes, connects Kafka, starts the metrics consumer + monitor dispatch scheduler + webhook retry worker
+- `src/lib/` — db.ts (PrismaClient), jwt.ts (sign/verify HS256), password.ts (bcrypt), redis.ts (ioredis client), kafka.ts (kafkajs client/producer/consumer)
 - `src/middleware/` — auth.middleware.ts (Bearer JWT), api-key.middleware.ts (x-api-key header), rbac.middleware.ts (workspace role checks)
-- `src/modules/` — auth, workspaces, monitors, incidents, webhooks, billing, status
+- `src/modules/` — auth, workspaces, monitors, incidents, webhooks, billing, status, telemetry (Kafka metrics consumer)
 - `src/workers/` — `webhook.worker.ts` exports `startWebhookRetryWorker()`, a BullMQ consumer for failed webhook delivery retries. Started automatically from `app.ts` — no separate process needed.
 
 ## Auth
@@ -34,15 +34,21 @@ Routes → Controller → Service → Prisma
 - `POST /auth/refresh` — re-signs token ignoring expiry (for frontend auto-refresh)
 - API key auth via `x-api-key` header (for heartbeat endpoint)
 
-## Ping Engine (`src/modules/monitors/monitor.engine.ts`)
-This is the single source of truth for monitor checks — there is no separate queue/broker pipeline.
-- `checkMonitor(monitor)` — runs one full check (HTTP + TLS + state machine + incidents + webhooks + Redis live-state) for a single monitor. Exported so it can be reused.
-- `startPingEngine()` — node-cron job (`* * * * *`, every 60s) that fetches all active monitors and calls `checkMonitor` on each in parallel via `Promise.all`. Started from `app.ts`.
-- The "run check now" button (`POST /workspaces/:wsId/monitors/:monitorId/check`) calls `checkMonitor` directly and returns the result synchronously — no queue involved.
-- HTTP ping: native `fetch()` with AbortController timeout
-- SSL inspection: parallel `tls.connect()` via `tls.inspector.ts`
+## Monitor Checks — two paths, one shared core
+
+All check outcomes (however they were produced) converge on `applyCheckResult()` in `src/modules/monitors/monitor.engine.ts` — the state machine, DB transaction, incident open/resolve, webhook firing, and Redis live-state write live there exactly once.
+
+**Automatic periodic checks (production path):**
+1. `src/modules/monitors/monitor.scheduler.ts` — `startMonitorDispatchScheduler()` polls every 15s for monitors that are due (respecting each monitor's own `intervalSeconds` vs `lastCheckedAt`, plus the maintenance-window/PAUSED rules), and publishes them to `KAFKA_TARGETS_TOPIC` as `{id, url, method, expected_status, timeout_ms, workspace_id}`.
+2. `../workers/ping-engine` (Go, sibling dir in this monorepo) consumes that topic, pings each target concurrently via a goroutine worker pool (`CONCURRENT_WORKERS`, default 20-50), captures TLS issuer/expiry inline off the same HTTPS handshake, and publishes a `Result` to `KAFKA_METRICS_TOPIC`.
+3. `src/modules/telemetry/metrics.consumer.ts` — `startMetricsConsumer()` consumes that topic, re-fetches the monitor fresh from Postgres (state may have changed since dispatch), converts the Go engine's result into a `PingResult`, and calls `applyCheckResult()`.
+
+This means **Kafka + the ping-engine container must be running for automatic checks to happen** — `connectKafka()` won't crash the API if Kafka is unreachable, it just logs and automatic checks silently stop until it reconnects. Run the full stack via the root `docker-compose.yml` (includes `zookeeper`, `kafka`, `ping-engine`) rather than just `pnpm dev` in isolation.
+
+**On-demand check (`POST /workspaces/:wsId/monitors/:monitorId/check`, the "check now" button):**
+Calls `checkMonitor(monitor)` — `performPing()` (a local `fetch()` + `tls.inspector.ts` TLS check) immediately followed by `applyCheckResult()` — and returns the result synchronously in the response. Deliberately bypasses Kafka so it doesn't depend on the Go engine and returns instantly.
+
 - State machine: consecutiveFailures >= graceThreshold → DOWN/DEGRADED
-- Creates MonitorCheck records, updates Monitor, opens/resolves Incidents, fires webhooks
 - SSL ≤7 days + HTTP up → DEGRADED (not DOWN), creates SSL-specific incident
 
 ## Key Endpoints (prefix `/api/v1`)
@@ -110,6 +116,11 @@ This is the single source of truth for monitor checks — there is no separate q
 | `RAZORPAY_KEY_SECRET` | — |
 | `RAZORPAY_WEBHOOK_SECRET` | — (required for `/billing/webhook` to verify signatures) |
 | `FRONTEND_URL` | `http://localhost:3000` — also used as the CORS allowlist (comma-separated for multiple origins) |
+| `KAFKA_BROKERS` | `localhost:9092` (comma-separated). `kafka:29092` inside docker-compose. |
+| `KAFKA_TARGETS_TOPIC` | `pulseops.monitors.targets` — dispatched to by the scheduler, consumed by `workers/ping-engine` |
+| `KAFKA_METRICS_TOPIC` | `pulseops.monitors.metrics` — published by `workers/ping-engine`, consumed by `metrics.consumer.ts` |
+
+`workers/ping-engine` has its own env vars (`KAFKA_CONSUMER_GROUP`, `CONCURRENT_WORKERS`) — see `workers/ping-engine/.env`.
 
 ## Scripts
 - `pnpm dev` — `tsx watch src/server.ts` (hot-reload)
@@ -118,7 +129,7 @@ This is the single source of truth for monitor checks — there is no separate q
 - `pnpm prisma:dev` — `prisma migrate dev`
 - `pnpm prisma:studio` — Prisma Studio GUI
 - After Prisma schema changes: `prisma db push` (uses `prisma.config.ts`)
-- Single process — `pnpm dev` / `pnpm start` is all you need. The ping engine and webhook retry worker start in-process; there are no separate worker/scheduler processes to run.
+- Single Node process — `pnpm dev` / `pnpm start` is all you need on the TS side (webhook retry worker + Kafka dispatch scheduler + metrics consumer all start in-process, no separate TS worker processes). But for automatic monitor checks to actually run, Kafka and `workers/ping-engine` also need to be up — easiest via `docker compose up` at the repo root. Without them, the API still works, but only the on-demand "check now" button pings anything.
 - Deploys: run `npx prisma migrate deploy` against `DATABASE_URL` as a release step (CI/CD) before rolling out a new image — it is not run automatically by the Dockerfile or at container start.
 
 ## Frontend repo (`../frontend/`)

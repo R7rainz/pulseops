@@ -62,6 +62,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      kafka:
+        condition: service_started
     ports:
       - "4000:4000"
     env_file:
@@ -77,6 +79,22 @@ services:
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - NODE_ENV=production
       - APP_URL=http://localhost:3000
+
+  ping-engine:
+    build:
+      context: .
+      dockerfile: workers/ping-engine/Dockerfile
+    container_name: pulseops-ping-engine
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_started
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+      - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets
+      - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics
+      - KAFKA_CONSUMER_GROUP=pulseops-ping-workers
+      - CONCURRENT_WORKERS=50
 
   web:
     build:

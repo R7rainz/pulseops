@@ -10,8 +10,10 @@ import { webhookRoutes } from "./modules/webhooks/webhook.routes";
 import { publicStatusRoutes } from "./modules/status/status.routes";
 import { inviteRoutes } from "./modules/workspaces/invite.routes";
 import { billingRoutes } from "./modules/billing/billing.routes";
-import { startPingEngine } from "./modules/monitors/monitor.engine";
 import { startWebhookRetryWorker } from "./workers/webhook.worker";
+import { connectKafka, kafkaProducer, kafkaConsumer } from "./lib/kafka";
+import { startMetricsConsumer } from "./modules/telemetry/metrics.consumer";
+import { startMonitorDispatchScheduler, stopMonitorDispatchScheduler } from "./modules/monitors/monitor.scheduler";
 import { prisma } from "./lib/db";
 import { redis } from "./lib/redis";
 
@@ -99,7 +101,14 @@ export async function buildApp() {
 
 export async function start(app: FastifyInstance) {
     try {
-        startPingEngine();
+        // Automatic monitor checks flow through Kafka to workers/ping-engine
+        // (the Go service). If Kafka is unreachable, connectKafka() logs and
+        // continues rather than crashing the API — but no automatic checks
+        // will run until it's back. The "check now" endpoint always works
+        // regardless, since it pings locally instead of going through Kafka.
+        await connectKafka();
+        await startMetricsConsumer();
+        startMonitorDispatchScheduler();
         startWebhookRetryWorker();
 
         const port = Number(process.env.PORT) || 4000;
@@ -117,6 +126,9 @@ export function setupShutdownHandlers(app: FastifyInstance) {
     signals.forEach((signal) => {
         process.on(signal, async () => {
             app.log.info(`[SHUTDOWN] Intercepted ${signal}. Powering down tracking engines...`);
+            stopMonitorDispatchScheduler();
+            try { await kafkaProducer.disconnect(); } catch {}
+            try { await kafkaConsumer.disconnect(); } catch {}
             await app.close();
             process.exit(0);
         });

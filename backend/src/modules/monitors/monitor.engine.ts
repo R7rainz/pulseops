@@ -1,16 +1,28 @@
-import cron from "node-cron";
 import type { Monitor } from "../../generated/prisma/client";
 import { prisma } from "../../lib/db";
 import { redis } from "../../lib/redis";
 import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 import { inspectSslCertificate } from "./tls.inspector";
 
-export async function checkMonitor(monitor: Monitor) {
+export type PingResult = {
+  isUp: boolean;
+  statusCode: number;
+  latencyMs: number;
+  tlsIssuer: string | null;
+  tlsValidTo: Date | null;
+  tlsDaysRemaining: number | null;
+};
+
+// Performs the actual network work for a single monitor. Used by the
+// synchronous "check now" path. Automatic periodic checks instead go through
+// the Go ping-engine (workers/ping-engine) via Kafka — see monitor.scheduler.ts
+// and modules/telemetry/metrics.consumer.ts — and land on applyCheckResult
+// directly with a PingResult built from that engine's output.
+export async function performPing(monitor: Monitor): Promise<PingResult> {
   const startTime = performance.now();
-  let currentAttemptUp = false;
+  let isUp = false;
   let statusCode = 0;
 
-  // 1. Run standard HTTP Ping
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(
@@ -26,21 +38,34 @@ export async function checkMonitor(monitor: Monitor) {
 
     clearTimeout(timeoutId);
     statusCode = response.status;
-
-    currentAttemptUp = statusCode === monitor.expectedStatus;
+    isUp = statusCode === monitor.expectedStatus;
   } catch (error) {
-    currentAttemptUp = false;
+    isUp = false;
     statusCode = 500;
   }
 
-  const endTime = performance.now();
-  const latencyMs = Math.round(endTime - startTime);
+  const latencyMs = Math.round(performance.now() - startTime);
 
-  // 2. Run SSL Inspection
   const sslData = await inspectSslCertificate(monitor.url);
-  const isSslFailing = sslData && sslData.daysRemaining <= 7;
 
-  // 3. Maintenance Window Suppression
+  return {
+    isUp,
+    statusCode,
+    latencyMs,
+    tlsIssuer: sslData?.issuer ?? null,
+    tlsValidTo: sslData?.validTo ?? null,
+    tlsDaysRemaining: sslData?.daysRemaining ?? null,
+  };
+}
+
+// Applies a ping outcome to a monitor: maintenance-window suppression, the
+// UP/DOWN/DEGRADED state machine, the MonitorCheck/Monitor/Incident
+// transaction, Redis live-state, and webhook notifications. Shared by both
+// the on-demand check path and the Kafka metrics consumer.
+export async function applyCheckResult(monitor: Monitor, pingResult: PingResult) {
+  const { isUp: currentAttemptUp, statusCode, latencyMs, tlsIssuer, tlsValidTo, tlsDaysRemaining } = pingResult;
+  const isSslFailing = tlsDaysRemaining !== null && tlsDaysRemaining <= 7;
+
   const now = new Date();
   const isUnderMaintenance =
     monitor.maintenanceStartAt &&
@@ -55,7 +80,7 @@ export async function checkMonitor(monitor: Monitor) {
 
   let incidentTitle = `Node Offline: HTTP ${statusCode} threshold breached`;
 
-  // 4. State Machine Logic (factoring in SSL)
+  // State Machine Logic (factoring in SSL)
   if (currentAttemptUp && !isSslFailing) {
     updatedFailures = 0;
     targetStatus = "UP";
@@ -76,22 +101,22 @@ export async function checkMonitor(monitor: Monitor) {
 
       const crossedThreshold = monitor.status !== targetStatus && updatedFailures === monitor.graceThreshold;
 
-      // 5. Suppress incident trigger if under maintenance
+      // Suppress incident trigger if under maintenance
       if (crossedThreshold && !isUnderMaintenance) {
         newlyTriggeredIncident = true;
         if (isSslFailing && currentAttemptUp) {
-          incidentTitle = `SSL/TLS Degradation: Certificate expires in ${sslData!.daysRemaining} days`;
+          incidentTitle = `SSL/TLS Degradation: Certificate expires in ${tlsDaysRemaining} days`;
         }
       }
     }
   }
 
-  // 6. Force PAUSED status in UI during maintenance
+  // Force PAUSED status in UI during maintenance
   if (isUnderMaintenance) {
     targetStatus = "PAUSED";
   }
 
-  // 4. Build Atomic DB Transaction
+  // Build Atomic DB Transaction
   const transactionQueries: any[] = [
     prisma.monitorCheck.create({
       data: {
@@ -107,9 +132,9 @@ export async function checkMonitor(monitor: Monitor) {
         status: targetStatus,
         consecutiveFailures: updatedFailures,
         lastCheckedAt: new Date(),
-        tlsIssuer: sslData?.issuer || null,
-        tlsValidTo: sslData?.validTo || null,
-        tlsDaysRemaining: sslData?.daysRemaining || null,
+        tlsIssuer,
+        tlsValidTo,
+        tlsDaysRemaining,
       },
     }),
   ];
@@ -143,7 +168,7 @@ export async function checkMonitor(monitor: Monitor) {
 
   const txResults = await prisma.$transaction(transactionQueries);
 
-  // 4.5. Write live state to Redis for the live-monitors endpoint
+  // Write live state to Redis for the live-monitors endpoint
   const liveState = {
     status: targetStatus,
     latency: latencyMs,
@@ -154,7 +179,7 @@ export async function checkMonitor(monitor: Monitor) {
     .set(`monitor:${monitor.id}:live`, JSON.stringify(liveState), "EX", 300)
     .catch((err: any) => console.error("[ENGINE] Redis live write failed:", err));
 
-  // 5. Blast Webhooks
+  // Blast Webhooks
   if (newlyTriggeredIncident) {
     const createdIncident = txResults[2];
 
@@ -184,36 +209,9 @@ export async function checkMonitor(monitor: Monitor) {
   return txResults[0];
 }
 
-export function startPingEngine() {
-  console.log("[SYSTEM] PulseOps industrial Telemetry Engine online.");
-
-  cron.schedule("* * * * *", async () => {
-    try {
-      const activeMonitors = await prisma.monitor.findMany({
-        where: {
-          isActive: true,
-          OR: [
-            { status: { not: "PAUSED" } },
-            {
-              status: "PAUSED",
-              maintenanceStartAt: { lte: new Date() },
-              maintenanceEndAt: { gte: new Date() },
-            },
-          ],
-        },
-      });
-
-      if (activeMonitors.length === 0) return;
-
-      await Promise.all(
-        activeMonitors.map((monitor) =>
-          checkMonitor(monitor).catch((error) =>
-            console.error(`[ENGINE] Check failed for monitor ${monitor.id}:`, error),
-          ),
-        ),
-      );
-    } catch (error) {
-      console.error("[ENGINE] Critical execution failure:", error);
-    }
-  });
+// Convenience wrapper for the on-demand "check now" path: ping locally and
+// apply the result synchronously, without going through Kafka.
+export async function checkMonitor(monitor: Monitor) {
+  const pingResult = await performPing(monitor);
+  return applyCheckResult(monitor, pingResult);
 }
