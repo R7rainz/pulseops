@@ -108,7 +108,6 @@ function ResetForm() {
           id="password"
           name="password"
           label="New password"
-          variant="line"
           autoComplete="new-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -135,7 +134,6 @@ function ResetForm() {
           id="confirmPassword"
           name="confirmPassword"
           label="Confirm new password"
-          variant="line"
           autoComplete="new-password"
           value={confirmPwd}
           onChange={(e) => setConfirmPwd(e.target.value)}
@@ -160,15 +158,12 @@ function ResetForm() {
 export default function ResetPasswordPage() {
   return (
     <div>
-      <div className="fade-up">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Reset</p>
-        <h1 className="mt-3 font-display font-semibold leading-[1.05] tracking-tight text-[clamp(2.25rem,5vw,3.25rem)]">
-          Set a new <span className="text-primary">password.</span>
-        </h1>
-        <p className="mt-3 text-[15px] text-muted-foreground">Choose a strong password for your account.</p>
+      <div className="text-center">
+        <h1 className="font-display text-[1.7rem] font-semibold tracking-tight text-foreground">Set a new password</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">Choose a strong password for your account</p>
       </div>
 
-      <div className="fade-up mt-9" style={{ animationDelay: "80ms" }}>
+      <div className="mt-8">
         <Suspense fallback={<p className="text-sm text-muted-foreground">Loading…</p>}>
           <ResetForm />
         </Suspense>

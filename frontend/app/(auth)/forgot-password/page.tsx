@@ -42,15 +42,12 @@ export default function ForgotPasswordPage() {
 
   return (
     <div>
-      <div className="fade-up">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Reset</p>
-        <h1 className="mt-3 font-display font-semibold leading-[1.05] tracking-tight text-[clamp(2.25rem,5vw,3.25rem)]">
-          Forgot your <span className="text-primary">password?</span>
-        </h1>
-        <p className="mt-3 text-[15px] text-muted-foreground">We’ll email you a secure reset link.</p>
+      <div className="text-center">
+        <h1 className="font-display text-[1.7rem] font-semibold tracking-tight text-foreground">Reset your password</h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">We’ll email you a secure reset link</p>
       </div>
 
-      <div className="fade-up mt-9" style={{ animationDelay: "80ms" }}>
+      <div className="mt-8">
         {status === "success" ? (
           <div>
             <div role="status" className="mb-6 flex items-start gap-2 text-sm text-primary">
@@ -63,16 +60,16 @@ export default function ForgotPasswordPage() {
             </Link>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {status === "error" && (
-              <div role="alert" className="flex items-start gap-2 text-sm text-down">
+              <div role="alert" className="flex items-start gap-2.5 rounded-xl border border-down/30 bg-down/10 p-3 text-sm text-down">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <p>{message}</p>
               </div>
             )}
 
-            <div className="space-y-1">
-              <label htmlFor="email" className="block text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-foreground">
                 Email
               </label>
               <input
@@ -83,11 +80,11 @@ export default function ForgotPasswordPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="you@company.com"
-                className="field-line"
+                className="field"
               />
             </div>
 
-            <button type="submit" disabled={status === "loading"} className="btn btn-primary w-full py-3.5 text-base">
+            <button type="submit" disabled={status === "loading"} className="btn btn-primary w-full py-3 text-[15px]">
               {status === "loading" ? "Sending…" : "Send reset link"}
             </button>
           </form>
