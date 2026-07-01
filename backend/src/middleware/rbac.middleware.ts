@@ -8,8 +8,35 @@ export function requireRole(allowedRoles: WorkspaceRole[]) {
     try {
       const params = request.params as Record<string, string>;
       const body = request.body as Record<string, unknown> | null;
-      const workspaceId = Number(params.workspaceId || body?.workspaceId);
       const userId = request.user?.userId;
+
+      let workspaceId = Number(params.workspaceId || body?.workspaceId);
+
+      if (!workspaceId && params.incidentId) {
+        const incident = await prisma.incident.findUnique({
+          where: { id: Number(params.incidentId) },
+          select: { monitor: { select: { workspaceId: true } } },
+        });
+
+        if (!incident) {
+          return response.status(404).send({ message: "Incident not found" });
+        }
+
+        workspaceId = incident.monitor.workspaceId;
+      }
+
+      if (!workspaceId && params.keyId) {
+        const apiKey = await prisma.apiKey.findUnique({
+          where: { id: Number(params.keyId) },
+          select: { workspaceId: true },
+        });
+
+        if (!apiKey) {
+          return response.status(404).send({ message: "API key not found" });
+        }
+
+        workspaceId = apiKey.workspaceId;
+      }
 
       if (!workspaceId) {
         return response.status(400).send({ message: "Workspace context missing for authorization" });

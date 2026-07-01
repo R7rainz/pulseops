@@ -6,7 +6,10 @@ export const createMonitorSchema = z.object({
     .min(2, { message: "Monitor name must be atleast 2 characters long" })
     .max(80, { message: "Monitor name length cannot exceed 80 characters" }),
 
-  url: z.string().url({ message: "Invalid URL format" }),
+  url: z.preprocess(
+    (v) => (typeof v === "string" && !/^https?:\/\//i.test(v) ? `https://${v}` : v),
+    z.string().url({ message: "Invalid URL format" }),
+  ),
 
   method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]).default("GET"),
 

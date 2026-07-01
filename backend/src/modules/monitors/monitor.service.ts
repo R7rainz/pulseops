@@ -189,21 +189,40 @@ export async function getMonitorChecksService(
     return { checks, total };
 }
 
+function percentile(sortedAsc: number[], p: number): number {
+    if (sortedAsc.length === 0) return 0;
+    const index = Math.min(sortedAsc.length - 1, Math.ceil((p / 100) * sortedAsc.length) - 1);
+    return sortedAsc[Math.max(0, index)];
+}
+
 function computeStats(checks: { status: string; responseTimeMs: number | null }[]) {
     const totalChecks = checks.length;
     const upChecks = checks.filter((c) => c.status === "UP").length;
     const downChecks = checks.filter((c) => c.status === "DOWN").length;
+    const degradedChecks = checks.filter((c) => c.status === "DEGRADED").length;
     const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
-    const withRt = checks.filter((c) => c.responseTimeMs !== null);
-    const averageResponseTimeMs = withRt.length === 0
+
+    // Only healthy (UP) checks count toward latency — a DOWN/DEGRADED check's timing
+    // reflects a timeout/failure, not real response performance.
+    const upLatencies = checks
+        .filter((c) => c.status === "UP" && c.responseTimeMs !== null)
+        .map((c) => c.responseTimeMs!)
+        .sort((a, b) => a - b);
+
+    const averageResponseTimeMs = upLatencies.length === 0
         ? 0
-        : withRt.reduce((s, c) => s + c.responseTimeMs!, 0) / withRt.length;
+        : upLatencies.reduce((s, v) => s + v, 0) / upLatencies.length;
+
     return {
         totalChecks,
         upChecks,
         downChecks,
+        degradedChecks,
         uptimePercentage: Math.round(uptimePercentage * 100) / 100,
         averageResponseTimeMs: Math.round(averageResponseTimeMs * 100) / 100,
+        p50ResponseTimeMs: Math.round(percentile(upLatencies, 50) * 100) / 100,
+        p95ResponseTimeMs: Math.round(percentile(upLatencies, 95) * 100) / 100,
+        p99ResponseTimeMs: Math.round(percentile(upLatencies, 99) * 100) / 100,
     };
 }
 

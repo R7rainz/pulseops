@@ -14,10 +14,10 @@ export async function createApiKeyService(
   input: CreateApiKeyInput,
 ) {
   const membership = await prisma.workspaceMember.findFirst({
-    where: { userId, workspaceId, role: "OWNER" },
+    where: { userId, workspaceId, role: { in: ["OWNER", "ADMIN"] } },
   });
 
-  if (!membership) throw new Error("Only workspace owners can create API keys");
+  if (!membership) throw new Error("Only workspace owners or admins can create API keys");
 
   const key = generateApiKey();
 
@@ -67,7 +67,7 @@ export async function revokeApiKeyService(
       workspace: {
         include: {
           members: {
-            where: { userId, role: "OWNER" },
+            where: { userId, role: { in: ["OWNER", "ADMIN"] } },
           },
         },
       },

@@ -8,6 +8,10 @@ function setToast(cookieStore: Awaited<ReturnType<typeof cookies>>, message: str
   cookieStore.set("pulseops_toast", JSON.stringify({ message, type }), { path: "/", maxAge: 5 });
 }
 
+function normalizeUrl(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 export async function createMonitor(formData: FormData) {
   const name = formData.get("name") as string;
   const url = formData.get("url") as string;
@@ -41,7 +45,7 @@ export async function createMonitor(formData: FormData) {
         },
         body: JSON.stringify({
           name,
-          url,
+          url: normalizeUrl(url),
           method,
           intervalSeconds: intervalSeconds || 60,
           timeoutMs: timeoutMs || 5000,
@@ -205,7 +209,7 @@ export async function updateMonitor(formData: FormData) {
 
   const body: Record<string, unknown> = {};
   if (name) body.name = name;
-  if (url) body.url = url;
+  if (url) body.url = normalizeUrl(url);
   if (method) body.method = method;
   if (intervalSeconds) body.intervalSeconds = intervalSeconds;
   if (timeoutMs) body.timeoutMs = timeoutMs;
