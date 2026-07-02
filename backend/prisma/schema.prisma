@@ -92,6 +92,8 @@ model Monitor {
   graceThreshold      Int           @default(3)
   isActive            Boolean       @default(true)
   lastCheckedAt       DateTime?
+  lastResponseTime    Int?
+  lastStatusCode      Int?
   lastHeartbeatAt     DateTime?
   tlsIssuer           String?
   tlsValidTo          DateTime?

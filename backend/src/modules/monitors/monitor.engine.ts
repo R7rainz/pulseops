@@ -132,6 +132,10 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
         status: targetStatus,
         consecutiveFailures: updatedFailures,
         lastCheckedAt: new Date(),
+        // Persist the latest latency/status so the UI can show last-known
+        // stats even after the 5-minute Redis live cache expires.
+        lastResponseTime: latencyMs,
+        lastStatusCode: statusCode,
         tlsIssuer,
         tlsValidTo,
         tlsDaysRemaining,

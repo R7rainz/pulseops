@@ -25,6 +25,8 @@ interface Monitor {
   consecutiveFailures: number;
   graceThreshold: number;
   lastCheckedAt: string | null;
+  lastResponseTime?: number | null;
+  lastStatusCode?: number | null;
 }
 
 interface MonitorGridProps {
@@ -77,11 +79,17 @@ export default function MonitorGrid({ workspaceId, initialMonitors, canEdit }: M
             <div className="grid grid-cols-3 gap-3 border-t border-border pt-3">
               <Metric label="Latency">
                 <span className={cn(isDown ? "text-down" : isDegraded ? "text-degraded" : "text-up")}>
-                  {live ? `${live.latency}ms` : "—"}
+                  {live
+                    ? `${live.latency}ms`
+                    : monitor.lastResponseTime != null
+                      ? `${monitor.lastResponseTime}ms`
+                      : "—"}
                 </span>
               </Metric>
               <Metric label="HTTP">
-                <span className={isDown ? "text-down" : "text-foreground"}>{live?.statusCode ?? "—"}</span>
+                <span className={isDown ? "text-down" : "text-foreground"}>
+                  {live?.statusCode ?? monitor.lastStatusCode ?? "—"}
+                </span>
               </Metric>
               <Metric label="Last check">
                 <span className="text-muted-foreground">
