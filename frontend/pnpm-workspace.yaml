@@ -1,4 +1,9 @@
+# pnpm records dependency build-script decisions here. Native deps need
+# their build; vue-demi (a transitive Scalar/Vue dep) ships a postinstall
+# shim we don't need, so it's marked false. Without an explicit decision,
+# `pnpm install --frozen-lockfile` fails in CI with ERR_PNPM_IGNORED_BUILDS.
 allowBuilds:
   msw: true
   sharp: true
   unrs-resolver: true
+  vue-demi: false

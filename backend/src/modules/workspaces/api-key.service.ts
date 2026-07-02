@@ -26,6 +26,7 @@ export async function createApiKeyService(
       workspaceId,
       name: input.name,
       key,
+      scope: input.scope,
     },
   });
 
@@ -47,6 +48,7 @@ export async function getApiKeysService(
     select: {
       id: true,
       name: true,
+      scope: true,
       lastUsedAt: true,
       isActive: true,
       createdAt: true,

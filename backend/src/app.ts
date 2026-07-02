@@ -1,6 +1,9 @@
 import Fastify, { type FastifyInstance, type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
+import swagger from "@fastify/swagger";
+import scalarApiReference from "@scalar/fastify-api-reference";
+import { scalarThemeCss } from "./lib/scalar-theme";
 import { ZodError } from "zod";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { workspaceRoutes } from "./modules/workspaces/workspace.routes";
@@ -36,6 +39,69 @@ export async function buildApp() {
         global: true,
         max: 100,
         timeWindow: "1 minute",
+    });
+
+    // OpenAPI docs for the programmatic API. Registered before routes so its
+    // onRoute hook captures them. Only routes that declare `schema.tags` are
+    // included in the spec (see transform) — that's the key-authed surface;
+    // internal browser-only endpoints stay out of the public docs.
+    await app.register(swagger, {
+        openapi: {
+            info: {
+                title: "PulseOps API",
+                description:
+                    "Programmatic access to PulseOps monitors and incidents. " +
+                    "Authenticate with a workspace API key via the `x-api-key` header " +
+                    "(create one in Settings → API Keys). v1 keys are read-only.",
+                version: "1.0.0",
+            },
+            servers: [
+                { url: process.env.PUBLIC_API_URL || "http://localhost:4000" },
+            ],
+            components: {
+                securitySchemes: {
+                    apiKey: {
+                        type: "apiKey",
+                        name: "x-api-key",
+                        in: "header",
+                        description: "Workspace API key (prefixed `po_`).",
+                    },
+                    bearerAuth: {
+                        type: "http",
+                        scheme: "bearer",
+                        bearerFormat: "JWT",
+                        description: "Session token used by the PulseOps web app.",
+                    },
+                },
+            },
+            tags: [
+                { name: "Monitors", description: "Monitor config, live state, checks, stats and SLA analytics." },
+                { name: "Incidents", description: "Incident history." },
+                { name: "Heartbeat", description: "Push liveness signals for HEARTBEAT monitors." },
+            ],
+        },
+        transform: ({ schema, url }: { schema: any; url: string }) => {
+            const documented =
+                schema && Array.isArray(schema.tags) && schema.tags.length > 0;
+            return documented
+                ? { schema, url }
+                : { schema: { ...(schema || {}), hide: true }, url };
+        },
+    });
+
+    // Scalar renders the spec as a classic docs site: left sidebar grouped by
+    // tag, ⌘/Ctrl-K search, per-endpoint pages with request/response examples.
+    // It sources the OpenAPI document from @fastify/swagger above.
+    await app.register(scalarApiReference, {
+        routePrefix: "/docs",
+        configuration: {
+            pageTitle: "PulseOps API",
+            theme: "default",
+            // Default to dark (the app's default) but keep the toggle so the
+            // docs can switch to light like the rest of the site.
+            darkMode: true,
+            customCss: scalarThemeCss,
+        },
     });
 
     app.setErrorHandler((error: FastifyError | ZodError, request, response) => {

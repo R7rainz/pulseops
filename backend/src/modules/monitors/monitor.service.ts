@@ -1,6 +1,10 @@
 import type { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
 import { checkMonitor } from "./monitor.engine";
+import {
+    assertWorkspaceAccess,
+    type AccessContext,
+} from "../../middleware/workspace-access.middleware";
 
 export async function createMonitorService(
     userId: number,
@@ -60,21 +64,10 @@ export async function createMonitorService(
 }
 
 export async function getWorkspaceMonitorsService(
-    userId: number,
+    access: AccessContext,
     workspaceId: number,
 ) {
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    await assertWorkspaceAccess(access, workspaceId);
 
     const monitors = await prisma.monitor.findMany({
         where: {
@@ -117,17 +110,11 @@ export async function runMonitorCheckNowService(
 }
 
 export async function getMonitorService(
-    userId: number,
+    access: AccessContext,
     workspaceId: number,
     monitorId: number,
 ) {
-    const membership = await prisma.workspaceMember.findUnique({
-        where: { userId_workspaceId: { userId, workspaceId } },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    await assertWorkspaceAccess(access, workspaceId);
 
     const [monitor, workspace] = await Promise.all([
         prisma.monitor.findFirst({
@@ -153,7 +140,7 @@ export async function getMonitorService(
 }
 
 export async function getMonitorChecksService(
-    userId: number,
+    access: AccessContext,
     monitorId: number,
     limit: number,
     offset: number,
@@ -168,18 +155,7 @@ export async function getMonitorChecksService(
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this monitor");
-    }
+    await assertWorkspaceAccess(access, monitor.workspaceId);
 
     const [checks, total] = await Promise.all([
         prisma.monitorCheck.findMany({
@@ -232,7 +208,7 @@ function computeStats(checks: { status: string; responseTimeMs: number | null }[
 }
 
 export async function getMonitorStatsService(
-    userId: number,
+    access: AccessContext,
     monitorId: number,
 ) {
     const monitor = await prisma.monitor.findUnique({
@@ -243,15 +219,7 @@ export async function getMonitorStatsService(
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: { userId, workspaceId: monitor.workspaceId },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this monitor");
-    }
+    await assertWorkspaceAccess(access, monitor.workspaceId);
 
     const allChecks = await prisma.monitorCheck.findMany({
         where: { monitorId },

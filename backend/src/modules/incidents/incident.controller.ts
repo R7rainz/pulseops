@@ -26,7 +26,7 @@ export async function getWorkspaceIncidentsController(
     }
 
     const incidents = await getWorkspaceIncidentsService(
-        request.user.userId,
+        request.access!,
         workspaceId,
     );
     return response.status(200).send({
@@ -47,7 +47,7 @@ export async function getIncidentByIdController(
     }
 
     const incident = await getIncidentByIdService(
-        request.user.userId,
+        request.access!,
         incidentId,
     );
 

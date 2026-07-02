@@ -53,6 +53,7 @@ export async function updateWorkspaceName(formData: FormData) {
 export async function createApiKey(formData: FormData) {
   const workspaceId = formData.get("workspaceId") as string;
   const name = formData.get("name") as string;
+  const scope = formData.get("scope") === "READ_WRITE" ? "READ_WRITE" : "READ_ONLY";
 
   if (!name || !workspaceId) return;
 
@@ -69,7 +70,7 @@ export async function createApiKey(formData: FormData) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, scope }),
       },
     );
 
