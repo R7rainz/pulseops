@@ -1,9 +1,7 @@
-import { API_URL } from "@/lib/constants";
+// Same-origin proxy for the backend's OpenAPI document, so Scalar fetches the
+// spec without CORS and the API host stays internal. The spec is public.
+const API_URL = process.env.API_URL || "http://127.0.0.1:4000";
 
-// Same-origin proxy for the backend's OpenAPI document. Fetching it here
-// (server-side) instead of pointing the docs client straight at :4000 keeps
-// the spec on the frontend origin — no CORS, and the backend host stays
-// internal. The spec is public, so no auth is forwarded.
 export const dynamic = "force-dynamic";
 
 export async function GET() {

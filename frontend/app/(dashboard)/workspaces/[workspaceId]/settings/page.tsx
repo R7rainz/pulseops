@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { API_URL } from "@/lib/constants";
+import { API_URL, DOCS_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
@@ -139,13 +139,14 @@ export default async function WorkspaceSettingsPage({
             <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
               <Key className="h-4 w-4 text-muted-foreground" /> API keys
             </h3>
-            <Link
-              href="/docs"
+            <a
+              href={DOCS_URL}
               target="_blank"
+              rel="noreferrer"
               className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
             >
               <BookOpen className="h-3.5 w-3.5" /> API docs ↗
-            </Link>
+            </a>
           </div>
 
           {apiKeys.length > 0 ? (

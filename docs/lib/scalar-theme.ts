@@ -1,18 +1,15 @@
-// Maps Scalar's theme variables onto PulseOps' own design tokens (the CSS
-// custom properties defined in app/globals.css). Because these reference
-// `var(--background)` etc., the embedded API docs recolor live with the app's
-// light/dark toggle and use the same Geist/Instrument fonts — one source of
-// truth, no separate palette to keep in sync.
+// Maps Scalar's theme variables onto the docs app's color tokens (defined in
+// app/globals.css). Because they reference var(--background) etc., the docs
+// recolor live with the .dark class on <html> (the theme toggle), matching the
+// main PulseOps app's palette.
 export const scalarThemeCss = `
 :root {
-  --scalar-font: var(--font-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --scalar-font-code: var(--font-geist-mono), ui-monospace, "JetBrains Mono", Menlo, monospace;
+  --scalar-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --scalar-font-code: ui-monospace, "Geist Mono", "JetBrains Mono", "SFMono-Regular", Menlo, monospace;
   --scalar-radius: 0.625rem;
   --scalar-radius-lg: 0.875rem;
 }
 
-/* Drive both Scalar modes from the app tokens so it always matches whatever
-   theme the app is in (html.dark), rather than Scalar's own mode state. */
 .light-mode,
 .dark-mode {
   --scalar-background-1: var(--background);
@@ -47,6 +44,6 @@ export const scalarThemeCss = `
   --scalar-sidebar-color-active: var(--primary);
   --scalar-sidebar-search-background: var(--surface);
   --scalar-sidebar-search-border-color: var(--border);
-  --scalar-sidebar-search--color: var(--muted-foreground);
+  --scalar-sidebar-search-color: var(--muted-foreground);
 }
 `;

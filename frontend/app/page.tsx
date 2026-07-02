@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { API_URL } from "@/lib/constants";
+import { API_URL, DOCS_URL } from "@/lib/constants";
 import AmbientGlow from "@/components/AmbientGlow";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Brand } from "@/components/Brand";
@@ -21,6 +21,7 @@ import {
   Workflow,
   GitPullRequest,
   Check,
+  Code2,
 } from "lucide-react";
 
 const FEATURES = [
@@ -56,7 +57,9 @@ export default async function RootPage() {
         destination =
           workspaces.length > 0 ? `/workspaces/${workspaces[0].id}/monitors` : "/workspaces/new";
       } else if (res.status === 401) {
-        redirect("/api/auth/logout");
+        // Expired session on the home page — clear it and show the landing
+        // page rather than bouncing the visitor to /login.
+        redirect("/api/auth/logout?redirect=/");
       }
     } catch (error) {
       if ((error as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) throw error;
@@ -105,6 +108,12 @@ export default async function RootPage() {
           <Brand href="/" />
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle className="h-9 w-9" />
+            <a
+              href={DOCS_URL}
+              className="hidden items-center gap-1.5 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+            >
+              <Code2 className="h-4 w-4" /> API docs
+            </a>
             <Link
               href="/login"
               className="px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -280,9 +289,17 @@ export default async function RootPage() {
       <footer className="border-t border-border/70 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           <Brand href="/" size="sm" />
-          <p className="font-mono text-[11px] text-muted-foreground">
-            © {new Date().getFullYear()} PulseOps · Uptime &amp; telemetry
-          </p>
+          <div className="flex items-center gap-4">
+            <a
+              href={DOCS_URL}
+              className="font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              API docs
+            </a>
+            <p className="font-mono text-[11px] text-muted-foreground">
+              © {new Date().getFullYear()} PulseOps · Uptime &amp; telemetry
+            </p>
+          </div>
         </div>
       </footer>
     </div>
