@@ -37,6 +37,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# Next standalone binds to $HOSTNAME; Docker sets that to the container id
+# (unresolvable → EAI_AGAIN on a compose network). Force all-interfaces.
+ENV HOSTNAME=0.0.0.0
 EXPOSE 3000
 
 COPY --from=builder /app/.next/standalone ./
