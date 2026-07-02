@@ -17,6 +17,7 @@ import {
 interface Monitor {
   id: number;
   name: string;
+  type?: "HTTP" | "HEARTBEAT";
   url: string;
   method: string;
   intervalSeconds: number;
@@ -68,7 +69,7 @@ export default function MonitorGrid({ workspaceId, initialMonitors, canEdit }: M
                 <h3 className="truncate font-display text-base font-semibold tracking-tight text-foreground group-hover:text-up">
                   {monitor.name}
                 </h3>
-                <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{monitor.url}</p>
+                <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{monitor.type === "HEARTBEAT" ? "Heartbeat (push)" : monitor.url}</p>
               </Link>
               <StatusBadge status={currentStatus} size="sm" />
             </div>
@@ -108,13 +109,15 @@ export default function MonitorGrid({ workspaceId, initialMonitors, canEdit }: M
                     </button>
                   </form>
                 )}
-                <form action={triggerCheck}>
-                  <input type="hidden" name="workspaceId" value={workspaceId} />
-                  <input type="hidden" name="monitorId" value={monitor.id} />
-                  <button type="submit" className="icon-btn hover:text-info hover:border-info/40" title="Run check now" aria-label="Run check now">
-                    <RefreshCw className="h-4 w-4" />
-                  </button>
-                </form>
+                {monitor.type !== "HEARTBEAT" && (
+                  <form action={triggerCheck}>
+                    <input type="hidden" name="workspaceId" value={workspaceId} />
+                    <input type="hidden" name="monitorId" value={monitor.id} />
+                    <button type="submit" className="icon-btn hover:text-info hover:border-info/40" title="Run check now" aria-label="Run check now">
+                      <RefreshCw className="h-4 w-4" />
+                    </button>
+                  </form>
+                )}
                 <form action={deleteMonitor}>
                   <input type="hidden" name="workspaceId" value={workspaceId} />
                   <input type="hidden" name="monitorId" value={monitor.id} />

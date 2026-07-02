@@ -13,6 +13,7 @@ import {
     deleteMonitorService,
     runMonitorCheckNowService,
 } from "./monitor.service";
+import { recordHeartbeat } from "./monitor.engine";
 import { prisma } from "../../lib/db";
 import { redis } from "../../lib/redis"
 
@@ -309,26 +310,19 @@ export async function monitorHeartbeatController(
             });
         }
 
-        if (target.status === "PAUSED") {
-            prisma.monitor.update({
-                where: {
-                    id: monitorId,
-                },
-                data: {
-                    status: "UP",
-                    lastCheckedAt: new Date(),
-                },
-            });
-
-            prisma.monitorCheck.create({
-                data: {
-                    monitorId: monitorId,
-                    status: "UP",
-                    statusCode: 200,
-                    responseTimeMs: 0,
-                },
+        if (target.type !== "HEARTBEAT") {
+            return response.status(400).send({
+                message: "This monitor is not a heartbeat monitor. Heartbeats are only accepted by monitors of type HEARTBEAT.",
             });
         }
+
+        if (!target.isActive) {
+            return response.status(409).send({
+                message: "This heartbeat monitor is paused.",
+            });
+        }
+
+        await recordHeartbeat(target);
 
         return response.status(200).send({
             message: `HEARTBEAT ACKNOWLEDGE: Node [${target.name}] status UP`,

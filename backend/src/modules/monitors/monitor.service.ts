@@ -39,15 +39,20 @@ export async function createMonitorService(
         }
     }
 
+    const isHeartbeat = input.type === "HEARTBEAT";
+
     const monitor = await prisma.monitor.create({
         data: {
             workspaceId,
             name: input.name,
-            url: input.url,
+            type: input.type,
+            // Heartbeat monitors are push-based and have no URL to ping.
+            url: isHeartbeat ? "" : input.url!,
             method: input.method,
             intervalSeconds: input.intervalSeconds,
             timeoutMs: input.timeoutMs,
             expectedStatus: input.expectedStatus,
+            gracePeriodSeconds: input.gracePeriodSeconds,
         },
     });
 

@@ -7,6 +7,7 @@ async function dispatchDueMonitors() {
     const monitors = await prisma.monitor.findMany({
         where: {
             isActive: true,
+            type: "HTTP",
             OR: [
                 { status: { not: "PAUSED" } },
                 {
