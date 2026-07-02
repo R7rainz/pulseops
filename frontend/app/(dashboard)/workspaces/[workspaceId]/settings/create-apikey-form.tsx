@@ -11,6 +11,7 @@ export default function CreateApiKeyForm({
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [scope, setScope] = useState<"READ_ONLY" | "READ_WRITE">("READ_ONLY");
   const [pending, setPending] = useState(false);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -23,6 +24,7 @@ export default function CreateApiKeyForm({
     const form = new FormData();
     form.set("workspaceId", workspaceId);
     form.set("name", name);
+    form.set("scope", scope);
 
     try {
       const result = await createApiKey(form);
@@ -83,6 +85,18 @@ export default function CreateApiKeyForm({
               className="field"
             />
           </div>
+          <div className="space-y-1.5">
+            <label htmlFor="key-scope" className="block text-sm font-medium text-foreground">Scope</label>
+            <select
+              id="key-scope"
+              value={scope}
+              onChange={(e) => setScope(e.target.value as "READ_ONLY" | "READ_WRITE")}
+              className="field"
+            >
+              <option value="READ_ONLY">Read only</option>
+              <option value="READ_WRITE">Read &amp; write</option>
+            </select>
+          </div>
           <button type="submit" disabled={pending || !name.trim()} className="btn btn-primary h-11">
             {pending ? "…" : "Create"}
           </button>
@@ -90,6 +104,11 @@ export default function CreateApiKeyForm({
             Cancel
           </button>
         </form>
+      )}
+      {open && (
+        <p className="mt-2 font-mono text-[11px] text-muted-foreground">
+          v1 keys unlock read-only endpoints + heartbeat. Read &amp; write is stored now and enforced when write access ships.
+        </p>
       )}
     </div>
   );

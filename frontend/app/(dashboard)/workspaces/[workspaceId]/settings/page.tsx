@@ -3,7 +3,7 @@ import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Key, Settings, ShieldAlert, UserPlus, Zap, ChevronRight } from "lucide-react";
+import { ArrowLeft, Trash2, Key, Settings, ShieldAlert, UserPlus, Zap, ChevronRight, BookOpen } from "lucide-react";
 import { revokeApiKey, updateWorkspaceName } from "./actions";
 import { ConfirmSubmit } from "@/components/ui/confirm-submit";
 import DeleteWorkspaceButton from "./delete-button";
@@ -21,6 +21,7 @@ interface Workspace {
 interface ApiKey {
   id: number;
   name: string;
+  scope: "READ_ONLY" | "READ_WRITE";
   lastUsedAt: string | null;
   isActive: boolean;
   createdAt: string;
@@ -138,7 +139,13 @@ export default async function WorkspaceSettingsPage({
             <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
               <Key className="h-4 w-4 text-muted-foreground" /> API keys
             </h3>
-            <span className="font-mono text-[11px] text-muted-foreground">{apiKeys.length}</span>
+            <Link
+              href="/docs"
+              target="_blank"
+              className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <BookOpen className="h-3.5 w-3.5" /> API docs ↗
+            </Link>
           </div>
 
           {apiKeys.length > 0 ? (
@@ -146,7 +153,12 @@ export default async function WorkspaceSettingsPage({
               {apiKeys.map((key) => (
                 <div key={key.id} className="flex items-center justify-between gap-3 py-3">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{key.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-medium text-foreground">{key.name}</p>
+                      <span className="shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                        {key.scope === "READ_WRITE" ? "read/write" : "read only"}
+                      </span>
+                    </div>
                     <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                       {key.isActive ? (
                         <>
