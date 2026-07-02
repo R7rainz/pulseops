@@ -17,7 +17,16 @@ export default function Page() {
 
   useEffect(() => {
     const el = document.documentElement;
-    const sync = () => setIsDark(el.classList.contains("dark"));
+    const sync = () => {
+      const dark = el.classList.contains("dark");
+      setIsDark(dark);
+      // Scalar keys its mode-specific styles off `.dark-mode` / `.light-mode`
+      // on <body>. It sets this once from `darkMode` and doesn't flip it when
+      // the app's `.dark` class toggles, so drive it ourselves to keep code
+      // blocks, cards, etc. in sync with the rest of the theme.
+      document.body.classList.toggle("dark-mode", dark);
+      document.body.classList.toggle("light-mode", !dark);
+    };
     sync();
     const observer = new MutationObserver(sync);
     observer.observe(el, { attributes: true, attributeFilter: ["class"] });

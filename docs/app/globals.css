@@ -39,28 +39,13 @@
   box-sizing: border-box;
 }
 
+/* Match Scalar's standalone host page: a clean body with no height/overflow
+   constraints. Scalar renders its full-height layout and drives the sidebar
+   scroll-spy off the normal document scroll — forcing an inner scroll box or
+   `overflow: hidden` instead just clips the content and breaks scrolling. */
 html,
 body {
-  height: 100%;
   margin: 0;
   padding: 0;
   background: var(--background);
-  /* Kill the window scroll so scrolling happens inside Scalar's own content
-     column — that's the element its sidebar scroll-spy observes. If the window
-     scrolls instead, the active-section highlighting goes patchy. */
-  overflow: hidden;
-}
-
-/* Scalar mounts into a bare <div> and doesn't set its own height. Give the host
-   the viewport height and let Scalar's root fill it; Scalar's internal layout
-   then establishes the fixed sidebar + scrolling content column itself. Do NOT
-   force a height on .scalar-api-reference — that overflows past the header and
-   pushes the scroll onto the window. */
-#scalar-host {
-  height: 100dvh;
-  overflow: hidden;
-}
-#scalar-host > div,
-.scalar-app {
-  height: 100%;
 }
