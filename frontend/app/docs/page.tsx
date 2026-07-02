@@ -3,6 +3,10 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { ApiReferenceReact } from "@scalar/api-reference-react";
+// Scalar's base stylesheet. The component imports this internally, but the
+// side-effect import is dropped by Next's client bundler, so pull it in here
+// explicitly — otherwise the reference renders unstyled.
+import "@scalar/api-reference-react/style.css";
 import ThemeToggle from "@/components/ThemeToggle";
 import { scalarThemeCss } from "@/lib/scalar-theme";
 
