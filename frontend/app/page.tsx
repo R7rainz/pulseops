@@ -57,7 +57,9 @@ export default async function RootPage() {
         destination =
           workspaces.length > 0 ? `/workspaces/${workspaces[0].id}/monitors` : "/workspaces/new";
       } else if (res.status === 401) {
-        redirect("/api/auth/logout");
+        // Expired session on the home page — clear it and show the landing
+        // page rather than bouncing the visitor to /login.
+        redirect("/api/auth/logout?redirect=/");
       }
     } catch (error) {
       if ((error as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) throw error;
