@@ -21,6 +21,7 @@ import {
   Workflow,
   GitPullRequest,
   Check,
+  Code2,
 } from "lucide-react";
 
 const FEATURES = [
@@ -105,6 +106,12 @@ export default async function RootPage() {
           <Brand href="/" />
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle className="h-9 w-9" />
+            <Link
+              href="/docs"
+              className="hidden items-center gap-1.5 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+            >
+              <Code2 className="h-4 w-4" /> API docs
+            </Link>
             <Link
               href="/login"
               className="px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -280,9 +287,17 @@ export default async function RootPage() {
       <footer className="border-t border-border/70 py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           <Brand href="/" size="sm" />
-          <p className="font-mono text-[11px] text-muted-foreground">
-            © {new Date().getFullYear()} PulseOps · Uptime &amp; telemetry
-          </p>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/docs"
+              className="font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              API docs
+            </Link>
+            <p className="font-mono text-[11px] text-muted-foreground">
+              © {new Date().getFullYear()} PulseOps · Uptime &amp; telemetry
+            </p>
+          </div>
         </div>
       </footer>
     </div>
