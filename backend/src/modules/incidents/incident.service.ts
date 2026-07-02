@@ -1,19 +1,15 @@
 import { prisma } from "../../lib/db";
 import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
+import {
+  assertWorkspaceAccess,
+  type AccessContext,
+} from "../../middleware/workspace-access.middleware";
 
 export async function getWorkspaceIncidentsService(
-  userId: number,
+  access: AccessContext,
   workspaceId: number,
 ) {
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId,
-      },
-    },
-  });
-  if (!membership) throw new Error("You do not have access to this workspace");
+  await assertWorkspaceAccess(access, workspaceId);
 
   //querying through incidents and this works as - Incident belongs to Monitor. Monitor belongs to Workspace. So we filter incidents through monitor.workspaceId.
   const incidents = await prisma.incident.findMany({
@@ -40,7 +36,7 @@ export async function getWorkspaceIncidentsService(
 }
 
 export async function getIncidentByIdService(
-  userId: number,
+  access: AccessContext,
   incidentId: number,
 ) {
   const incident = await prisma.incident.findUnique({
@@ -61,15 +57,7 @@ export async function getIncidentByIdService(
   });
   if (!incident) throw new Error("Incident not found");
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: incident.monitor.workspaceId,
-      },
-    },
-  });
-  if (!membership) throw new Error("You do not have access to this incident");
+  await assertWorkspaceAccess(access, incident.monitor.workspaceId);
   return incident;
 }
 

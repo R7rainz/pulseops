@@ -73,7 +73,7 @@ export async function getWorkspaceMonitorsController(
 
     try {
         const monitors = await getWorkspaceMonitorsService(
-            request.user.userId,
+            request.access!,
             numWorkspaceID,
         );
 
@@ -138,7 +138,7 @@ export async function getMonitorController(
 
     try {
         const monitor = await getMonitorService(
-            request.user.userId,
+            request.access!,
             workspaceId,
             monitorId,
         );
@@ -165,7 +165,7 @@ export async function getMonitorChecksController(
     const limit = Math.min(Math.max(Number(request.query.limit) || 20, 1), 200);
     const offset = Math.max(Number(request.query.offset) || 0, 0);
     const result = await getMonitorChecksService(
-        request.user.userId,
+        request.access!,
         monitorId,
         limit,
         offset,
@@ -188,7 +188,7 @@ export async function getMonitorStatsController(
         });
     }
 
-    const stats = await getMonitorStatsService(request.user.userId, monitorId);
+    const stats = await getMonitorStatsService(request.access!, monitorId);
     return response.status(200).send({
         message: "Monitor stats fetched successfully",
         data: stats,
