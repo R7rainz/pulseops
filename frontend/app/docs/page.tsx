@@ -3,10 +3,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { ApiReferenceReact } from "@scalar/api-reference-react";
-// Scalar's base stylesheet. The component imports this internally, but the
-// side-effect import is dropped by Next's client bundler, so pull it in here
-// explicitly — otherwise the reference renders unstyled.
-import "@scalar/api-reference-react/style.css";
 import ThemeToggle from "@/components/ThemeToggle";
 import { scalarThemeCss } from "@/lib/scalar-theme";
 
@@ -15,7 +11,7 @@ import { scalarThemeCss } from "@/lib/scalar-theme";
 // scalar-theme), so it tracks the site's light/dark toggle.
 export default function ApiDocsPage() {
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="flex h-dvh flex-col bg-background">
       <header className="flex shrink-0 items-center justify-between border-b border-border px-4 py-2.5">
         <Link
           href="/workspaces"
@@ -31,7 +27,10 @@ export default function ApiDocsPage() {
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-hidden">
+      {/* ApiReferenceReact mounts Scalar into a bare <div> with no height of
+          its own, so force that mount node (and Scalar's root) to fill this
+          bounded pane — otherwise the content overflows and can't scroll. */}
+      <div className="min-h-0 flex-1 overflow-hidden [&>div]:h-full">
         <ApiReferenceReact
           configuration={{
             url: "/docs/spec",

@@ -47,6 +47,14 @@ export const scalarThemeCss = `
   --scalar-sidebar-color-active: var(--primary);
   --scalar-sidebar-search-background: var(--surface);
   --scalar-sidebar-search-border-color: var(--border);
-  --scalar-sidebar-search--color: var(--muted-foreground);
+  --scalar-sidebar-search-color: var(--muted-foreground);
+}
+
+/* Scalar doesn't set its own height (the standalone host page normally does),
+   so make its root fill the mount node. That gives the layout a bounded height
+   and lets the sidebar stay fixed while the content column scrolls. */
+.scalar-app,
+.scalar-app .scalar-api-reference {
+  height: 100%;
 }
 `;
