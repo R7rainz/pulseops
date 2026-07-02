@@ -13,11 +13,11 @@ RUN echo "dangerouslyAllowAllBuilds: true" > pnpm-workspace.yaml
 # timeout" on throttled networks. Raise the timeout, add retries, and lower
 # concurrency so each request gets more bandwidth. A persistent BuildKit store
 # cache means re-builds reuse anything already downloaded.
-ENV npm_config_fetch_retries=5
+ENV npm_config_fetch_retries=8
 ENV npm_config_fetch_retry_mintimeout=20000
-ENV npm_config_fetch_retry_maxtimeout=120000
-ENV npm_config_fetch_timeout=600000
-ENV npm_config_network_concurrency=4
+ENV npm_config_fetch_retry_maxtimeout=180000
+ENV npm_config_fetch_timeout=900000
+ENV npm_config_network_concurrency=2
 ENV npm_config_store_dir=/pnpm/store
 # --trust-lockfile skips pnpm 11's per-entry supply-chain re-verification
 # (a slow registry crawl that also timed out here). The committed lockfile is
