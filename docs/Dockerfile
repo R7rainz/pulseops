@@ -17,8 +17,13 @@ ENV npm_config_fetch_retry_maxtimeout=180000
 ENV npm_config_fetch_timeout=900000
 ENV npm_config_network_concurrency=2
 ENV npm_config_store_dir=/pnpm/store
+# Retry within one RUN so the persistent store cache accumulates across
+# attempts and can grind through a slow/flaky registry.
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm install --frozen-lockfile --trust-lockfile
+    n=0; until pnpm install --frozen-lockfile --trust-lockfile; do \
+      n=$((n+1)); [ "$n" -ge 6 ] && echo "pnpm install failed after $n attempts" && exit 1; \
+      echo "pnpm install attempt $n failed — retrying"; sleep 5; \
+    done
 
 COPY docs/tsconfig.json docs/next.config.ts ./
 COPY docs/app ./app
