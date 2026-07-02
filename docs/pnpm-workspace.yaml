@@ -1,0 +1,7 @@
+# pnpm records dependency build-script decisions here. sharp (Next's image
+# optimiser) needs its build; vue-demi (a transitive Scalar/Vue dep) ships a
+# postinstall shim we don't need. Without explicit decisions,
+# `pnpm install --frozen-lockfile` fails in CI with ERR_PNPM_IGNORED_BUILDS.
+allowBuilds:
+  sharp: true
+  vue-demi: false

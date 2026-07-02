@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { API_URL } from "@/lib/constants";
+import { API_URL, DOCS_URL } from "@/lib/constants";
 import AmbientGlow from "@/components/AmbientGlow";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Brand } from "@/components/Brand";
@@ -106,12 +106,12 @@ export default async function RootPage() {
           <Brand href="/" />
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle className="h-9 w-9" />
-            <Link
-              href="/docs"
+            <a
+              href={DOCS_URL}
               className="hidden items-center gap-1.5 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
             >
               <Code2 className="h-4 w-4" /> API docs
-            </Link>
+            </a>
             <Link
               href="/login"
               className="px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -288,12 +288,12 @@ export default async function RootPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           <Brand href="/" size="sm" />
           <div className="flex items-center gap-4">
-            <Link
-              href="/docs"
+            <a
+              href={DOCS_URL}
               className="font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
             >
               API docs
-            </Link>
+            </a>
             <p className="font-mono text-[11px] text-muted-foreground">
               © {new Date().getFullYear()} PulseOps · Uptime &amp; telemetry
             </p>

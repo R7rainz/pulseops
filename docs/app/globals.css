@@ -1,0 +1,58 @@
+/* Minimal global CSS for the docs app — deliberately NO Tailwind / preflight,
+   so nothing leaks into Scalar's DOM (that's what broke the embedded version).
+   Just a reset + PulseOps color tokens mirrored from the main app's design
+   system, which the Scalar theme maps onto (see lib/scalar-theme.ts). */
+
+:root {
+  color-scheme: light;
+  --background: #f4f4f6;
+  --foreground: #2c2c2c;
+  --surface: #ffffff;
+  --surface-raised: #ececef;
+  --muted-foreground: #5e5e66;
+  --primary: #2f3237;
+  --primary-foreground: #ffffff;
+  --border: #e3e3e7;
+  --up: #1f9d63;
+  --down: #d64550;
+  --degraded: #b9740c;
+  --info: #357578;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #161516;
+  --foreground: #ece7ea;
+  --surface: #1e1b1e;
+  --surface-raised: #2c282c;
+  --muted-foreground: #a79fa5;
+  --primary: #cbd0d7;
+  --primary-foreground: #17171a;
+  --border: #3d3f43;
+  --up: #86d9ad;
+  --down: #f4707e;
+  --degraded: #f2c879;
+  --info: #a8dadc;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+}
+
+/* Scalar mounts into a bare <div> and doesn't set its own height, so give the
+   host + Scalar root the full viewport — that's what lets the sidebar stay
+   fixed and the content column scroll. */
+#scalar-host,
+#scalar-host > div,
+.scalar-app,
+.scalar-app .scalar-api-reference {
+  height: 100dvh;
+}

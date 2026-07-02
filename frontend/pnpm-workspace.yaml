@@ -1,9 +1,8 @@
-# pnpm records dependency build-script decisions here. Native deps need
-# their build; vue-demi (a transitive Scalar/Vue dep) ships a postinstall
-# shim we don't need, so it's marked false. Without an explicit decision,
-# `pnpm install --frozen-lockfile` fails in CI with ERR_PNPM_IGNORED_BUILDS.
+# pnpm records dependency build-script decisions here. These native deps
+# (Next's image optimiser + resolver, and msw) need their build step. Without
+# explicit decisions, `pnpm install --frozen-lockfile` fails in CI with
+# ERR_PNPM_IGNORED_BUILDS.
 allowBuilds:
   msw: true
   sharp: true
   unrs-resolver: true
-  vue-demi: false
