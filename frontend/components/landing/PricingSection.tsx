@@ -82,11 +82,11 @@ export default function PricingSection() {
 /* ── Billing toggle ─────────────────────────────────────────── */
 function BillingToggle({ billing, setBilling }: { billing: Billing; setBilling: (b: Billing) => void }) {
   return (
-    <div className="relative inline-flex items-center rounded-full border border-border bg-surface/70 p-1 backdrop-blur">
-      {/* sliding pill */}
+    <div className="relative grid grid-cols-2 rounded-full border border-border bg-surface/70 p-1 backdrop-blur">
+      {/* sliding pill — exactly one column wide, moves a full column across */}
       <span
-        className="absolute top-1 bottom-1 w-[calc(50%-0.25rem)] rounded-full bg-primary transition-transform duration-300 ease-out"
-        style={{ transform: billing === "annual" ? "translateX(calc(100% + 0.5rem))" : "translateX(0)" }}
+        className="pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-full bg-primary transition-transform duration-300 ease-out"
+        style={{ transform: billing === "annual" ? "translateX(100%)" : "translateX(0)" }}
         aria-hidden="true"
       />
       {(["monthly", "annual"] as const).map((b) => (
@@ -95,7 +95,7 @@ function BillingToggle({ billing, setBilling }: { billing: Billing; setBilling: 
           type="button"
           onClick={() => setBilling(b)}
           className={cn(
-            "relative z-10 inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium capitalize transition-colors",
+            "relative z-10 inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-full px-5 py-2 text-sm font-medium capitalize transition-colors",
             billing === b ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
           )}
         >
