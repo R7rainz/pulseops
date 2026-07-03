@@ -5,13 +5,22 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/2181' 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: pulseops-kafka
     restart: unless-stopped
     depends_on:
-      - zookeeper
+      # Wait for Zookeeper to be ready, not just started — Kafka boots rockily
+      # (and can restart) if it races Zookeeper coming up.
+      zookeeper:
+        condition: service_healthy
     ports:
       - "9092:9092"
     environment:
@@ -21,13 +30,15 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     healthcheck:
-      # Gate dependents until the broker actually accepts connections — the api
-      # connects to Kafka once at startup, so it must not start too early.
-      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 >/dev/null 2>&1 || exit 1"]
+      # Lightweight TCP check that the broker listener is accepting connections.
+      # (A `kafka-broker-api-versions` check spins up a JVM every interval and
+      # can time out under Kafka's own startup load, causing false "unhealthy"
+      # and aborted dependents.) Generous start_period for the JVM broker boot.
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/29092' 2>/dev/null || exit 1"]
       interval: 10s
-      timeout: 10s
-      retries: 15
-      start_period: 25s
+      timeout: 5s
+      retries: 20
+      start_period: 45s
 
   postgres:
     image: postgres:16-alpine
