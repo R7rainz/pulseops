@@ -11,6 +11,8 @@ import SpotlightCard from "@/components/SpotlightCard";
 import AnimatedHeadline from "@/components/AnimatedHeadline";
 import MagneticButton from "@/components/MagneticButton";
 import CountUp from "@/components/CountUp";
+import PricingSection from "@/components/landing/PricingSection";
+import TelemetrySection from "@/components/landing/TelemetrySection";
 import {
   ArrowRight,
   Activity,
@@ -109,8 +111,20 @@ export default async function RootPage() {
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle className="h-9 w-9" />
             <a
+              href="#telemetry"
+              className="hidden px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
+            >
+              Telemetry
+            </a>
+            <a
+              href="#pricing"
+              className="hidden px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+            >
+              Pricing
+            </a>
+            <a
               href={DOCS_URL}
-              className="hidden items-center gap-1.5 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+              className="hidden items-center gap-1.5 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
             >
               <Code2 className="h-4 w-4" /> API docs
             </a>
@@ -211,8 +225,14 @@ export default async function RootPage() {
         </div>
       </section>
 
+      {/* TELEMETRY DIFFERENTIATION */}
+      <TelemetrySection />
+
+      {/* PRICING */}
+      <PricingSection />
+
       {/* ROADMAP + TESTIMONIAL */}
-      <section className="border-t border-border/70 py-24">
+      <section className="section-alt border-t border-border/70 py-24">
         <div className="mx-auto grid max-w-6xl grid-cols-1 gap-12 px-6 lg:grid-cols-2">
           <div>
             <h2 className="mb-8 flex items-center gap-2.5 font-display text-xl font-semibold tracking-tight">
