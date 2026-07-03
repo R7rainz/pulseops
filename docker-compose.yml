@@ -1,39 +1,34 @@
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: pulseops-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    healthcheck:
-      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/2181' 2>/dev/null || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 15s
-
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: pulseops-kafka
     restart: unless-stopped
-    depends_on:
-      # Wait for Zookeeper to be ready, not just started — Kafka boots rockily
-      # (and can restart) if it races Zookeeper coming up.
-      zookeeper:
-        condition: service_healthy
+    # KRaft mode — no ZooKeeper. Kafka is its own controller, which removes the
+    # ZK-readiness race that used to make the broker exit and flap on cold start
+    # (and abort api/ping-engine, which gate on `kafka: service_healthy`).
     ports:
       - "9092:9092"
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      # Single-node combined broker+controller.
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # Bind all three listeners; advertise the two clients use (internal + host).
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # Fixed cluster id so the auto-format on boot is deterministic across
+      # restarts. Must be a base64-encoded UUID (22 chars) or storage format fails.
+      CLUSTER_ID: pO2Rs1TqStyBhpercqp0iA
     healthcheck:
       # Lightweight TCP check that the broker listener is accepting connections.
       # (A `kafka-broker-api-versions` check spins up a JVM every interval and
       # can time out under Kafka's own startup load, causing false "unhealthy"
-      # and aborted dependents.) Generous start_period for the JVM broker boot.
+      # and aborted dependents.) KRaft boots faster than ZK-mode, but keep a
+      # generous start_period for the JVM broker boot.
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/29092' 2>/dev/null || exit 1"]
       interval: 10s
       timeout: 5s
