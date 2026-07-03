@@ -5,9 +5,13 @@ const brokers = process.env.KAFKA_BROKERS ? process.env.KAFKA_BROKERS.split(",")
 export const kafka = new Kafka({
     clientId: "pulseops-backend",
     brokers: brokers,
+    // Tolerate a slow/late broker at startup (e.g. Kafka still coming up in
+    // Docker) instead of giving up after ~12s and leaving the producer
+    // permanently disconnected. ~20 retries with backoff ≈ a couple of minutes.
     retry: {
-        initialRetryTime: 300,
-        retries: 5,
+        initialRetryTime: 1000,
+        maxRetryTime: 30000,
+        retries: 20,
     },
 });
 

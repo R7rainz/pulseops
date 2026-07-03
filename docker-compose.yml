@@ -20,6 +20,14 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      # Gate dependents until the broker actually accepts connections — the api
+      # connects to Kafka once at startup, so it must not start too early.
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:29092 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 25s
 
   postgres:
     image: postgres:16-alpine
@@ -63,7 +71,7 @@ services:
       redis:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "4000:4000"
     env_file:
@@ -88,7 +96,7 @@ services:
     restart: unless-stopped
     depends_on:
       kafka:
-        condition: service_started
+        condition: service_healthy
     environment:
       - KAFKA_BROKERS=kafka:29092
       - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets
