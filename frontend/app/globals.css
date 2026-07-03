@@ -421,6 +421,30 @@
     border-color: color-mix(in oklab, var(--accent-mid) 55%, transparent);
     background-image: var(--gradient-glow);
   }
+
+  /* ── Background textures (decorative, subtle, token-driven) ───
+     Layered behind sections for contrast without new colours. Each
+     fades out via a mask so it never fights foreground content. */
+  .texture-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--border) 60%, transparent) 1px, transparent 1px);
+    background-size: 58px 58px;
+    -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 0%, #000 38%, transparent 80%);
+    mask-image: radial-gradient(ellipse 78% 62% at 50% 0%, #000 38%, transparent 80%);
+  }
+  .texture-dots {
+    background-image: radial-gradient(color-mix(in oklab, var(--accent-mid) 40%, transparent) 1px, transparent 1.4px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 64% at 50% 42%, #000 26%, transparent 76%);
+    mask-image: radial-gradient(ellipse 70% 64% at 50% 42%, #000 26%, transparent 76%);
+  }
+  /* Alternating section block — a faint raise off the base for rhythm. */
+  .section-alt {
+    background:
+      linear-gradient(180deg, transparent, color-mix(in oklab, var(--surface) 55%, transparent) 22%,
+        color-mix(in oklab, var(--surface) 55%, transparent) 78%, transparent);
+  }
 }
 
 /* ── Fluid motion ──────────────────────────────────────────── */
@@ -458,6 +482,24 @@
 }
 .fade-up {
   animation: fadeUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Price swap — used when the monthly/annual toggle changes the amount. */
+@keyframes priceSwap {
+  from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+.price-swap {
+  animation: priceSwap 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Tooltip / hover-reveal pop for perk breakdowns. */
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.pop-in {
+  animation: popIn 0.18s ease-out;
 }
 
 /* Flowing gradient (background) */
@@ -516,6 +558,8 @@
   .animate-drift,
   .animate-sway,
   .fade-up,
+  .price-swap,
+  .pop-in,
   .gradient-flow {
     animation: none !important;
   }
