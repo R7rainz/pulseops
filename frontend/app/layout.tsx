@@ -4,6 +4,7 @@ import { Bricolage_Grotesque, Instrument_Sans, Geist_Mono } from "next/font/goog
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import Toast from "@/components/Toast";
+import CookieConsent from "@/components/CookieConsent";
 
 // Display / headings — Bricolage Grotesque (variable weight)
 const display = Bricolage_Grotesque({
@@ -33,8 +34,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
   // Slate (dark) is the default; light is opt-in via the toggle (cookie-driven, SSR — no flash).
-  const isDark = (await cookies()).get("pulseops_theme")?.value !== "light";
+  const isDark = cookieStore.get("pulseops_theme")?.value !== "light";
+  const hasCookieConsent = cookieStore.get("pulseops_cookie_consent")?.value === "accepted";
 
   return (
     <html
@@ -44,6 +47,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         {children}
         <Toast />
+        {!hasCookieConsent && <CookieConsent />}
       </body>
     </html>
   );
