@@ -296,6 +296,12 @@ export default async function RootPage() {
             >
               API docs
             </a>
+            <Link
+              href="/cookie-policy"
+              className="font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Cookies
+            </Link>
             <p className="font-mono text-[11px] text-muted-foreground">
               © {new Date().getFullYear()} PulseOps · Uptime &amp; telemetry
             </p>
