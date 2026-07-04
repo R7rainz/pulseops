@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Layers,
-  Plus,
   LogOut,
   Settings,
   AlertTriangle,
@@ -17,17 +15,14 @@ import {
   User,
   Menu,
   X,
+  Plus,
+  SunMoon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Brand } from "@/components/Brand";
 import ThemeToggle from "@/components/ThemeToggle";
 import { logoutUser } from "@/app/(auth)/auth.actions";
-
-interface Workspace {
-  id: number | string;
-  name: string;
-  slug: string;
-}
+import WorkspaceSwitcher, { type Workspace } from "./WorkspaceSwitcher";
 
 export default function Sidebar({
   workspaces,
@@ -45,11 +40,25 @@ export default function Sidebar({
     setOpen(false);
   }, [pathname]);
 
+  // Active workspace = the one in the URL, else the first one.
+  const urlWsId = pathname.match(/^\/workspaces\/([^/]+)/)?.[1] ?? null;
+  const active =
+    workspaces.find((w) => String(w.id) === urlWsId) ?? workspaces[0] ?? null;
+  const wsBase = active ? `/workspaces/${active.id}` : null;
+
+  const on = (suffix: string, exact = false) => {
+    if (!wsBase) return false;
+    const full = `${wsBase}${suffix}`;
+    return exact ? pathname === full : pathname.startsWith(full);
+  };
+
+  const homeHref = wsBase ? `${wsBase}/monitors` : "/";
+
   return (
     <>
       {/* MOBILE TOP BAR */}
       <div className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-background/80 px-4 backdrop-blur-md lg:hidden">
-        <Brand href="/workspaces" size="sm" />
+        <Brand href={homeHref} size="sm" />
         <button
           onClick={() => setOpen(true)}
           className="icon-btn"
@@ -77,89 +86,90 @@ export default function Sidebar({
       >
         {/* LOGO */}
         <div className="flex h-14 items-center justify-between border-b border-border px-5">
-          <Brand href="/workspaces" />
+          <Brand href={homeHref} />
           <button onClick={() => setOpen(false)} className="icon-btn h-8 w-8 lg:hidden" aria-label="Close menu">
             <X className="h-4 w-4" />
           </button>
         </div>
 
+        {/* WORKSPACE SWITCHER — outside the scroll area so its dropdown isn't clipped */}
+        {workspaces.length > 0 && (
+          <div className="px-4 pt-4">
+            <WorkspaceSwitcher workspaces={workspaces} active={active} />
+          </div>
+        )}
+
         {/* NAV */}
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
-          <section>
-            <div className="mb-3 flex items-center justify-between px-2">
-              <h2 className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                Workspaces
-              </h2>
-              <Link href="/workspaces/new" className="icon-btn h-7 w-7 hover:text-primary hover:border-primary/40" title="New workspace" aria-label="New workspace">
-                <Plus className="h-3.5 w-3.5" />
+          {workspaces.length === 0 ? (
+            <div className="space-y-3 px-1 pt-1">
+              <p className="text-sm text-muted-foreground">No workspaces yet.</p>
+              <Link href="/workspaces/new" className="btn btn-primary w-full">
+                <Plus className="h-4 w-4" /> Create workspace
               </Link>
             </div>
+          ) : (
+            <>
+              <NavGroup label="Monitoring">
+                <NavItem href={`${wsBase}/monitors`} icon={<Radio className="h-4 w-4" />} label="Monitors" isActive={on("/monitors")} />
+                <NavItem href={`${wsBase}/incidents`} icon={<AlertTriangle className="h-4 w-4" />} label="Incidents" isActive={on("/incidents")} />
+              </NavGroup>
 
-            <div className="space-y-1.5">
-              {workspaces.length === 0 ? (
-                <p className="px-2 py-3 text-xs text-muted-foreground">No workspaces yet.</p>
-              ) : (
-                workspaces.map((ws) => {
-                  const wsBase = `/workspaces/${ws.id}`;
-                  const statusPath = `/status/${ws.slug}`;
-                  const isMonitors = pathname.startsWith(`${wsBase}/monitors`);
-                  const isIncidents = pathname.startsWith(`${wsBase}/incidents`);
-                  const isInvites = pathname === `${wsBase}/invites`;
-                  const isBilling = pathname === `${wsBase}/billing`;
-                  const isSettings = pathname === `${wsBase}/settings`;
-                  const isStatus = pathname === statusPath;
-                  const isWebhooks = pathname.startsWith(`${wsBase}/webhooks`);
-                  const isActive =
-                    isMonitors || isIncidents || isBilling || isInvites || isSettings || isStatus || isWebhooks;
+              <NavGroup label="Sharing">
+                <NavItem href={`/status/${active!.slug}`} icon={<Eye className="h-4 w-4" />} label="Status page" isActive={pathname === `/status/${active!.slug}`} />
+                <NavItem href={`${wsBase}/invites`} icon={<UserPlus className="h-4 w-4" />} label="Invites" isActive={on("/invites", true)} />
+              </NavGroup>
 
-                  return (
-                    <div
-                      key={ws.id}
-                      className={cn(
-                        "overflow-hidden rounded-lg border transition-colors",
-                        isActive ? "border-primary/20 bg-primary/[0.04]" : "border-transparent hover:border-border",
-                      )}
-                    >
-                      <Link
-                        href={`${wsBase}/monitors`}
-                        className={cn(
-                          "flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors",
-                          isActive ? "text-primary" : "text-foreground/80 hover:text-foreground",
-                        )}
-                      >
-                        <Layers className="h-4 w-4 shrink-0" />
-                        <span className="truncate font-display tracking-tight">{ws.name}</span>
-                      </Link>
-
-                      <div
-                        className={cn(
-                          "overflow-hidden transition-all duration-200",
-                          isActive
-                            ? "max-h-96 opacity-100"
-                            : "max-h-0 opacity-0 group-hover:max-h-96",
-                        )}
-                      >
-                        <div className="space-y-0.5 px-2 pb-2">
-                          <NavItem href={`${wsBase}/monitors`} icon={<Radio className="h-3.5 w-3.5" />} label="Monitors" isActive={isMonitors} />
-                          <NavItem href={`${wsBase}/incidents`} icon={<AlertTriangle className="h-3.5 w-3.5" />} label="Incidents" isActive={isIncidents} />
-                          <NavItem href={`${wsBase}/webhooks`} icon={<Zap className="h-3.5 w-3.5" />} label="Webhooks" isActive={isWebhooks} />
-                          <NavItem href={`${wsBase}/invites`} icon={<UserPlus className="h-3.5 w-3.5" />} label="Invites" isActive={isInvites} />
-                          <NavItem href={`${wsBase}/billing`} icon={<CreditCard className="h-3.5 w-3.5" />} label="Billing" isActive={isBilling} />
-                          <NavItem href={`${wsBase}/settings`} icon={<Settings className="h-3.5 w-3.5" />} label="Settings" isActive={isSettings} />
-                          <NavItem href={statusPath} icon={<Eye className="h-3.5 w-3.5" />} label="Status page" isActive={isStatus} />
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </section>
+              <NavGroup label="Settings">
+                <NavItem href={`${wsBase}/webhooks`} icon={<Zap className="h-4 w-4" />} label="Webhooks" isActive={on("/webhooks")} />
+                <NavItem href={`${wsBase}/billing`} icon={<CreditCard className="h-4 w-4" />} label="Billing" isActive={on("/billing", true)} />
+                <NavItem href={`${wsBase}/settings`} icon={<Settings className="h-4 w-4" />} label="Settings" isActive={on("/settings", true)} />
+              </NavGroup>
+            </>
+          )}
         </nav>
 
-        {/* PROFILE & LOGOUT */}
-        <div className="space-y-2 border-t border-border p-3">
-          <div className="flex items-center gap-3 px-2 py-1">
+        {/* ACCOUNT */}
+        <div className="border-t border-border p-3">
+          <h2 className="mb-2 px-2 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Account
+          </h2>
+
+          <div className="space-y-0.5">
+            <Link
+              href="/account"
+              className={cn(
+                "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                pathname === "/account"
+                  ? "bg-primary/[0.08] text-primary"
+                  : "text-muted-foreground hover:bg-surface-raised hover:text-foreground",
+              )}
+            >
+              <User className="h-4 w-4" />
+              Account
+            </Link>
+
+            <div className="flex items-center justify-between rounded-lg px-3 py-1.5">
+              <span className="flex items-center gap-2.5 text-sm font-medium text-muted-foreground">
+                <SunMoon className="h-4 w-4" />
+                Theme
+              </span>
+              <ThemeToggle className="h-8 w-8 shrink-0" />
+            </div>
+
+            <form action={logoutUser}>
+              <button
+                type="submit"
+                className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-down/10 hover:text-down"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </form>
+          </div>
+
+          {/* Identity */}
+          <div className="mt-2 flex items-center gap-3 border-t border-border px-2 pt-3">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-primary/30 bg-primary/10 font-display text-sm font-semibold text-primary">
               {(user.name || user.email || "?").charAt(0).toUpperCase()}
             </span>
@@ -167,34 +177,21 @@ export default function Sidebar({
               <p className="truncate text-sm font-medium text-foreground">{user.name || "Operator"}</p>
               <p className="truncate font-mono text-[11px] text-muted-foreground">{user.email || "—"}</p>
             </div>
-            <ThemeToggle className="h-8 w-8 shrink-0" />
           </div>
-
-          <Link
-            href="/account"
-            className={cn(
-              "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-              pathname === "/account"
-                ? "bg-primary/[0.06] text-primary"
-                : "text-muted-foreground hover:bg-surface-raised hover:text-foreground",
-            )}
-          >
-            <User className="h-4 w-4" />
-            Account
-          </Link>
-
-          <form action={logoutUser}>
-            <button
-              type="submit"
-              className="flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-down/10 hover:text-down"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-          </form>
         </div>
       </aside>
     </>
+  );
+}
+
+function NavGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <section>
+      <h2 className="mb-2 px-3 font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </h2>
+      <div className="space-y-0.5">{children}</div>
+    </section>
   );
 }
 
@@ -214,7 +211,7 @@ function NavItem({
       href={href}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
+        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
         isActive
           ? "bg-primary/[0.08] text-primary"
           : "text-muted-foreground hover:bg-surface-raised hover:text-foreground",
