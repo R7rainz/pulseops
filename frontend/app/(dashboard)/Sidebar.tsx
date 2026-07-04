@@ -116,7 +116,7 @@ export default function Sidebar({
               </NavGroup>
 
               <NavGroup label="Sharing">
-                <NavItem href={`/status/${active!.slug}`} icon={<Eye className="h-4 w-4" />} label="Status page" isActive={pathname === `/status/${active!.slug}`} />
+                <NavItem href={`${wsBase}/status`} icon={<Eye className="h-4 w-4" />} label="Status page" isActive={on("/status", true)} />
                 <NavItem href={`${wsBase}/invites`} icon={<UserPlus className="h-4 w-4" />} label="Invites" isActive={on("/invites", true)} />
               </NavGroup>
 
@@ -206,17 +206,15 @@ function NavItem({
   label: string;
   isActive: boolean;
 }) {
+  const className = cn(
+    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+    isActive
+      ? "bg-primary/[0.08] text-primary"
+      : "text-muted-foreground hover:bg-surface-raised hover:text-foreground",
+  );
+
   return (
-    <Link
-      href={href}
-      aria-current={isActive ? "page" : undefined}
-      className={cn(
-        "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-        isActive
-          ? "bg-primary/[0.08] text-primary"
-          : "text-muted-foreground hover:bg-surface-raised hover:text-foreground",
-      )}
-    >
+    <Link href={href} aria-current={isActive ? "page" : undefined} className={className}>
       <span className="shrink-0">{icon}</span>
       {label}
     </Link>
