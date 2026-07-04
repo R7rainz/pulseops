@@ -24,11 +24,11 @@ export default function SignatureScene({ paused = false }: { paused?: boolean })
       <NetworkGraph />
       <EffectComposer>
         <Bloom
-          intensity={0.9}
-          luminanceThreshold={0.15}
+          intensity={0.45}
+          luminanceThreshold={0.25}
           luminanceSmoothing={0.9}
           mipmapBlur
-          radius={0.6}
+          radius={0.5}
         />
       </EffectComposer>
     </Canvas>

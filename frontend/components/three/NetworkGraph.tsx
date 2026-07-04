@@ -195,7 +195,7 @@ export function NetworkGraph({ dispersion = 0 }: { dispersion?: number }) {
         <lineBasicMaterial
           color={STEEL}
           transparent
-          opacity={0.16}
+          opacity={0.08}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
@@ -217,10 +217,10 @@ export function NetworkGraph({ dispersion = 0 }: { dispersion?: number }) {
         </bufferGeometry>
         <pointsMaterial
           vertexColors
-          size={0.11}
+          size={0.085}
           sizeAttenuation
           transparent
-          opacity={0.95}
+          opacity={0.5}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
@@ -237,10 +237,10 @@ export function NetworkGraph({ dispersion = 0 }: { dispersion?: number }) {
         </bufferGeometry>
         <pointsMaterial
           color={PULSE}
-          size={0.14}
+          size={0.11}
           sizeAttenuation
           transparent
-          opacity={0.9}
+          opacity={0.6}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
         />
