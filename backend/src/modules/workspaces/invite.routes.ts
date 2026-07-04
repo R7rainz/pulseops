@@ -6,6 +6,7 @@ import {
   generateInviteController,
   listInvitesController,
   lookupInviteController,
+  resendInviteController,
   revokeInviteController,
 } from "./invite.controller";
 
@@ -17,5 +18,6 @@ export async function inviteRoutes(app: FastifyInstance) {
 
   app.post("/workspaces/:workspaceId/invites", { preHandler: write }, generateInviteController as any);
   app.get("/workspaces/:workspaceId/invites", { preHandler: write }, listInvitesController as any);
+  app.post("/workspaces/:workspaceId/invites/:inviteId/resend", { preHandler: write }, resendInviteController as any);
   app.delete("/workspaces/:workspaceId/invites/:inviteId", { preHandler: write }, revokeInviteController as any);
 }
