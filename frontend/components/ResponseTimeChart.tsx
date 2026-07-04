@@ -21,7 +21,7 @@ interface Props {
 export default function ResponseTimeChart({ checks, p95 }: Props) {
   const c = useThemeColors();
   const dotColor = (status: string) =>
-    status === "UP" ? c.accentMid : status === "DEGRADED" ? c.degraded : c.down;
+    status === "UP" ? c.signal : status === "DEGRADED" ? c.degraded : c.down;
 
   if (checks.length === 0) {
     return (
@@ -59,9 +59,8 @@ export default function ResponseTimeChart({ checks, p95 }: Props) {
           <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
             <defs>
               <linearGradient id="rt-signal" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor={c.accentDeep} />
-                <stop offset="50%" stopColor={c.accentMid} />
-                <stop offset="100%" stopColor={c.accentLight} />
+                <stop offset="0%" stopColor={c.signalIndigo} />
+                <stop offset="100%" stopColor={c.signal} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke={c.border} vertical={false} />
@@ -135,7 +134,7 @@ export default function ResponseTimeChart({ checks, p95 }: Props) {
                   />
                 );
               }}
-              activeDot={{ r: 4, fill: c.accentLight, stroke: c.card, strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: c.signal, stroke: c.card, strokeWidth: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>

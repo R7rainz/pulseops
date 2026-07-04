@@ -52,6 +52,9 @@
   --color-accent-deep: var(--accent-deep);
   --color-accent-mid: var(--accent-mid);
   --color-accent-light: var(--accent-light);
+  --color-signal: var(--signal);
+  --color-signal-cyan: var(--signal-cyan);
+  --color-signal-indigo: var(--signal-indigo);
   --font-display: var(--font-display);
   --font-heading: var(--font-display);
   --radius-sm: calc(var(--radius) * 0.6);
@@ -145,7 +148,7 @@
   --surface-raised: #ececef;
   --muted: #ececef;
   --muted-foreground: #5e5e66;
-  --primary: #2f3237;
+  --primary: #4f46e5;            /* Iris signal (indigo) — AA with white text */
   --primary-foreground: #ffffff;
   --secondary: #ececef;
   --secondary-foreground: #2c2c2c;
@@ -154,7 +157,7 @@
   --destructive: #d64550;
   --border: #e3e3e7;
   --input: #d7d7dc;
-  --ring: #2f3237;
+  --ring: #4f46e5;
 
   --up: #1f9d63;
   --up-foreground: #ffffff;
@@ -171,6 +174,13 @@
   --accent-light: #9aa0aa;
   --gradient-signal: linear-gradient(135deg, #2f3237 0%, #6b6f76 50%, #9aa0aa 100%);
   --gradient-glow: radial-gradient(circle at 30% 0%, rgba(51, 54, 59, 0.12), transparent 60%);
+
+  /* Iris signal (light) — slightly deeper hues so it reads on white */
+  --signal-cyan: #12a5c4;
+  --signal-indigo: #5b57e8;
+  --signal: #4f46e5;
+  --gradient-signal-iris: linear-gradient(115deg, #12a5c4 0%, #5b57e8 100%);
+  --glow-iris: radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.16), transparent 62%);
 
   /* Metallic sheen — decorative background gradients (steel, visible on light bg) */
   --sheen-deep: #5c6069;
@@ -214,9 +224,15 @@
   --sheen-mid: #9aa0aa;
   --sheen-light: #f2f3f5;
 
-  --primary: #cbd0d7;            /* brand accent = brushed silver */
-  --primary-foreground: #17171a;
-  --ring: #aab0b8;
+  /* Iris signal — telemetry accent that complements the metallic base.
+     Cyan→indigo. Reserved for CTAs, active states, focus, key data and
+     the WebGL emissive glow. Silver/steel (--accent-*) stays the chrome. */
+  --signal-cyan: #38e0f0;
+  --signal-indigo: #6366f1;
+  --signal: #45c8ee;             /* mid — solid fills / focus ring */
+  --primary: #45c8ee;            /* brand accent = Iris signal */
+  --primary-foreground: #04171d; /* dark ink on cyan (AA) */
+  --ring: #5cccf0;
   --destructive: #f4707e;
 
   /* Status — semantic, tuned for black surfaces (unchanged meaning) */
@@ -240,6 +256,14 @@
     circle at 30% 0%,
     color-mix(in oklab, var(--accent-light) 30%, transparent),
     transparent 60%
+  );
+
+  /* Iris signal gradient + glow — the one confident accent sweep. */
+  --gradient-signal-iris: linear-gradient(115deg, var(--signal-cyan) 0%, var(--signal-indigo) 100%);
+  --glow-iris: radial-gradient(
+    circle at 50% 0%,
+    color-mix(in oklab, var(--signal-cyan) 34%, transparent),
+    transparent 62%
   );
 
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35),
@@ -415,6 +439,60 @@
     pointer-events: none;
   }
 
+  /* ── Iris signal utilities ────────────────────────────────────
+     The telemetry accent as fill / text / border / glow. Layered on
+     the metallic neutrals, never stacked on the metallic gradient. */
+  .bg-signal-iris {
+    background-image: var(--gradient-signal-iris);
+  }
+  .text-signal-iris {
+    background-image: var(--gradient-signal-iris);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .border-signal-iris {
+    border: 1px solid transparent;
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      var(--gradient-signal-iris) border-box;
+  }
+  .glow-iris {
+    position: relative;
+    isolation: isolate;
+  }
+  .glow-iris::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--glow-iris);
+    pointer-events: none;
+  }
+
+  /* Animated Iris gradient border — the "Popular" pricing tier. */
+  .border-iris-animated {
+    border: 1px solid transparent;
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      linear-gradient(115deg, var(--signal-cyan), var(--signal-indigo), var(--signal-cyan)) border-box;
+    background-size: 100% 100%, 220% 220%;
+    animation: irisBorderFlow 6s ease-in-out infinite;
+  }
+
+  /* Film-grain / noise overlay (2–4%). Drop as an absolute child of a
+     `position: relative` container; sits above bg, below content. */
+  .texture-noise {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 140px 140px;
+    opacity: 0.035;
+    mix-blend-mode: soft-light;
+  }
+
   /* Active/selected surface — gradient-glow wash + accent border,
      not a solid accent fill (per DESIGN.md component rules). */
   .card-active {
@@ -513,6 +591,23 @@
   will-change: background-position;
 }
 
+/* Iris gradient border sweep (Popular pricing tier) */
+@keyframes irisBorderFlow {
+  0% { background-position: 0% 50%, 0% 50%; }
+  50% { background-position: 0% 50%, 100% 50%; }
+  100% { background-position: 0% 50%, 0% 50%; }
+}
+
+/* Logo marquee — social-proof strip */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 32s linear infinite;
+  will-change: transform;
+}
+
 /* Scroll reveal — pop + slide in when entering the viewport */
 .reveal {
   opacity: 0;
@@ -560,7 +655,9 @@
   .fade-up,
   .price-swap,
   .pop-in,
-  .gradient-flow {
+  .gradient-flow,
+  .border-iris-animated,
+  .animate-marquee {
     animation: none !important;
   }
   .reveal {

@@ -17,6 +17,8 @@ const TOKENS = {
   accentDeep: "--accent-deep",
   accentMid: "--accent-mid",
   accentLight: "--accent-light",
+  signal: "--signal",
+  signalIndigo: "--signal-indigo",
   up: "--up",
   down: "--down",
   degraded: "--degraded",
@@ -29,9 +31,11 @@ const TOKENS = {
 export type ThemeColors = Record<keyof typeof TOKENS, string>;
 
 const FALLBACK: ThemeColors = {
-  accentDeep: "#745a67",
-  accentMid: "#b16d96",
-  accentLight: "#ebaeb6",
+  accentDeep: "#565961",
+  accentMid: "#9aa0aa",
+  accentLight: "#e8eaee",
+  signal: "#45c8ee",
+  signalIndigo: "#6366f1",
   up: "#86d9ad",
   down: "#f4707e",
   degraded: "#f2c879",

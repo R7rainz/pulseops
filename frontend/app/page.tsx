@@ -11,8 +11,11 @@ import SpotlightCard from "@/components/SpotlightCard";
 import AnimatedHeadline from "@/components/AnimatedHeadline";
 import MagneticButton from "@/components/MagneticButton";
 import CountUp from "@/components/CountUp";
+import { HeroSignature } from "@/components/HeroSignature";
 import PricingSection from "@/components/landing/PricingSection";
 import TelemetrySection from "@/components/landing/TelemetrySection";
+import ChartsShowcase from "@/components/landing/ChartsShowcase";
+import LogoMarquee from "@/components/landing/LogoMarquee";
 import {
   ArrowRight,
   Activity,
@@ -142,7 +145,10 @@ export default async function RootPage() {
       </nav>
 
       {/* HERO */}
-      <section className="mx-auto max-w-3xl px-6 pb-16 pt-20 text-center sm:pt-28">
+      <div className="relative">
+        {/* WebGL signature — fluid node-network graph (gated + CSS fallback) */}
+        <HeroSignature />
+        <section className="relative mx-auto max-w-3xl px-6 pb-16 pt-20 text-center sm:pt-28">
         <div className="fade-up inline-flex items-center gap-2.5 rounded-full border border-border bg-surface/70 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-70" />
@@ -191,14 +197,37 @@ export default async function RootPage() {
             </div>
           ))}
         </div>
-      </section>
+        </section>
+      </div>
 
       {/* PRODUCT PREVIEW */}
       <section className="mx-auto max-w-5xl px-6 pb-24">
         <div className="fade-up" style={{ animationDelay: "240ms" }}>
           <PreviewCard />
         </div>
-        <p className="mt-8 text-center text-sm text-muted-foreground">Trusted by teams shipping at scale.</p>
+        <div className="mt-12">
+          <p className="mb-6 text-center font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            Trusted by teams shipping at scale
+          </p>
+          <LogoMarquee />
+        </div>
+      </section>
+
+      {/* LIVE CHARTS SHOWCASE */}
+      <section id="telemetry-demo" className="mx-auto max-w-6xl px-6 pb-24">
+        <div className="mx-auto mb-10 max-w-2xl text-center">
+          <p className="font-mono text-xs uppercase tracking-[0.18em] text-signal">Live telemetry</p>
+          <h2 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            Metrics, logs and traces in one stream
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Watch events, latency distribution and traces update in real time — the same views your
+            team gets in production.
+          </p>
+        </div>
+        <Reveal>
+          <ChartsShowcase />
+        </Reveal>
       </section>
 
       {/* FEATURES */}

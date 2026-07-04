@@ -1,9 +1,24 @@
-## Dark Mode — Metallic Palette (v2)
+## Dark Mode — Metallic Palette (v2) + Iris Signal
 
-Black-dominant surfaces with a **metallic gray → white** accent system. Pink/lavender
-is retired; the brand accent is now brushed silver on black, so the UI reads sleek and
-monochrome. Functional status colours (up / degraded / down) stay semantic and are never
-part of the accent ramp.
+Black-dominant surfaces with a **metallic gray → white** neutral system, over which sits
+one confident telemetry accent — the **Iris signal**, a cyan→indigo gradient
+(`--signal-cyan #38E0F0` → `--signal-indigo #6366F1`, mid `--signal #45C8EE`). The metallic
+ramp (`--accent-deep/mid/light`, `--sheen-*`, `.gradient-signal`, textures) stays the chrome:
+surfaces, borders, structural washes. Iris is reserved for **CTAs, active states, focus rings,
+key data highlights and the WebGL emissive glow** — never stacked on the metallic gradient.
+`--primary` and `--ring` point at Iris, so buttons, focus, the cursor spotlight and hero
+shells inherit it automatically. Functional status colours (up / degraded / down) stay
+semantic and are never part of either ramp.
+
+**Iris utilities:** `.text-signal-iris`, `.bg-signal-iris`, `.border-signal-iris`,
+`.glow-iris` (radial wash), `.border-iris-animated` (the Popular pricing frame). Charts read
+`--signal` / `--signal-indigo` via `lib/useThemeColors.ts`.
+
+**WebGL signature:** `components/three/` — a fluid node-network graph (`NetworkGraph`) in a
+DPR-capped, bloom-lit `SignatureScene`, mounted by `components/HeroSignature.tsx`. It is
+code-split (`next/dynamic`, `ssr:false`), `aria-hidden`, and gated behind
+`useReducedMotion` + `useCapability`; reduced-motion / low-power / SSR get the CSS Iris aurora
+fallback. The loop pauses when the hero scrolls out of view.
 
 Tokens live in `app/globals.css` (the `.dark` block for dark, the light `:root` block for
 light). `@theme inline` maps them to Tailwind utilities (`bg-card`, `text-primary`,
