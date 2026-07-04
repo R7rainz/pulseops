@@ -35,11 +35,13 @@ export default function Page() {
 
   return (
     <div id="scalar-host">
-      {/* Floating controls — fixed so they don't take layout height. */}
+      {/* Floating controls — pinned to the bottom-right so they clear Scalar's
+          own header bar (search / client controls live top-right). Fixed so
+          they don't take layout height. */}
       <div
         style={{
           position: "fixed",
-          top: 10,
+          bottom: 12,
           right: 12,
           zIndex: 80,
           display: "flex",
