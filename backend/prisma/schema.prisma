@@ -267,14 +267,22 @@ model WebhookDeliveryLog {
   webhook WebhookEndpoint @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 }
 
+// An invite is one of two kinds, distinguished by `email`:
+//   - Email invite (email set): targeted, single-use — consumed on accept.
+//   - Shareable link (email null): Discord-style, multi-use until it expires,
+//     is revoked, or hits maxUses.
+// `expiresAt` null means "never expires". `maxUses` null means unlimited.
 model WorkspaceInvite {
-  id          Int           @id @default(autoincrement())
-  workspaceId Int
-  token       String        @unique
-  email       String?
-  role        WorkspaceRole @default(VIEWER)
-  expiresAt   DateTime
-  createdAt   DateTime      @default(now())
+  id            Int           @id @default(autoincrement())
+  workspaceId   Int
+  token         String        @unique
+  email         String?
+  role          WorkspaceRole @default(VIEWER)
+  expiresAt     DateTime?
+  maxUses       Int?
+  useCount      Int           @default(0)
+  invitedByName String?
+  createdAt     DateTime      @default(now())
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 

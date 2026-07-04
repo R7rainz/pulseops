@@ -24,6 +24,7 @@ export async function sendInviteEmail(params: {
   inviteLink: string;
   role: string;
   invitedByName: string;
+  expiresAt?: Date | null;
 }) {
   const transporter = getTransporter();
 
@@ -34,6 +35,9 @@ export async function sendInviteEmail(params: {
   }
 
   const from = process.env.SMTP_FROM || `"PulseOps" <${process.env.SMTP_USER}>`;
+  const expiryLine = params.expiresAt
+    ? `This invite expires on ${params.expiresAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}.`
+    : "This invite does not expire.";
 
   try {
     const info = await transporter.sendMail({
@@ -47,7 +51,7 @@ ${params.invitedByName} has invited you to join "${params.workspaceName}" on Pul
 Click the link below to accept the invite:
 ${params.inviteLink}
 
-This invite expires in 7 days.
+${expiryLine}
 
 — PulseOps`,
       html: `<!DOCTYPE html>
@@ -74,7 +78,7 @@ This invite expires in 7 days.
       </p>
       <p>with role <span class="role-badge">${params.role}</span></p>
       <a href="${params.inviteLink}" class="button">Accept Invite</a>
-      <p style="font-size: 11px; color: #71717a;">This invite expires in 7 days. If you don't have a PulseOps account, you'll be prompted to create one.</p>
+      <p style="font-size: 11px; color: #71717a;">${expiryLine} If you don't have a PulseOps account, you'll be prompted to create one.</p>
     </div>
     <div class="footer">PulseOps · Infrastructure Monitoring Platform</div>
   </div>
