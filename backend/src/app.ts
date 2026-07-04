@@ -2,8 +2,6 @@ import Fastify, { type FastifyInstance, type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
 import swagger from "@fastify/swagger";
-import scalarApiReference from "@scalar/fastify-api-reference";
-import { scalarThemeCss } from "./lib/scalar-theme";
 import { ZodError } from "zod";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { workspaceRoutes } from "./modules/workspaces/workspace.routes";
@@ -89,20 +87,13 @@ export async function buildApp() {
         },
     });
 
-    // Scalar renders the spec as a classic docs site: left sidebar grouped by
-    // tag, ⌘/Ctrl-K search, per-endpoint pages with request/response examples.
-    // It sources the OpenAPI document from @fastify/swagger above.
-    await app.register(scalarApiReference, {
-        routePrefix: "/docs",
-        configuration: {
-            pageTitle: "PulseOps API",
-            theme: "default",
-            // Default to dark (the app's default) but keep the toggle so the
-            // docs can switch to light like the rest of the site.
-            darkMode: true,
-            customCss: scalarThemeCss,
-        },
-    });
+    // The rendered docs site lives on Mintlify (git-synced, hosted separately);
+    // /docs redirects there. We still expose the raw OpenAPI document so the
+    // spec stays publicly fetchable (and the docs/ dump script can source it).
+    app.get("/docs/openapi.json", async () => app.swagger());
+    app.get("/docs", async (_request, reply) =>
+        reply.redirect(process.env.DOCS_URL || "https://pulseops.mintlify.app"),
+    );
 
     app.setErrorHandler((error: FastifyError | ZodError, request, response) => {
         if (error instanceof ZodError) {
