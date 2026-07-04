@@ -65,9 +65,7 @@ jobs:
         continue-on-error: true
 
   docs:
-    # Docs are a hosted Mintlify project (no build step) — validate the config
-    # and spec are well-formed and that every navigation page resolves to a file.
-    name: Docs Validate
+    name: Docs Build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -76,30 +74,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate JSON is well-formed
-        run: |
-          jq empty docs.json
-          jq empty api-reference/openapi.json
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
 
-      - name: Validate navigation pages exist
-        run: |
-          node -e '
-            const fs = require("fs");
-            const cfg = JSON.parse(fs.readFileSync("docs.json", "utf8"));
-            const pages = [];
-            // Only strings inside a "pages" array are page files; tab/group
-            // names and the auto-generated "openapi" tab are not.
-            const walk = (node) => {
-              if (Array.isArray(node)) { node.forEach(walk); return; }
-              if (!node || typeof node !== "object") return;
-              if (Array.isArray(node.pages)) node.pages.forEach((p) =>
-                typeof p === "string" ? pages.push(p) : walk(p));
-              if (Array.isArray(node.groups)) node.groups.forEach(walk);
-              if (Array.isArray(node.tabs)) node.tabs.forEach(walk);
-            };
-            walk(cfg.navigation);
-            const missing = pages.filter((p) => !p.startsWith("http")
-              && !fs.existsSync(p + ".mdx") && !fs.existsSync(p + ".md"));
-            if (missing.length) { console.error("Missing pages:", missing); process.exit(1); }
-            console.log("All " + pages.length + " navigation pages resolve.");
-          '
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+          cache-dependency-path: docs/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm run build
