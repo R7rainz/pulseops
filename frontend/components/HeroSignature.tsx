@@ -29,6 +29,9 @@ function WebGLFallback() {
   );
 }
 
+// Overall backdrop dimming — keeps the field quiet behind the hero.
+const BASE_OPACITY = 0.7;
+
 // Code-split + client-only: Three.js never ships in the SSR/first-paint bundle.
 const SignatureScene = dynamic(() => import("./three/SignatureScene"), {
   ssr: false,
@@ -48,6 +51,11 @@ export function HeroSignature() {
 
   const showScene = cap === "capable" && !reduced;
 
+  // Fade the field out of the center so it never competes with the headline,
+  // and keep it dim overall — a quiet backdrop, not a foreground animation.
+  const CENTER_MASK =
+    "radial-gradient(115% 85% at 50% 38%, transparent 0%, transparent 40%, #000 78%)";
+
   useEffect(() => {
     if (!showScene) return;
     const el = containerRef.current;
@@ -66,7 +74,7 @@ export function HeroSignature() {
       raf = requestAnimationFrame(() => {
         const r = el.getBoundingClientRect();
         const p = Math.min(1, Math.max(0, -r.top / (r.height * 0.85)));
-        el.style.opacity = String(1 - p);
+        el.style.opacity = String((1 - p) * BASE_OPACITY);
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -84,6 +92,11 @@ export function HeroSignature() {
       ref={containerRef}
       aria-hidden
       className="pointer-events-none absolute inset-0 -z-10 overflow-hidden transition-opacity duration-300"
+      style={{
+        opacity: BASE_OPACITY,
+        maskImage: CENTER_MASK,
+        WebkitMaskImage: CENTER_MASK,
+      }}
     >
       {showScene ? <SignatureScene paused={paused} /> : <WebGLFallback />}
     </div>
