@@ -127,7 +127,7 @@ function PricingCard({ tier, billing }: { tier: Tier; billing: Billing }) {
     <div
       className={cn(
         "spotlight glass relative flex h-full flex-col rounded-2xl p-7",
-        tier.featured && "border-gradient-signal shadow-[0_24px_60px_-30px_color-mix(in_oklab,var(--primary)_60%,transparent)]",
+        tier.featured && "border-iris-animated shadow-[0_24px_60px_-30px_color-mix(in_oklab,var(--primary)_60%,transparent)]",
       )}
     >
       {tier.featured && (
