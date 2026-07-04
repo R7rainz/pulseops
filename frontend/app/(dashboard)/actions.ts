@@ -4,14 +4,6 @@ import { cookies } from "next/headers";
 import { API_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 
-export async function logoutUser() {
-  const cookieStore = await cookies();
-
-  cookieStore.delete("pulseops_token");
-
-  redirect("/login");
-}
-
 export async function createWorkspace(prevState: unknown, formData: FormData) {
   const name = formData.get("name") as string;
 

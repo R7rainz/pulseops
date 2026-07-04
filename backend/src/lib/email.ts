@@ -156,3 +156,70 @@ If you didn't request this, you can safely ignore this email.
     console.error(`[EMAIL] Failed to send reset email to ${params.to}:`, msg);
   }
 }
+
+export async function sendMagicLinkEmail(params: {
+  to: string;
+  magicLink: string;
+}) {
+  // Log the link so passwordless sign-in works in dev without SMTP configured
+  // (same convenience as the password-reset flow).
+  console.log(`[EMAIL] Magic sign-in link for ${params.to}: ${params.magicLink}`);
+
+  const transporter = getTransporter();
+
+  if (!transporter) {
+    const msg = `[EMAIL] SMTP not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS env vars. Skipping magic-link email to ${params.to}`;
+    console.warn(msg);
+    return;
+  }
+
+  const from = process.env.SMTP_FROM || `"PulseOps" <${process.env.SMTP_USER}>`;
+
+  try {
+    const info = await transporter.sendMail({
+      from,
+      to: params.to,
+      subject: "Your PulseOps sign-in link",
+      text: `Hello,
+
+Click the link below to sign in to PulseOps:
+${params.magicLink}
+
+This link expires in 15 minutes and can only be used once.
+
+If you didn't request this, you can safely ignore this email.
+
+— PulseOps`,
+      html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Courier New', monospace; background: #09090b; color: #fafafa; padding: 40px; }
+    .container { max-width: 480px; margin: 0 auto; border: 2px solid #27272a; padding: 32px; background: #09090b; }
+    .header { font-size: 14px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: #34d399; margin-bottom: 24px; border-bottom: 2px solid #27272a; padding-bottom: 16px; }
+    .body { font-size: 13px; line-height: 1.6; color: #a1a1aa; }
+    .button { display: inline-block; margin: 24px 0; padding: 14px 32px; background: #34d399; color: #09090b; text-decoration: none; font-weight: 800; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; border: 2px solid transparent; }
+    .footer { margin-top: 24px; padding-top: 16px; border-top: 2px solid #27272a; font-size: 10px; color: #52525b; letter-spacing: 0.1em; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">PulseOps — Sign In</div>
+    <div class="body">
+      <p>Click below to sign in to your PulseOps account.</p>
+      <a href="${params.magicLink}" class="button">Sign In</a>
+      <p style="font-size: 11px; color: #71717a;">This link expires in 15 minutes and can only be used once. If you didn't request this, you can safely ignore this email.</p>
+    </div>
+    <div class="footer">PulseOps · Infrastructure Monitoring Platform</div>
+  </div>
+</body>
+</html>`,
+    });
+
+    console.log(`[EMAIL] Magic-link email sent to ${params.to} — messageId: ${info.messageId}`);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(`[EMAIL] Failed to send magic-link email to ${params.to}:`, msg);
+  }
+}

@@ -5,6 +5,8 @@ import { API_URL } from "@/lib/constants";
 import { Mail, Calendar, ShieldCheck } from "lucide-react";
 import { updateProfile } from "./actions";
 import ChangePasswordForm from "./ChangePasswordForm";
+import TwoFactorSection from "./TwoFactorSection";
+import DeleteAccountSection from "./DeleteAccountSection";
 
 export default async function AccountPage() {
   const cookieStore = await cookies();
@@ -12,7 +14,7 @@ export default async function AccountPage() {
 
   if (!token) redirect("/login");
 
-  let user = { id: 0, name: "", email: "", createdAt: "" };
+  let user = { id: 0, name: "", email: "", createdAt: "", totpEnabled: false, hasPassword: true };
 
   try {
     const res = await apiFetch(`${API_URL}/api/v1/auth/me`, { token, cookieStore });
@@ -77,11 +79,17 @@ export default async function AccountPage() {
       {/* CHANGE PASSWORD */}
       <ChangePasswordForm />
 
+      {/* TWO-FACTOR AUTHENTICATION */}
+      <TwoFactorSection initialEnabled={user.totpEnabled} />
+
+      {/* DANGER ZONE — DELETE ACCOUNT */}
+      <DeleteAccountSection hasPassword={user.hasPassword} />
+
       {/* SECURITY NOTE */}
       <div className="mt-6 flex items-start gap-3 rounded-lg border border-border p-4">
         <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-info" />
         <p className="text-xs leading-relaxed text-muted-foreground">
-          Your credentials are hashed and stored securely — we never store plain-text passwords. Session tokens expire after 15 minutes.
+          Your credentials are hashed and stored securely — we never store plain-text passwords. Access tokens expire after 15 minutes and refresh against a revocable session; signing out invalidates it everywhere.
         </p>
       </div>
     </div>

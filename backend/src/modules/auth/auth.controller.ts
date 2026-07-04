@@ -1,7 +1,16 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
-import { loginSchema, signupSchema, updateMeSchema, forgotPasswordSchema, resetPasswordSchema } from "./auth.schema";
-import { loginService, signupService, refreshTokenService, updateMeService, forgotPasswordService, resetPasswordService } from "./auth.service";
+import { loginSchema, signupSchema, updateMeSchema, forgotPasswordSchema, resetPasswordSchema, refreshSchema, logoutSchema, deleteAccountSchema } from "./auth.schema";
+import { loginService, signupService, refreshTokenService, logoutService, deleteAccountService, updateMeService, forgotPasswordService, resetPasswordService } from "./auth.service";
 import { getMeService } from "./auth.service";
+import type { SessionMeta } from "../../lib/session";
+
+/** Capture request metadata to attach to a session for auditing. */
+export function metaFrom(request: FastifyRequest): SessionMeta {
+  return {
+    userAgent: request.headers["user-agent"] ?? null,
+    ip: request.ip,
+  };
+}
 
 export async function signupController(
   request: FastifyRequest,
@@ -10,7 +19,7 @@ export async function signupController(
   try {
     //validate request body
     const body = signupSchema.parse(request.body);
-    const result = await signupService(body);
+    const result = await signupService(body, metaFrom(request));
     return response
       .status(201)
       .send({ message: "User created successfully", data: result });
@@ -28,10 +37,10 @@ export async function loginController(
 ) {
   try {
     const body = loginSchema.parse(request.body);
-    const user = await loginService(body);
+    const result = await loginService(body, metaFrom(request));
     return response
       .status(200)
-      .send({ message: "Login successful", data: user });
+      .send({ message: "Login successful", data: result });
   } catch (error) {
     return response.status(400).send({
       message: error instanceof Error ? error.message : "Login Failed",
@@ -44,13 +53,8 @@ export async function refreshTokenController(
   response: FastifyReply,
 ) {
   try {
-    const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return response.status(401).send({ message: "Token missing" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const result = await refreshTokenService(token);
+    const { refreshToken } = refreshSchema.parse(request.body);
+    const result = await refreshTokenService(refreshToken);
 
     return response.status(200).send({
       message: "Token refreshed successfully",
@@ -60,6 +64,21 @@ export async function refreshTokenController(
     return response.status(401).send({
       message: error instanceof Error ? error.message : "Token refresh failed",
     });
+  }
+}
+
+export async function logoutController(
+  request: FastifyRequest,
+  response: FastifyReply,
+) {
+  try {
+    const { refreshToken } = logoutSchema.parse(request.body);
+    await logoutService(refreshToken);
+    return response.status(200).send({ message: "Logged out" });
+  } catch (error) {
+    // Logout is best-effort — never surface an error that would block the
+    // frontend from clearing its cookies.
+    return response.status(200).send({ message: "Logged out" });
   }
 }
 
@@ -95,6 +114,25 @@ export async function updateMeController(
     }
     return response.status(400).send({
       message: error instanceof Error ? error.message : "Update failed",
+    });
+  }
+}
+
+export async function deleteMeController(
+  request: FastifyRequest,
+  response: FastifyReply,
+) {
+  try {
+    const body = deleteAccountSchema.parse(request.body ?? {});
+    await deleteAccountService(request.user.userId, body);
+    return response.status(200).send({ message: "Account deleted" });
+  } catch (error: any) {
+    if (error?.issues) {
+      const messages = error.issues.map((i: any) => i.message).join("; ");
+      return response.status(400).send({ message: messages || "Invalid input" });
+    }
+    return response.status(400).send({
+      message: error instanceof Error ? error.message : "Failed to delete account",
     });
   }
 }

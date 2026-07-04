@@ -6,12 +6,21 @@ import { loginUser } from "../auth.actions";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import PasswordInput from "@/components/PasswordInput";
+import OAuthButtons from "@/components/OAuthButtons";
+
+const OAUTH_ERRORS: Record<string, string> = {
+  oauth: "We couldn't sign you in with that provider. Please try again.",
+  oauth_state: "Your sign-in session expired. Please try again.",
+  oauth_unavailable: "That sign-in provider isn't configured yet.",
+};
 
 function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginUser, {});
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
   const inviteToken = searchParams.get("invite_token");
+  const oauthError = searchParams.get("error");
+  const errorMessage = state?.error ?? (oauthError ? OAUTH_ERRORS[oauthError] ?? OAUTH_ERRORS.oauth : null);
 
   return (
     <div>
@@ -20,13 +29,17 @@ function LoginForm() {
         <p className="mt-1.5 text-sm text-muted-foreground">Sign in to your PulseOps account</p>
       </div>
 
-      <form action={formAction} className="fade-up mt-8 space-y-5" style={{ animationDelay: "80ms" }}>
+      <div className="fade-up mt-8" style={{ animationDelay: "60ms" }}>
+        <OAuthButtons label="Or continue with email" />
+      </div>
+
+      <form action={formAction} className="fade-up mt-6 space-y-5" style={{ animationDelay: "80ms" }}>
         {callbackUrl && <input type="hidden" name="callbackUrl" value={callbackUrl} />}
         {inviteToken && <input type="hidden" name="invite_token" value={inviteToken} />}
-        {state?.error && (
+        {errorMessage && (
           <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-down/40 bg-down/10 p-3 text-sm text-down">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>{state.error}</p>
+            <p>{errorMessage}</p>
           </div>
         )}
 
@@ -39,7 +52,10 @@ function LoginForm() {
 
         <PasswordInput id="password" name="password" label="Password" autoComplete="current-password" required placeholder="••••••••" />
 
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          <Link href="/magic-link" className="text-xs font-medium text-info transition-colors hover:text-primary">
+            Email me a sign-in link
+          </Link>
           <Link href="/forgot-password" className="text-xs font-medium text-info transition-colors hover:text-primary">
             Forgot password?
           </Link>
