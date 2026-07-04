@@ -1,0 +1,82 @@
+---
+title: "PulseOps API"
+description: "Read your monitors, checks, incidents, and SLA analytics over HTTP."
+---
+
+The PulseOps API gives you programmatic, read-only access to everything you
+track in the app: your monitors and their live state, historical checks, SLA and
+uptime analytics, and incident history. It's the same data the dashboard renders,
+served as plain JSON so you can pipe it into your own tooling, status pages, or
+alerting.
+
+<Note>
+  v1 API keys are **read-only**. The one exception is pushing liveness signals
+  for `HEARTBEAT` monitors — see [Heartbeat](/api-reference/heartbeat).
+</Note>
+
+## Base URL
+
+Every endpoint lives under `/api/v1` on your PulseOps API host:
+
+```
+https://<your-pulseops-api-host>/api/v1
+```
+
+For local development that's `http://localhost:4000/api/v1`.
+
+## Your first request
+
+1. Create a workspace API key in **Settings → API Keys** (see
+   [Authentication](/authentication)).
+2. Pass it in the `x-api-key` header on every request.
+3. Note your **workspace ID** — most endpoints are scoped to a workspace.
+
+<CodeGroup>
+
+```bash cURL
+curl https://<your-pulseops-api-host>/api/v1/workspaces/{workspaceId}/monitors \
+  -H "x-api-key: po_your_key_here"
+```
+
+```javascript Node.js
+const res = await fetch(
+  "https://<your-pulseops-api-host>/api/v1/workspaces/{workspaceId}/monitors",
+  { headers: { "x-api-key": "po_your_key_here" } },
+);
+const monitors = await res.json();
+```
+
+```python Python
+import requests
+
+res = requests.get(
+    "https://<your-pulseops-api-host>/api/v1/workspaces/{workspaceId}/monitors",
+    headers={"x-api-key": "po_your_key_here"},
+)
+monitors = res.json()
+```
+
+</CodeGroup>
+
+## What you can do
+
+<CardGroup cols={2}>
+  <Card title="Monitors" icon="radar" href="/api-reference/monitors">
+    List monitors, read a single monitor, live state, recent checks, uptime
+    stats, and SLA analytics.
+  </Card>
+  <Card title="Incidents" icon="triangle-exclamation" href="/api-reference/incidents">
+    Browse incident history across a workspace or fetch a single incident.
+  </Card>
+  <Card title="Heartbeat" icon="heart-pulse" href="/api-reference/heartbeat">
+    Push liveness signals for `HEARTBEAT` monitors from your own jobs and crons.
+  </Card>
+  <Card title="Authentication" icon="key" href="/authentication">
+    Create keys, scope them, and authenticate with the `x-api-key` header.
+  </Card>
+</CardGroup>
+
+## Rate limits
+
+The API is rate limited to protect the service. If you exceed the limit you'll
+receive a `429 Too Many Requests` response — back off and retry.

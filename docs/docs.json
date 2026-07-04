@@ -1,0 +1,54 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "PulseOps",
+  "description": "Programmatic access to PulseOps monitors and incidents.",
+  "colors": {
+    "primary": "#6366f1",
+    "light": "#22d3ee",
+    "dark": "#6366f1"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": ["index", "authentication"]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "openapi": "/api-reference/openapi.json"
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Back to app",
+        "href": "https://pulseops.app"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://pulseops.app"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/rainz/pulseops"
+    }
+  }
+}

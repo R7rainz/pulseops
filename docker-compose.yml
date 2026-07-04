@@ -126,22 +126,7 @@ services:
       - NODE_ENV=production
       - API_URL=http://api:4000
 
-  docs:
-    build:
-      context: .
-      dockerfile: docs/Dockerfile
-    container_name: pulseops-docs
-    restart: unless-stopped
-    depends_on:
-      - api
-    ports:
-      - "3001:3000"
-    environment:
-      - NODE_ENV=production
-      # Server-side spec proxy (/openapi.json) reaches the API on the internal
-      # network. The "Back to app" link uses NEXT_PUBLIC_APP_URL, baked at build
-      # (defaults to http://localhost:3000, correct for host access).
-      - API_URL=http://api:4000
+  # Docs are hosted on Mintlify (git-synced), not self-hosted here. See docs/README.md.
 
 volumes:
   pulseops_postgres_data:
