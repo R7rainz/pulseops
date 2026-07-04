@@ -20,14 +20,25 @@ Monitor checks converge on `applyCheckResult()` in `monitor.engine.ts` from two 
 
 ## Key env
 - `DATABASE_URL` — postgresql://rainz:brainz@localhost:5432/pulseops
-- `JWT_SECRET` — HS256 signing key (64 hex)
+- `JWT_SECRET` — HS256 signing key (64 hex). Also signs 5-min MFA challenge tokens.
 - `PORT` — 4000
-- `FRONTEND_URL` — CORS allowlist origin(s), comma-separated
+- `FRONTEND_URL` — CORS allowlist origin(s), comma-separated. First entry is also the OAuth handoff redirect base.
+- `APP_URL` — public frontend URL used in emailed reset / magic-link URLs (default http://localhost:3000)
+- `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` — transactional email (invites, password reset, magic links). Unset ⇒ links are logged to console instead (dev-friendly).
 - `RAZORPAY_WEBHOOK_SECRET` — required for `/billing/webhook` signature verification
 - `KAFKA_BROKERS` / `KAFKA_TARGETS_TOPIC` / `KAFKA_METRICS_TOPIC` — must match `../workers/ping-engine`'s env
-- Redis default localhost:6379 for BullMQ (webhook retry queue) and live monitor state cache
+- Redis default localhost:6379 for BullMQ (webhook retry queue), live monitor state cache, **OAuth state + one-time handoff codes**
+
+### OAuth (social login) env — each provider is optional; unset ⇒ its button 302s to `/login?error=oauth_unavailable`
+- `OAUTH_CALLBACK_BASE` — public backend URL used to build provider redirect URIs (default http://localhost:4000). Register `<base>/api/v1/auth/oauth/<provider>/callback` with each provider.
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`
+- `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` / `MICROSOFT_TENANT` (default `common`)
+
+## Auth methods
+Password (bcrypt) · OAuth social login (Google/GitHub/Microsoft via `arctic`) · passwordless magic links · TOTP 2FA (`otplib`, with one-time recovery codes). All converge on a revocable **Session** row (opaque refresh token, sha256-hashed): access token is a 15-min JWT, `POST /auth/refresh` reissues it against a live session, `POST /auth/logout` revokes it. `DELETE /auth/me` self-deletes the account (re-confirms password when set; deletes owned workspaces + their data, then cascades sessions/OAuth/recovery codes). See `src/modules/auth/` (`auth`/`oauth`/`mfa`/`magic-link`) and `src/lib/{session,oauth,jwt}.ts`.
 
 ## Frontend (`../frontend/`)
 Next.js 16 on port 3000, fetches from this API at port 4000.
-`pulseops_token` httpOnly cookie for auth, server actions for mutations.
+`pulseops_token` (access) + `pulseops_refresh` (refresh) httpOnly cookies for auth, server actions for mutations.
 Brutalist dark design system.

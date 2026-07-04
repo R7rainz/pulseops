@@ -79,8 +79,60 @@ export const resetPasswordSchema = z.object({
     }),
 });
 
+export const refreshSchema = z.object({
+  refreshToken: z.string().min(1, { message: "Refresh token is required" }),
+});
+
+export const logoutSchema = z.object({
+  refreshToken: z.string().min(1, { message: "Refresh token is required" }),
+});
+
+export const magicLinkRequestSchema = z.object({
+  email: z.email({ message: "Invalid email address format" }),
+});
+
+export const magicLinkVerifySchema = z.object({
+  token: z.string().min(1, { message: "Token is required" }),
+});
+
+export const oauthExchangeSchema = z.object({
+  code: z.string().min(1, { message: "Code is required" }),
+});
+
+// 6-digit TOTP code, or a longer alphanumeric recovery code.
+const otpCode = z
+  .string()
+  .min(6, { message: "Enter your 6-digit code" })
+  .max(20, { message: "Invalid code" });
+
+export const twoFactorEnableSchema = z.object({
+  secret: z.string().min(1, { message: "Secret is required" }),
+  code: otpCode,
+});
+
+export const twoFactorVerifySchema = z.object({
+  mfaToken: z.string().min(1, { message: "MFA token is required" }),
+  code: otpCode,
+});
+
+export const twoFactorDisableSchema = z.object({
+  code: otpCode,
+});
+
+export const deleteAccountSchema = z.object({
+  // Required only for accounts that have a password (enforced in the service);
+  // OAuth-only / passwordless accounts can delete without one.
+  password: z.string().optional(),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type UpdateMeInput = z.infer<typeof updateMeSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type MagicLinkRequestInput = z.infer<typeof magicLinkRequestSchema>;
+export type MagicLinkVerifyInput = z.infer<typeof magicLinkVerifySchema>;
+export type TwoFactorEnableInput = z.infer<typeof twoFactorEnableSchema>;
+export type TwoFactorVerifyInput = z.infer<typeof twoFactorVerifySchema>;
+export type TwoFactorDisableInput = z.infer<typeof twoFactorDisableSchema>;
+export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;

@@ -7,7 +7,8 @@ export function middleware(request: NextRequest) {
 
   const isAuthPage =
     pathname.startsWith("/login") || pathname.startsWith("/signup") ||
-    pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password");
+    pathname.startsWith("/forgot-password") || pathname.startsWith("/reset-password") ||
+    pathname.startsWith("/magic-link") || pathname.startsWith("/2fa");
   // 🚨 Now protecting the new workspaces route!
   const isDashboardRoute = pathname.startsWith("/workspaces");
 
@@ -25,5 +26,5 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   // 🚨 Ensure the matcher runs on the root, auth, and workspaces
-  matcher: ["/", "/workspaces/:path*", "/login", "/signup", "/forgot-password", "/reset-password"],
+  matcher: ["/", "/workspaces/:path*", "/login", "/signup", "/forgot-password", "/reset-password", "/magic-link", "/2fa"],
 };

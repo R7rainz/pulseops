@@ -6,6 +6,7 @@ import { signupUser } from "../auth.actions";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import PasswordInput from "@/components/PasswordInput";
+import OAuthButtons from "@/components/OAuthButtons";
 
 function SignupForm() {
   const [state, formAction, isPending] = useActionState(signupUser, {});
@@ -19,7 +20,11 @@ function SignupForm() {
         <p className="mt-1.5 text-sm text-muted-foreground">Start monitoring in under a minute</p>
       </div>
 
-      <form action={formAction} className="fade-up mt-8 space-y-5" style={{ animationDelay: "80ms" }}>
+      <div className="fade-up mt-8" style={{ animationDelay: "60ms" }}>
+        <OAuthButtons label="Or sign up with email" />
+      </div>
+
+      <form action={formAction} className="fade-up mt-6 space-y-5" style={{ animationDelay: "80ms" }}>
         {inviteToken && <input type="hidden" name="invite_token" value={inviteToken} />}
         {state?.error && (
           <div role="alert" className="flex items-start gap-2.5 rounded-lg border border-down/40 bg-down/10 p-3 text-sm text-down">

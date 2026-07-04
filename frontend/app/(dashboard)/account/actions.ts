@@ -51,6 +51,40 @@ export async function updateProfile(formData: FormData) {
   }
 }
 
+export async function deleteAccount(
+  prevState: { error?: string },
+  formData: FormData,
+): Promise<{ error?: string }> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("pulseops_token")?.value;
+  if (!token) return { error: "Not authenticated" };
+
+  const password = (formData.get("password") as string | null) ?? undefined;
+
+  try {
+    const res = await fetch(`${API_URL}/api/v1/auth/me`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(password ? { password } : {}),
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      return { error: json.message || "Failed to delete account." };
+    }
+  } catch {
+    return { error: "Network error deleting account." };
+  }
+
+  // Account (and its sessions) are gone server-side — clear cookies and leave.
+  cookieStore.delete("pulseops_token");
+  cookieStore.delete("pulseops_refresh");
+  redirect("/signup");
+}
+
 export async function changePassword(
   prevState: { error?: string; success?: string },
   formData: FormData,

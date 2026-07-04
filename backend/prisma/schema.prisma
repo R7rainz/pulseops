@@ -17,13 +17,84 @@ model User {
   id                  Int      @id @default(autoincrement())
   name                String?
   email               String   @unique
-  passwordHash        String
+  passwordHash        String?
+  emailVerified       Boolean  @default(false)
+  totpSecret          String?
+  totpEnabled         Boolean  @default(false)
   resetPasswordToken  String?
   resetPasswordExpires DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
   workspaceMembers WorkspaceMember[]
+  sessions         Session[]
+  oauthAccounts    OAuthAccount[]
+  mfaRecoveryCodes MfaRecoveryCode[]
+}
+
+// Rotating refresh-token sessions. The opaque refresh token is never stored;
+// only its sha256 hash. Rotation revokes the old row and inserts a new one;
+// logout sets revokedAt so a token can be invalidated before it expires.
+model Session {
+  id               String    @id @default(cuid())
+  userId           Int
+  refreshTokenHash String    @unique
+  userAgent        String?
+  ip               String?
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum OAuthProvider {
+  GOOGLE
+  GITHUB
+  MICROSOFT
+}
+
+model OAuthAccount {
+  id                Int           @id @default(autoincrement())
+  userId            Int
+  provider          OAuthProvider
+  providerAccountId String
+  email             String?
+  createdAt         DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+// One-time recovery codes for TOTP 2FA. Only the sha256 hash is stored;
+// codes are shown to the user once at enable time.
+model MfaRecoveryCode {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Passwordless magic-link tokens. Only the sha256 hash is stored; single-use
+// (usedAt) with a short expiry.
+model MagicLinkToken {
+  id        Int       @id @default(autoincrement())
+  email     String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
 }
 
 enum WorkspaceRole {
