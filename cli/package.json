@@ -13,6 +13,8 @@
     ".": "./dist/index.js",
     "./client": "./dist/client.js",
     "./config": "./dist/config.js",
+    "./credentials": "./dist/credentials.js",
+    "./auth": "./dist/auth.js",
     "./types": "./dist/types.js"
   },
   "files": [

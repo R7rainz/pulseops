@@ -16,6 +16,7 @@ anything you can see in the dashboard you can also script.
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Quick start](#quick-start)
+- [Authentication](#authentication)
 - [Configuration](#configuration)
 - [Command reference](#command-reference)
 - [Output formats](#output-formats)
@@ -71,12 +72,13 @@ linked it globally, substitute `node dist/index.js` (e.g.
 ## Quick start
 
 ```bash
-# 1. Point the CLI at your API and authenticate
-export PULSEOPS_API_URL=https://api.pulseops.example.com   # omit to use http://localhost:4000
-export PULSEOPS_API_KEY=po_your_key_here
-export PULSEOPS_WORKSPACE=1
+# Point at your API (omit to use http://localhost:4000)
+export PULSEOPS_API_URL=https://api.pulseops.example.com
 
-# 2. List your monitors
+# 1. Sign in through your browser — no workspace to configure
+pulseops login
+
+# 2. List your monitors (workspace comes from your login)
 pulseops monitors list
 
 # 3. Drill into one
@@ -89,17 +91,54 @@ pulseops incidents list
 
 ---
 
+## Authentication
+
+The CLI supports two ways to authenticate:
+
+### 1. Log in (recommended)
+
+`pulseops login` runs a browser-based device flow (like `gh auth login`): it
+prints a short code, opens the PulseOps web app, and you approve there — so it
+works with **password, OAuth and 2FA** accounts alike. On success it stores a
+session in `~/.config/pulseops/credentials.json` (mode `0600`) and **auto-selects
+your workspace**, so you never set `PULSEOPS_WORKSPACE` manually.
+
+```bash
+pulseops login          # sign in
+pulseops whoami         # show who you are + current workspace
+pulseops workspaces     # list your workspaces
+pulseops use 42         # switch default workspace (if you have several)
+pulseops logout         # sign out and delete stored credentials
+```
+
+Access tokens are refreshed automatically; a login lasts until you `logout` or
+the session is revoked.
+
+### 2. API key
+
+For CI/scripts, a workspace **API key** is simpler and non-interactive. Keys are
+scoped to one workspace, so you set that workspace explicitly. A key
+(`--api-key` / `PULSEOPS_API_KEY`) always takes precedence over a stored login.
+
+```bash
+export PULSEOPS_API_KEY=po_your_key_here
+export PULSEOPS_WORKSPACE=1
+pulseops monitors list
+```
+
+---
+
 ## Configuration
 
-Every request needs an **API key**, and workspace-scoped commands need a
-**workspace id**. Each setting resolves in this order — **command-line flag →
-environment variable → built-in default**:
+Auth resolves as **`--api-key`/`PULSEOPS_API_KEY` (key mode) → stored `pulseops
+login` session**. URL and workspace each resolve **flag → environment variable →
+stored login → built-in default**:
 
 | Setting      | Flag                | Environment variable | Default                 | Required                    |
 | ------------ | ------------------- | -------------------- | ----------------------- | --------------------------- |
 | API base URL | `--url <url>`       | `PULSEOPS_API_URL`   | `http://localhost:4000` | no                          |
-| API key      | `-k, --api-key <key>` | `PULSEOPS_API_KEY` | —                       | **yes**                     |
-| Workspace id | `-w, --workspace <id>` | `PULSEOPS_WORKSPACE` | —                    | for workspace-scoped commands |
+| API key      | `-k, --api-key <key>` | `PULSEOPS_API_KEY` | —                       | unless logged in (`pulseops login`) |
+| Workspace id | `-w, --workspace <id>` | `PULSEOPS_WORKSPACE` | —                    | key mode only (login auto-selects)  |
 
 Environment variables are the usual way to configure it; flags are handy for
 one-offs or overriding a single call:
@@ -139,6 +178,12 @@ These apply to every command:
 ## Command reference
 
 ```
+pulseops login                            Sign in through your browser (device flow)
+pulseops logout                           Sign out, delete stored credentials
+pulseops whoami                           Show the signed-in user + current workspace
+pulseops workspaces                       List the workspaces you belong to (alias: ws)
+pulseops use <workspaceId>                Set the default workspace for a login session
+
 pulseops monitors list                    List every monitor in the workspace
 pulseops monitors get <monitorId>         Show one monitor's config + current state
 pulseops monitors live                    Latest cached status/latency for each monitor
@@ -327,8 +372,9 @@ pulseops monitors checks 6 --limit 200 --json > checks-6.json
 
 | Symptom                                                        | Cause & fix                                                                                     |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `Error: No API key…` (exit 2)                                  | Set `PULSEOPS_API_KEY` or pass `--api-key`. Create a key in **Settings → API Keys**.            |
-| `Error: This command needs a workspace…` (exit 2)              | Set `PULSEOPS_WORKSPACE` or pass `--workspace <id>`.                                             |
+| `Error: Not authenticated…` (exit 2)                           | Run `pulseops login`, or set `PULSEOPS_API_KEY` / pass `--api-key`.                              |
+| `Error: This command needs a workspace…` (exit 2)              | Logged in with several workspaces: `pulseops use <id>`. Key mode: set `PULSEOPS_WORKSPACE`.      |
+| `Your session has expired…`                                    | Run `pulseops login` again.                                                                      |
 | `Error: Invalid monitorId: … (expected an integer)` (exit 1)   | Ids are integers — use the numeric id from `monitors list`.                                      |
 | `Error: API 401: …`                                            | The key is missing, wrong, or revoked.                                                           |
 | `Error: API 403: …`                                            | The key belongs to a different workspace than `--workspace`.                                     |
@@ -356,12 +402,14 @@ models and controllers. If the API's response shapes change, update that file.
 ```
 src/
   index.ts           CLI entry — global flags, error handling, exit codes
-  client.ts          Typed fetch client (x-api-key auth, envelope unwrapping)
+  client.ts          Typed fetch client (key or Bearer auth, 401 auto-refresh)
+  auth.ts            Device-flow login + token refresh + browser opener
+  credentials.ts     Read/write ~/.config/pulseops/credentials.json (0600)
   types.ts           Response models
-  config.ts          Flag → env → default resolution
+  config.ts          Auth (key/session) + flag → env → default resolution
   context.ts         Per-command client + config wiring
   format.ts          Tables, colour, status glyphs, date/latency formatting
-  commands/          monitors.ts · incidents.ts · heartbeat.ts
+  commands/          auth.ts · workspaces.ts · monitors.ts · incidents.ts · heartbeat.ts
   generated/         schema.d.ts (from `pnpm gen`)
 ```
 

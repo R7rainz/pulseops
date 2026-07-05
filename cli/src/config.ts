@@ -1,9 +1,17 @@
-/** Resolves connection settings from CLI flags, then env, then defaults. */
+/** Resolves connection + auth settings from flags, env, stored login, defaults. */
+
+import { loadCredentials } from "./credentials.js";
+
+export type Auth =
+  | { mode: "key"; apiKey: string }
+  | { mode: "session"; accessToken: string; refreshToken: string };
 
 export interface Config {
   apiUrl: string;
-  apiKey: string;
+  auth: Auth;
   workspaceId?: number;
+  /** True when auth came from stored `pulseops login` credentials. */
+  fromStoredSession: boolean;
 }
 
 export interface ConfigOverrides {
@@ -17,26 +25,41 @@ const DEFAULT_API_URL = "http://localhost:4000";
 export class ConfigError extends Error {}
 
 /**
- * Precedence: explicit flag > environment variable > built-in default.
- *   --url       / PULSEOPS_API_URL   (default http://localhost:4000)
- *   --api-key   / PULSEOPS_API_KEY   (required)
- *   --workspace / PULSEOPS_WORKSPACE (required only for workspace-scoped calls)
+ * Auth precedence: explicit `--api-key`/`PULSEOPS_API_KEY` (key mode) wins;
+ * otherwise a stored `pulseops login` session is used. URL/workspace each
+ * resolve flag > env > stored > default.
  */
 export function resolveConfig(overrides: ConfigOverrides): Config {
+  const stored = loadCredentials();
+
   const apiUrl = (
     overrides.url ||
     process.env.PULSEOPS_API_URL ||
+    stored?.apiUrl ||
     DEFAULT_API_URL
   ).replace(/\/+$/, "");
 
   const apiKey = overrides.apiKey || process.env.PULSEOPS_API_KEY || "";
-  if (!apiKey) {
+
+  let auth: Auth;
+  let fromStoredSession = false;
+  if (apiKey) {
+    auth = { mode: "key", apiKey };
+  } else if (stored) {
+    auth = {
+      mode: "session",
+      accessToken: stored.accessToken,
+      refreshToken: stored.refreshToken,
+    };
+    fromStoredSession = true;
+  } else {
     throw new ConfigError(
-      "No API key. Pass --api-key po_… or set PULSEOPS_API_KEY " +
-        "(create a key in Settings → API Keys).",
+      "Not authenticated. Run `pulseops login`, or pass --api-key / set " +
+        "PULSEOPS_API_KEY.",
     );
   }
 
+  // Workspace: flag > env > stored default (session only).
   const rawWorkspace = overrides.workspace ?? process.env.PULSEOPS_WORKSPACE;
   let workspaceId: number | undefined;
   if (rawWorkspace != null && rawWorkspace !== "") {
@@ -44,18 +67,21 @@ export function resolveConfig(overrides: ConfigOverrides): Config {
     if (!Number.isInteger(workspaceId)) {
       throw new ConfigError(`Invalid workspace id: ${rawWorkspace}`);
     }
+  } else if (fromStoredSession && stored?.workspaceId != null) {
+    workspaceId = stored.workspaceId;
   }
 
-  return { apiUrl, apiKey, workspaceId };
+  return { apiUrl, auth, workspaceId, fromStoredSession };
 }
 
 /** Asserts a workspace id is present for workspace-scoped commands. */
 export function requireWorkspace(config: Config): number {
   if (config.workspaceId == null) {
-    throw new ConfigError(
-      "This command needs a workspace. Pass --workspace <id> or set " +
-        "PULSEOPS_WORKSPACE.",
-    );
+    const hint =
+      config.auth.mode === "session"
+        ? "Pick one with `pulseops use <id>` (see `pulseops workspaces`)."
+        : "Pass --workspace <id> or set PULSEOPS_WORKSPACE.";
+    throw new ConfigError(`This command needs a workspace. ${hint}`);
   }
   return config.workspaceId;
 }

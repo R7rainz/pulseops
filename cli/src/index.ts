@@ -3,6 +3,8 @@ import { Command } from "commander";
 import { registerMonitorCommands } from "./commands/monitors.js";
 import { registerIncidentCommands } from "./commands/incidents.js";
 import { registerHeartbeatCommand } from "./commands/heartbeat.js";
+import { registerAuthCommands } from "./commands/auth.js";
+import { registerWorkspaceCommands } from "./commands/workspaces.js";
 import { ApiError } from "./client.js";
 import { ConfigError } from "./config.js";
 import { color } from "./format.js";
@@ -11,7 +13,10 @@ const program = new Command();
 
 program
   .name("pulseops")
-  .description("Official CLI for the PulseOps monitoring API")
+  .description(
+    "Official CLI for the PulseOps monitoring API.\n" +
+      "Sign in with `pulseops login`, or use an API key (--api-key / PULSEOPS_API_KEY).",
+  )
   .version("0.1.0")
   .option(
     "--url <url>",
@@ -28,6 +33,8 @@ program
   .option("--json", "Emit raw JSON instead of a formatted table")
   .showHelpAfterError();
 
+registerAuthCommands(program);
+registerWorkspaceCommands(program);
 registerMonitorCommands(program);
 registerIncidentCommands(program);
 registerHeartbeatCommand(program);
