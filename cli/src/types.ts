@@ -10,6 +10,20 @@
  * Dates cross the wire as ISO-8601 strings.
  */
 
+export interface SessionUser {
+  id: number;
+  name: string | null;
+  email: string;
+  createdAt?: string;
+}
+
+/** A workspace the signed-in user belongs to (from GET /workspaces). */
+export interface Workspace {
+  id: number;
+  name: string;
+  role?: string;
+}
+
 export type MonitorStatus = "UP" | "DOWN" | "DEGRADED" | "PAUSED";
 export type MonitorType = "HTTP" | "HEARTBEAT";
 export type IncidentStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED";
