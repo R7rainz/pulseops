@@ -336,7 +336,7 @@ export function IncidentList({
   );
 }
 
-export function Footer({ view, error }: { view: View; error: string | undefined }) {
+export function Footer({ error }: { error: string | undefined }) {
   if (error) {
     return (
       <Box paddingX={1}>
@@ -344,13 +344,11 @@ export function Footer({ view, error }: { view: View; error: string | undefined 
       </Box>
     );
   }
-  const keys =
-    view === "monitors"
-      ? "↑/↓ select · tab incidents · r refresh · q quit"
-      : "↑/↓ select · tab monitors · r refresh · q quit";
   return (
     <Box paddingX={1}>
-      <Text color={iris.muted}>{keys}</Text>
+      <Text color={iris.muted}>
+        j/k move · h/l panes · gg/G ends · ⌃d/⌃u page · r reload · q quit
+      </Text>
     </Box>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, useApp, useInput, useStdout } from "ink";
 import type { PulseOpsClient } from "@pulseops/cli/client";
 import type { Config } from "@pulseops/cli/config";
@@ -112,24 +112,69 @@ export function App({
     incidentsPoll.refresh();
   };
 
+  // Tracks a pending `g` so a second `g` within the window triggers `gg` (top).
+  const pendingG = useRef(false);
+
   useInput((input, key) => {
+    // Quit.
     if (input === "q" || (key.ctrl && input === "c")) {
       exit();
       return;
     }
-    if (key.tab || input === "\t") {
-      setView((v) => (v === "monitors" ? "incidents" : "monitors"));
+
+    // Pane switching, vim-style: h ← Monitors, l → Incidents.
+    if (input === "h") {
+      setView("monitors");
       return;
     }
-    if (input === "m") setView("monitors");
-    if (input === "i") setView("incidents");
-    if (input === "r") refreshAll();
+    if (input === "l") {
+      setView("incidents");
+      return;
+    }
+
+    // Refresh.
+    if (input === "r") {
+      refreshAll();
+      return;
+    }
 
     const len = view === "monitors" ? monitors.length : incidents.length;
-    if (len === 0) return;
     const setSel = view === "monitors" ? setMonitorSel : setIncidentSel;
-    if (key.upArrow || input === "k") setSel((s) => (s - 1 + len) % len);
-    if (key.downArrow || input === "j") setSel((s) => (s + 1) % len);
+    const clamp = (n: number) => Math.max(0, Math.min(len - 1, n));
+    if (len === 0) return;
+
+    // gg → top (two presses), G → bottom.
+    if (input === "g") {
+      if (pendingG.current) {
+        pendingG.current = false;
+        setSel(0);
+      } else {
+        pendingG.current = true;
+        setTimeout(() => {
+          pendingG.current = false;
+        }, 500);
+      }
+      return;
+    }
+    if (input === "G") {
+      setSel(len - 1);
+      return;
+    }
+
+    // Half-page scroll: Ctrl-d / Ctrl-u.
+    const half = Math.max(1, Math.floor(bodyRows / 2));
+    if (key.ctrl && input === "d") {
+      setSel((s) => clamp(s + half));
+      return;
+    }
+    if (key.ctrl && input === "u") {
+      setSel((s) => clamp(s - half));
+      return;
+    }
+
+    // Line movement: j / k (arrows also work). Clamps at ends, no wrap.
+    if (input === "j" || key.downArrow) setSel((s) => clamp(s + 1));
+    if (input === "k" || key.upArrow) setSel((s) => clamp(s - 1));
   });
 
   const error =
@@ -176,7 +221,7 @@ export function App({
           maxRows={bodyRows}
         />
       )}
-      <Footer view={view} error={error} />
+      <Footer error={error} />
     </Box>
   );
 }

@@ -46,13 +46,16 @@ pulseops-tui        # if linked globally, else: node dist/index.js
 
 ## Keys
 
-| Key            | Action                          |
-| -------------- | ------------------------------- |
-| `↑` / `↓` (`k`/`j`) | Move selection             |
-| `Tab`          | Switch Monitors ↔ Incidents     |
-| `m` / `i`      | Jump to Monitors / Incidents    |
-| `r`            | Refresh now                     |
-| `q` / `Ctrl-C` | Quit                            |
+Navigation is vim-style (arrow keys also work for line movement):
+
+| Key              | Action                                   |
+| ---------------- | ---------------------------------------- |
+| `j` / `k`        | Move selection down / up (also `↓` / `↑`) |
+| `h` / `l`        | Switch pane — `h` Monitors, `l` Incidents |
+| `gg` / `G`       | Jump to top / bottom of the list          |
+| `Ctrl-d` / `Ctrl-u` | Half-page down / up                    |
+| `r`              | Refresh now                              |
+| `q` / `Ctrl-C`   | Quit                                     |
 
 Data auto-refreshes: live state every 5s, monitor list every 15s, incidents
 every 20s.
