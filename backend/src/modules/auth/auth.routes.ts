@@ -25,6 +25,11 @@ import {
   oauthCallbackController,
   oauthExchangeController,
 } from "./oauth.controller";
+import {
+  deviceAuthorizeController,
+  deviceTokenController,
+  deviceApproveController,
+} from "./device.controller";
 import { requireAuth } from "../../middleware/auth.middleware";
 
 const bruteForceLimit = {
@@ -58,4 +63,9 @@ export async function authRoutes(app: FastifyInstance) {
   app.get("/oauth/:provider", oauthStartController);
   app.get("/oauth/:provider/callback", oauthCallbackController);
   app.post("/oauth/exchange", oauthExchangeController);
+
+  // Device authorization flow (CLI/TUI login through the browser).
+  app.post("/device/authorize", deviceAuthorizeController);
+  app.post("/device/token", deviceTokenController);
+  app.post("/device/approve", { preHandler: requireAuth }, deviceApproveController);
 }
