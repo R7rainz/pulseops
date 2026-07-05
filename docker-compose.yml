@@ -65,6 +65,24 @@ services:
       timeout: 5s
       retries: 5
 
+  # One-shot: applies Prisma migrations to a fresh (or upgraded) database, then
+  # exits. The API gates on it completing, so `docker compose up` sets up the
+  # schema automatically — no manual migrate step. Reuses the backend image's
+  # `builder` stage, which is the one that carries the Prisma CLI + migrations.
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: builder
+    container_name: pulseops-migrate
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://rainz:brainz@postgres:5432/pulseops
+    command: ["npx", "prisma", "migrate", "deploy"]
+
   api:
     build:
       context: .
@@ -78,10 +96,15 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "4000:4000"
+    # Optional: drop real secrets (OAuth, SMTP, billing) here to enable those
+    # features. Absent on a fresh clone — the defaults below are enough to run.
     env_file:
-      - ./backend/.env
+      - path: ./backend/.env
+        required: false
     environment:
       - DATABASE_URL=postgresql://rainz:brainz@postgres:5432/pulseops
       - REDIS_HOST=redis
@@ -92,7 +115,14 @@ services:
       - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - NODE_ENV=production
-      - APP_URL=http://localhost:3000
+      # Auth signing key. A shared dev default so the stack runs out of the box —
+      # OVERRIDE for any deployment that's reachable by others (set JWT_SECRET in
+      # a root .env or your shell). See .env.example.
+      - JWT_SECRET=${JWT_SECRET:-a3f1c09e7b2d48561fae90c3d7b6528e14aa9f0c5d3e2b7a8c6f4e1d0b9a8c7d}
+      - APP_URL=${APP_URL:-http://localhost:3000}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+      - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:4000}
+      - OAUTH_CALLBACK_BASE=${OAUTH_CALLBACK_BASE:-http://localhost:4000}
 
   ping-engine:
     build:
@@ -121,7 +151,8 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./frontend/.env
+      - path: ./frontend/.env
+        required: false
     environment:
       - NODE_ENV=production
       - API_URL=http://api:4000
