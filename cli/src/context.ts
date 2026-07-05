@@ -27,7 +27,7 @@ export function context(command: Command): Context {
   };
 }
 
-/** Parses a positional integer argument, exiting cleanly on bad input. */
+/** Parses a positional integer argument like monitorId and incidentId, exiting cleanly on bad input. */
 export function intArg(value: string, name: string): number {
   const n = Number(value);
   if (!Number.isInteger(n)) {
