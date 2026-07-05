@@ -13,6 +13,7 @@ import MagneticButton from "@/components/MagneticButton";
 import CountUp from "@/components/CountUp";
 import { HeroSignature } from "@/components/HeroSignature";
 import PricingSection from "@/components/landing/PricingSection";
+import TerminalSection from "@/components/landing/TerminalSection";
 import TelemetrySection from "@/components/landing/TelemetrySection";
 import ChartsShowcase from "@/components/landing/ChartsShowcase";
 import LogoMarquee from "@/components/landing/LogoMarquee";
@@ -113,6 +114,12 @@ export default async function RootPage() {
           <Brand href="/" />
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle className="h-9 w-9" />
+            <a
+              href="#developers"
+              className="hidden px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
+            >
+              Developers
+            </a>
             <a
               href="#telemetry"
               className="hidden px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline-flex"
@@ -253,6 +260,9 @@ export default async function RootPage() {
           </div>
         </div>
       </section>
+
+      {/* DEVELOPER / TERMINAL WORKFLOW */}
+      <TerminalSection />
 
       {/* TELEMETRY DIFFERENTIATION */}
       <TelemetrySection />
