@@ -34,14 +34,23 @@ During development (no build step): `pnpm dev`.
 
 ## Configuration
 
-Same environment as the CLI (a workspace is required — the dashboard is scoped
-to one):
+Launch it and it handles auth for you: if you haven't signed in (via the CLI's
+`pulseops login`) and no `PULSEOPS_API_KEY` is set, the TUI shows a **device
+login screen** (short code + browser approval), then a **workspace picker** if
+you belong to more than one — no `PULSEOPS_WORKSPACE` needed. It shares the CLI's
+stored credentials in `~/.config/pulseops/`.
+
+```bash
+pulseops-tui        # if linked globally, else: node dist/index.js
+```
+
+To use an API key instead (workspace-scoped, non-interactive):
 
 ```bash
 export PULSEOPS_API_URL=https://api.pulseops.example.com   # default http://localhost:4000
 export PULSEOPS_API_KEY=po_xxxxxxxx…
 export PULSEOPS_WORKSPACE=1
-pulseops-tui        # if linked globally, else: node dist/index.js
+pulseops-tui
 ```
 
 ## Keys
