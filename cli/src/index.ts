@@ -1,0 +1,55 @@
+#!/usr/bin/env node
+import { Command } from "commander";
+import { registerMonitorCommands } from "./commands/monitors.js";
+import { registerIncidentCommands } from "./commands/incidents.js";
+import { registerHeartbeatCommand } from "./commands/heartbeat.js";
+import { ApiError } from "./client.js";
+import { ConfigError } from "./config.js";
+import { color } from "./format.js";
+
+const program = new Command();
+
+program
+  .name("pulseops")
+  .description("Official CLI for the PulseOps monitoring API")
+  .version("0.1.0")
+  .option(
+    "--url <url>",
+    "API base URL (env PULSEOPS_API_URL)",
+  )
+  .option(
+    "-k, --api-key <key>",
+    "Workspace API key, po_… (env PULSEOPS_API_KEY)",
+  )
+  .option(
+    "-w, --workspace <id>",
+    "Workspace id (env PULSEOPS_WORKSPACE)",
+  )
+  .option("--json", "Emit raw JSON instead of a formatted table")
+  .showHelpAfterError();
+
+registerMonitorCommands(program);
+registerIncidentCommands(program);
+registerHeartbeatCommand(program);
+
+async function main(): Promise<void> {
+  try {
+    await program.parseAsync(process.argv);
+  } catch (err) {
+    if (err instanceof ConfigError) {
+      console.error(color.red("Error: ") + err.message);
+      process.exit(2);
+    }
+    if (err instanceof ApiError) {
+      const prefix = err.status ? `API ${err.status}: ` : "";
+      console.error(color.red("Error: ") + prefix + err.message);
+      process.exit(1);
+    }
+    console.error(
+      color.red("Error: ") + (err instanceof Error ? err.message : String(err)),
+    );
+    process.exit(1);
+  }
+}
+
+void main();
