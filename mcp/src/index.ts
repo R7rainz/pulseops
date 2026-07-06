@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { resolveConfig, ConfigError } from "@pulseops/cli/config";
+import { resolveConfig, ConfigError } from "pulseops/config";
 import { createServer } from "./server.js";
 
 /**

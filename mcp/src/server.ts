@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { PulseOpsClient, ApiError } from "@pulseops/cli/client";
-import { requireWorkspace, type Config } from "@pulseops/cli/config";
+import { PulseOpsClient, ApiError } from "pulseops/client";
+import { requireWorkspace, type Config } from "pulseops/config";
 import { z } from "zod";
 
 export interface ServerOptions {

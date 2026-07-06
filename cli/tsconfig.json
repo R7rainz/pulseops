@@ -8,6 +8,8 @@
     "strict": true,
     "esModuleInterop": true,
     "lib": ["ES2022"],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "types": ["node"],
     "skipLibCheck": true,
     "declaration": true,

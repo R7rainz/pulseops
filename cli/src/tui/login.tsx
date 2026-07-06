@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Text, useApp, useInput } from "ink";
-import { deviceAuthorize, devicePoll, openBrowser, sleep } from "@pulseops/cli/auth";
-import { saveCredentials } from "@pulseops/cli/credentials";
+import { deviceAuthorize, devicePoll, openBrowser, sleep } from "../auth.js";
+import { saveCredentials } from "../credentials.js";
 import { iris } from "./theme.js";
 import { useClock } from "./hooks.js";
 

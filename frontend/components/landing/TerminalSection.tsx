@@ -20,7 +20,7 @@ const POINTS = [
     icon: <LayoutDashboard className="h-5 w-5 text-info" />,
     accent: "border-info/30 bg-info/10",
     title: "Live TUI dashboard",
-    body: "`pulseops-tui` — a full-screen, vim-key dashboard of status, latency and incidents, refreshing in place without leaving the terminal.",
+    body: "Just run `pulseops` — a full-screen, vim-key dashboard of status, latency graphs and incidents, refreshing in place without leaving the terminal.",
   },
   {
     icon: <Bot className="h-5 w-5 text-degraded" />,

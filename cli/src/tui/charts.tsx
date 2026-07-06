@@ -1,6 +1,6 @@
 import { Box, Text } from "ink";
 import type { ReactNode } from "react";
-import type { Monitor, MonitorCheck } from "@pulseops/cli/types";
+import type { Monitor, MonitorCheck } from "../types.js";
 import { useTheme } from "./theme-context.js";
 import { statusColor, DOT } from "./theme.js";
 import { brailleChart, fmtMs, sparkline } from "./format.js";

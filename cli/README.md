@@ -1,13 +1,24 @@
-# @pulseops/cli
+# pulseops
 
-The official command-line client for the **PulseOps** monitoring API. `pulseops`
-gives you your monitors, live status, check history, uptime/latency stats, SLA
-analytics and incident history straight from the terminal — as readable tables
-for humans, or `--json` for scripts and pipelines.
+**PulseOps in your terminal.** `pulseops` is two things in one install:
+
+- a **scriptable CLI** — your monitors, live status, check history,
+  uptime/latency stats, SLA analytics and incident history as readable tables
+  for humans, or `--json` for scripts and pipelines; and
+- a **live TUI dashboard** — a full-screen, keyboard-driven view of your fleet
+  with latency graphs, an availability strip, a status heatmap and six themes.
+  Just run `pulseops` with no command.
 
 It's a thin, typed wrapper over the [programmatic API](../docs)'s
 key-authenticated **read** surface (plus the heartbeat push endpoint), so
-anything you can see in the dashboard you can also script.
+anything you can see in the web dashboard you can also script or watch live.
+
+```bash
+npm install -g pulseops
+pulseops login        # sign in through your browser
+pulseops              # open the live dashboard
+pulseops monitors ls  # …or run a command
+```
 
 ---
 
@@ -15,6 +26,7 @@ anything you can see in the dashboard you can also script.
 
 - [Requirements](#requirements)
 - [Installation](#installation)
+- [The dashboard](#the-dashboard)
 - [Quick start](#quick-start)
 - [Authentication](#authentication)
 - [Configuration](#configuration)
@@ -40,32 +52,69 @@ anything you can see in the dashboard you can also script.
 
 ## Installation
 
-From the repository:
+From npm (recommended):
+
+```bash
+npm install -g pulseops   # or: pnpm add -g pulseops
+pulseops --help
+```
+
+### From the repository
 
 ```bash
 cd cli
 pnpm install
 pnpm build          # compiles TypeScript to dist/
 node dist/index.js --help
-```
-
-### Install the `pulseops` command globally
-
-```bash
-pnpm build
-npm link            # exposes `pulseops` on your PATH
-pulseops --help
+# optionally expose `pulseops` on your PATH:
+npm link
 ```
 
 ### Run from source during development
 
 ```bash
 pnpm dev -- monitors list      # runs src/ directly, no build step
+pnpm dev                       # opens the dashboard from source
 ```
 
 Throughout this document the command is written as `pulseops`. If you haven't
-linked it globally, substitute `node dist/index.js` (e.g.
+installed it globally, substitute `node dist/index.js` (e.g.
 `node dist/index.js monitors list`).
+
+---
+
+## The dashboard
+
+Run `pulseops` with no subcommand (or `pulseops tui` / `pulseops dashboard`) to
+open the live terminal dashboard. It reuses your CLI login and honours the same
+global flags (`--url`, `--api-key`, `--workspace`).
+
+Three views, switched with the number keys or `Tab`:
+
+- **Overview** — fleet counters (total / up / down / degraded / open incidents /
+  average 30-day uptime), a colour-coded status heatmap of every monitor, and
+  the most recent incidents.
+- **Monitors** — the monitor list beside a rich detail pane: a **braille latency
+  graph** over recent checks, an **availability strip**, live stats, latency
+  percentiles (p50/p95/p99) and the 30-day SLA block.
+- **Incidents** — incident history beside a detail pane with the affected
+  monitor and a start → resolve timeline.
+
+Press `t` to cycle themes (Iris, Ember, Matrix, Grape, Nord, Mono) or `T` for a
+picker; your choice persists to `~/.config/pulseops/tui.json`. Press `?` for the
+full keyboard-shortcut overlay.
+
+| Key                 | Action                                     |
+| ------------------- | ------------------------------------------ |
+| `1` / `2` / `3`     | Jump to Overview / Monitors / Incidents    |
+| `Tab` / `⇧Tab`      | Cycle views                                |
+| `j` / `k` (↓ / ↑)   | Move selection                             |
+| `gg` / `G`          | Top / bottom of the list                   |
+| `Ctrl-d` / `Ctrl-u` | Half-page down / up                        |
+| `t` / `T`           | Cycle theme / open theme picker            |
+| `?`                 | Toggle the keyboard-shortcut help          |
+| `r`                 | Refresh now                                |
+| `q` / `Ctrl-C`      | Quit                                       |
 
 ---
 
@@ -401,7 +450,7 @@ models and controllers. If the API's response shapes change, update that file.
 
 ```
 src/
-  index.ts           CLI entry — global flags, error handling, exit codes
+  index.ts           CLI entry — global flags, `tui` command, default dashboard action
   client.ts          Typed fetch client (key or Bearer auth, 401 auto-refresh)
   auth.ts            Device-flow login + token refresh + browser opener
   credentials.ts     Read/write ~/.config/pulseops/credentials.json (0600)
@@ -410,16 +459,20 @@ src/
   context.ts         Per-command client + config wiring
   format.ts          Tables, colour, status glyphs, date/latency formatting
   commands/          auth.ts · workspaces.ts · monitors.ts · incidents.ts · heartbeat.ts
+  tui/               Ink dashboard — launch, root, app, components, charts, themes
   generated/         schema.d.ts (from `pnpm gen`)
 ```
+
+The dashboard is lazy-loaded: `pulseops <subcommand>` never imports Ink/React,
+so plain CLI use stays fast. Run `pnpm smoke` to render it headlessly against a
+mock client (no backend needed).
 
 ---
 
 ## Related packages
 
-The CLI's client is reused by two sibling packages:
+The client is reused by a sibling package:
 
 - **[`@pulseops/mcp`](../mcp)** — a Model Context Protocol server that exposes
   the same read API to LLM agents (e.g. Claude Desktop).
-- **[`@pulseops/tui`](../tui)** — a full-screen terminal dashboard built on Ink.
 ```
