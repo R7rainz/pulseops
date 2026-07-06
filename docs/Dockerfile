@@ -30,6 +30,13 @@ COPY docs/app ./app
 COPY docs/components ./components
 COPY docs/lib ./lib
 
+# NEXT_PUBLIC_APP_URL (the "Back to app" link) is inlined into the client bundle
+# at BUILD time, so it must be a build arg — a runtime env is too late. Compose
+# wires it from APP_URL. Default keeps localhost dev working; a real-domain
+# deploy MUST rebuild this image after changing it.
+ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+
 RUN pnpm run build
 
 FROM node:22-alpine AS runner

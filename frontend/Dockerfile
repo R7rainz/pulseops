@@ -39,6 +39,16 @@ COPY frontend/hooks ./hooks
 COPY frontend/lib ./lib
 COPY frontend/public ./public
 
+# NEXT_PUBLIC_* are inlined into the client bundle at BUILD time, so the
+# browser-facing API/docs URLs must be passed as build args — a runtime env var
+# is too late (it never reaches the shipped JS). Compose wires these from
+# PUBLIC_API_URL / DOCS_URL. Defaults keep localhost dev working; a real-domain
+# deploy MUST rebuild the image (not just restart) after changing them.
+ARG NEXT_PUBLIC_API_URL=http://localhost:4000
+ARG NEXT_PUBLIC_DOCS_URL=http://localhost:3001
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_DOCS_URL=$NEXT_PUBLIC_DOCS_URL
+
 RUN pnpm run build
 
 FROM node:22-alpine AS runner

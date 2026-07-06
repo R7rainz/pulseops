@@ -7,7 +7,10 @@ services:
     # ZK-readiness race that used to make the broker exit and flap on cold start
     # (and abort api/ping-engine, which gate on `kafka: service_healthy`).
     ports:
-      - "9092:9092"
+      # Bound to loopback: the broker is only used by other compose services on
+      # the internal network. Host publishing is for local tooling, not the
+      # public interface. Drop the "127.0.0.1:" prefix if you need LAN access.
+      - "127.0.0.1:9092:9092"
     environment:
       # Single-node combined broker+controller.
       KAFKA_NODE_ID: 1
@@ -40,15 +43,17 @@ services:
     container_name: pulseops-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: rainz
-      POSTGRES_PASSWORD: brainz
-      POSTGRES_DB: pulseops
+      POSTGRES_USER: ${POSTGRES_USER:-pulseops}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pulseops}
+      POSTGRES_DB: ${POSTGRES_DB:-pulseops}
     ports:
-      - "5432:5432"
+      # Loopback-only (see kafka note) — the DB is reached over the internal
+      # network by the api/migrate services, not from the public interface.
+      - "127.0.0.1:5432:5432"
     volumes:
       - pulseops_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rainz -d pulseops"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pulseops} -d ${POSTGRES_DB:-pulseops}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -58,7 +63,8 @@ services:
     container_name: pulseops-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      # Loopback-only (see kafka note).
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -80,7 +86,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://rainz:brainz@postgres:5432/pulseops
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-pulseops}:${POSTGRES_PASSWORD:-pulseops}@postgres:5432/${POSTGRES_DB:-pulseops}
     command: ["npx", "prisma", "migrate", "deploy"]
 
   api:
@@ -106,7 +112,7 @@ services:
       - path: ./backend/.env
         required: false
     environment:
-      - DATABASE_URL=postgresql://rainz:brainz@postgres:5432/pulseops
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-pulseops}:${POSTGRES_PASSWORD:-pulseops}@postgres:5432/${POSTGRES_DB:-pulseops}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_URL=redis://redis:6379
@@ -144,6 +150,13 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      # NEXT_PUBLIC_* are baked into the client bundle at build time, so the
+      # browser-facing API/docs URLs are build args (not runtime env). They use
+      # the PUBLIC URLs — the browser can't reach the internal `api:4000`. After
+      # changing PUBLIC_API_URL/DOCS_URL, run `docker compose build web`.
+      args:
+        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:4000}
+        NEXT_PUBLIC_DOCS_URL: ${DOCS_URL:-http://localhost:3001}
     container_name: pulseops-web
     restart: unless-stopped
     depends_on:
@@ -155,12 +168,17 @@ services:
         required: false
     environment:
       - NODE_ENV=production
+      # Server-side (SSR / server actions) reach the API on the internal network.
       - API_URL=http://api:4000
 
   docs:
     build:
       context: .
       dockerfile: docs/Dockerfile
+      # The "Back to app" link (NEXT_PUBLIC_APP_URL) is baked at build time from
+      # APP_URL. After changing APP_URL, run `docker compose build docs`.
+      args:
+        NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
     container_name: pulseops-docs
     restart: unless-stopped
     depends_on:
@@ -169,9 +187,7 @@ services:
       - "3001:3000"
     environment:
       - NODE_ENV=production
-      # Server-side spec proxy (/openapi.json) reaches the API on the internal
-      # network. The "Back to app" link uses NEXT_PUBLIC_APP_URL, baked at build
-      # (defaults to http://localhost:3000, correct for host access).
+      # Server-side spec proxy (/openapi.json) reaches the API on the internal network.
       - API_URL=http://api:4000
 
 volumes:
