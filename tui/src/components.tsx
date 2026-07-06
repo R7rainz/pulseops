@@ -4,9 +4,17 @@ import type {
   LiveMonitors,
   Monitor,
   MonitorAnalytics,
+  MonitorCheck,
   MonitorStats,
 } from "@pulseops/cli/types";
-import { DOT, ARROW, iris, statusColor, uptimeColor } from "./theme.js";
+import { useTheme, useThemeControls } from "./theme-context.js";
+import {
+  DOT,
+  ARROW,
+  statusColor,
+  uptimeColor,
+  latencyColor,
+} from "./theme.js";
 import {
   bar,
   fmtDate,
@@ -17,8 +25,15 @@ import {
   truncate,
   windowSlice,
 } from "./format.js";
+import { LatencyGraph, StatCard, StatusHeatmap, StatusStrip } from "./charts.js";
 
-export type View = "monitors" | "incidents";
+export type View = "overview" | "monitors" | "incidents";
+
+export const VIEWS: { key: View; label: string }[] = [
+  { key: "overview", label: "Overview" },
+  { key: "monitors", label: "Monitors" },
+  { key: "incidents", label: "Incidents" },
+];
 
 /** Merge a monitor's persisted fields with its live-cache state, preferring live. */
 export function effectiveState(monitor: Monitor, live: LiveMonitors | undefined) {
@@ -48,26 +63,27 @@ export function Header({
   refreshing: boolean;
   connected: boolean;
 }) {
+  const theme = useTheme();
   const host = apiUrl.replace(/^https?:\/\//, "");
   return (
     <Box
       justifyContent="space-between"
       paddingX={1}
       borderStyle="round"
-      borderColor={iris.cyan}
+      borderColor={theme.cyan}
     >
       <Box gap={1}>
-        <Text color={iris.cyan} bold>
+        <Text color={theme.cyan} bold>
           ◆ PulseOps
         </Text>
-        <Text color={iris.muted}>workspace {workspaceId ?? "—"}</Text>
+        <Text color={theme.muted}>workspace {workspaceId ?? "—"}</Text>
       </Box>
       <Box gap={2}>
         <Text color={connected ? "green" : "red"}>
           {connected ? "● connected" : "● offline"}
         </Text>
-        <Text color={iris.muted}>{host}</Text>
-        <Text color={refreshing ? iris.indigo : iris.muted}>
+        <Text color={theme.muted}>{host}</Text>
+        <Text color={refreshing ? theme.indigo : theme.muted}>
           {refreshing
             ? "⟳ refreshing"
             : updatedAt
@@ -79,23 +95,169 @@ export function Header({
   );
 }
 
-export function Tabs({ view }: { view: View }) {
-  const tab = (label: string, active: boolean) => (
-    <Text
-      color={active ? iris.ink : iris.muted}
-      backgroundColor={active ? iris.cyan : undefined}
-      bold={active}
-    >
-      {` ${label} `}
-    </Text>
-  );
+export function TabBar({ view }: { view: View }) {
+  const theme = useTheme();
   return (
     <Box gap={1} paddingX={1}>
-      {tab("Monitors", view === "monitors")}
-      {tab("Incidents", view === "incidents")}
+      {VIEWS.map((v, i) => {
+        const active = v.key === view;
+        return (
+          <Text
+            key={v.key}
+            color={active ? theme.ink : theme.muted}
+            backgroundColor={active ? theme.cyan : undefined}
+            bold={active}
+          >
+            {` ${i + 1} ${v.label} `}
+          </Text>
+        );
+      })}
     </Box>
   );
 }
+
+function StatLine({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: string;
+  color?: string;
+}) {
+  const theme = useTheme();
+  return (
+    <Box>
+      <Text color={theme.muted}>{label.padEnd(16)}</Text>
+      <Text color={color}>{value}</Text>
+    </Box>
+  );
+}
+
+function SectionTitle({ children }: { children: string }) {
+  const theme = useTheme();
+  return (
+    <Text color={theme.indigo} bold>
+      {children}
+    </Text>
+  );
+}
+
+// --- Overview ---------------------------------------------------------------
+
+export function Overview({
+  monitors,
+  incidents,
+  live,
+  analytics,
+  width,
+}: {
+  monitors: Monitor[];
+  incidents: Incident[];
+  live: LiveMonitors | undefined;
+  analytics: MonitorAnalytics[] | undefined;
+  width: number;
+}) {
+  const theme = useTheme();
+  const states = monitors.map((m) => effectiveState(m, live));
+  const up = states.filter((s) => s.status === "UP").length;
+  const down = states.filter((s) => s.status === "DOWN").length;
+  const degraded = states.filter((s) => s.status === "DEGRADED").length;
+  const openIncidents = incidents.filter((i) => i.status !== "RESOLVED").length;
+  const uptimes = (analytics ?? [])
+    .map((a) => a.uptime30Day)
+    .filter((n) => typeof n === "number");
+  const avgUptime = uptimes.length
+    ? uptimes.reduce((a, b) => a + b, 0) / uptimes.length
+    : null;
+  // The fleet panel takes the space left of the recent-incidents panel; each
+  // heatmap cell is "● " (2 cols). Keep the grid inside that inner width.
+  const recentWidth = Math.min(46, Math.floor(width * 0.4));
+  const fleetInner = Math.max(10, width - recentWidth - 8);
+  const cols = Math.max(6, Math.floor(fleetInner / 2));
+
+  const recent = incidents.slice(0, 6);
+
+  return (
+    <Box flexDirection="column">
+      <Box gap={1}>
+        <StatCard label="MONITORS" value={String(monitors.length)} color={theme.cyan} />
+        <StatCard
+          label="UP"
+          value={String(up)}
+          color="green"
+          hint={`${monitors.length ? Math.round((up / monitors.length) * 100) : 0}% of fleet`}
+        />
+        <StatCard label="DOWN" value={String(down)} color={down ? "red" : theme.muted} />
+        <StatCard
+          label="DEGRADED"
+          value={String(degraded)}
+          color={degraded ? "yellow" : theme.muted}
+        />
+        <StatCard
+          label="OPEN INCIDENTS"
+          value={String(openIncidents)}
+          color={openIncidents ? "red" : theme.muted}
+        />
+        <StatCard
+          label="AVG UPTIME 30d"
+          value={avgUptime != null ? fmtPct(avgUptime, 2) : "—"}
+          color={avgUptime != null ? uptimeColor(avgUptime) : theme.muted}
+        />
+      </Box>
+
+      <Box marginTop={1} gap={2}>
+        <Box
+          flexDirection="column"
+          flexGrow={1}
+          borderStyle="round"
+          borderColor={theme.muted}
+          paddingX={1}
+        >
+          <SectionTitle>FLEET STATUS</SectionTitle>
+          <Box marginTop={1}>
+            <StatusHeatmap
+              monitors={monitors}
+              cols={cols}
+              effectiveStatus={(m) => effectiveState(m, live).status}
+            />
+          </Box>
+          <Box marginTop={1} gap={2}>
+            <Text color="green">{`${DOT} up`}</Text>
+            <Text color="yellow">{`${DOT} degraded`}</Text>
+            <Text color="red">{`${DOT} down`}</Text>
+            <Text color="gray">{`${DOT} paused`}</Text>
+          </Box>
+        </Box>
+
+        <Box
+          flexDirection="column"
+          width={Math.min(46, Math.floor(width * 0.4))}
+          borderStyle="round"
+          borderColor={theme.muted}
+          paddingX={1}
+        >
+          <SectionTitle>RECENT INCIDENTS</SectionTitle>
+          {recent.length === 0 ? (
+            <Text color={theme.muted}>no incidents 🎉</Text>
+          ) : (
+            recent.map((inc) => (
+              <Box key={inc.id} gap={1}>
+                <StatusDot status={inc.status} />
+                <Text>{truncate(inc.title, 22).padEnd(22)}</Text>
+                <Text color={theme.muted}>
+                  {fmtDuration(inc.startedAt, inc.resolvedAt).padStart(7)}
+                </Text>
+              </Box>
+            ))
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+// --- Monitors ---------------------------------------------------------------
 
 function MonitorRow({
   monitor,
@@ -108,26 +270,26 @@ function MonitorRow({
   selected: boolean;
   width: number;
 }) {
+  const theme = useTheme();
   const s = effectiveState(monitor, live);
   const nameWidth = Math.max(8, width - 16);
   return (
     <Box>
-      <Text color={iris.cyan}>{selected ? ARROW + " " : "  "}</Text>
+      <Text color={theme.cyan}>{selected ? ARROW + " " : "  "}</Text>
       <StatusDot status={s.status} />
-      <Text bold={selected} color={selected ? iris.text : undefined}>
+      <Text bold={selected} color={selected ? theme.text : undefined}>
         {" " + truncate(monitor.name, nameWidth).padEnd(nameWidth)}
       </Text>
-      <Text color={iris.muted}>{fmtMs(s.latency).padStart(7)}</Text>
+      <Text color={latencyColor(s.latency)}>{fmtMs(s.latency).padStart(7)}</Text>
     </Box>
   );
 }
 
 function MoreRow({ count, up }: { count: number; up: boolean }) {
+  const theme = useTheme();
   if (count <= 0) return null;
   return (
-    <Text color={iris.muted}>
-      {"  " + (up ? "▲" : "▼") + ` ${count} more`}
-    </Text>
+    <Text color={theme.muted}>{"  " + (up ? "▲" : "▼") + ` ${count} more`}</Text>
   );
 }
 
@@ -137,27 +299,28 @@ export function MonitorList({
   selectedIndex,
   width,
   maxRows,
+  focused,
 }: {
   monitors: Monitor[];
   live: LiveMonitors | undefined;
   selectedIndex: number;
   width: number;
   maxRows: number;
+  focused: boolean;
 }) {
+  const theme = useTheme();
   const win = windowSlice(monitors, selectedIndex, Math.max(1, maxRows));
   return (
     <Box
       flexDirection="column"
       width={width}
       borderStyle="round"
-      borderColor={iris.muted}
+      borderColor={focused ? theme.cyan : theme.muted}
       paddingX={1}
     >
-      <Text color={iris.indigo} bold>
-        MONITORS {monitors.length ? `(${monitors.length})` : ""}
-      </Text>
+      <SectionTitle>{`MONITORS ${monitors.length ? `(${monitors.length})` : ""}`}</SectionTitle>
       {monitors.length === 0 ? (
-        <Text color={iris.muted}>no monitors</Text>
+        <Text color={theme.muted}>no monitors</Text>
       ) : (
         <>
           <MoreRow count={win.hiddenBefore} up />
@@ -177,47 +340,48 @@ export function MonitorList({
   );
 }
 
-function StatLine({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <Box>
-      <Text color={iris.muted}>{label.padEnd(16)}</Text>
-      <Text color={color}>{value}</Text>
-    </Box>
-  );
-}
-
-export function DetailPane({
+export function MonitorDetail({
   monitor,
   live,
   stats,
   analytics,
+  checks,
   loading,
+  width,
 }: {
   monitor: Monitor | undefined;
   live: LiveMonitors | undefined;
   stats: MonitorStats | undefined;
   analytics: MonitorAnalytics | undefined;
+  checks: MonitorCheck[] | undefined;
   loading: boolean;
+  width: number;
 }) {
+  const theme = useTheme();
   if (!monitor) {
     return (
-      <Box flexGrow={1} borderStyle="round" borderColor={iris.muted} paddingX={1}>
-        <Text color={iris.muted}>select a monitor</Text>
+      <Box flexGrow={1} borderStyle="round" borderColor={theme.muted} paddingX={1}>
+        <Text color={theme.muted}>select a monitor</Text>
       </Box>
     );
   }
   const s = effectiveState(monitor, live);
+  // Checks arrive newest-first from the API; plot oldest→newest.
+  const ordered = (checks ?? []).slice().reverse();
+  const latencies = ordered.map((c) => c.responseTimeMs);
+  const inner = Math.max(20, width - 4);
+
   return (
     <Box
       flexDirection="column"
       flexGrow={1}
       borderStyle="round"
-      borderColor={iris.cyan}
+      borderColor={theme.cyan}
       paddingX={1}
     >
       <Box justifyContent="space-between">
-        <Text bold color={iris.text}>
-          {truncate(monitor.name, 32)}
+        <Text bold color={theme.text}>
+          {truncate(monitor.name, Math.max(12, inner - 14))}
         </Text>
         <Box gap={1}>
           <StatusDot status={s.status} />
@@ -226,105 +390,122 @@ export function DetailPane({
           </Text>
         </Box>
       </Box>
-      <Text color={iris.muted}>
-        {monitor.method} {truncate(monitor.url, 44)}
+      <Text color={theme.muted}>
+        {monitor.method} {truncate(monitor.url, inner - 6)}
       </Text>
+
       <Box marginTop={1} flexDirection="column">
-        <StatLine label="type" value={monitor.type} />
-        <StatLine label="interval" value={`${monitor.intervalSeconds}s`} />
-        <StatLine label="last latency" value={fmtMs(s.latency)} />
-        <StatLine label="last code" value={s.statusCode != null ? String(s.statusCode) : "—"} />
-        <StatLine label="last checked" value={fmtRel(s.checkedAt)} />
+        <SectionTitle>{`LATENCY · LAST ${ordered.length} CHECKS`}</SectionTitle>
+        {loading && ordered.length === 0 ? (
+          <Text color={theme.muted}>loading…</Text>
+        ) : (
+          <LatencyGraph values={latencies} width={inner} height={5} />
+        )}
+        <Box marginTop={1} flexDirection="column">
+          <Text color={theme.muted}>availability</Text>
+          <StatusStrip checks={ordered} width={inner} />
+        </Box>
+      </Box>
+
+      <Box marginTop={1} flexDirection="row" gap={2}>
+        <Box flexDirection="column">
+          <SectionTitle>NOW</SectionTitle>
+          <StatLine label="type" value={monitor.type} />
+          <StatLine label="interval" value={`${monitor.intervalSeconds}s`} />
+          <StatLine
+            label="latency"
+            value={fmtMs(s.latency)}
+            color={latencyColor(s.latency)}
+          />
+          <StatLine
+            label="code"
+            value={s.statusCode != null ? String(s.statusCode) : "—"}
+          />
+          <StatLine label="checked" value={fmtRel(s.checkedAt)} />
+        </Box>
+        <Box flexDirection="column">
+          <SectionTitle>PERCENTILES</SectionTitle>
+          {stats ? (
+            <>
+              <StatLine label="p50" value={fmtMs(stats.p50ResponseTimeMs)} />
+              <StatLine label="p95" value={fmtMs(stats.p95ResponseTimeMs)} />
+              <StatLine label="p99" value={fmtMs(stats.p99ResponseTimeMs)} />
+              <StatLine label="checks" value={String(stats.totalChecks)} />
+            </>
+          ) : (
+            <Text color={theme.muted}>{loading ? "loading…" : "—"}</Text>
+          )}
+        </Box>
       </Box>
 
       <Box marginTop={1} flexDirection="column">
-        <Text color={iris.indigo} bold>
-          SLA · 30 DAYS
-        </Text>
+        <SectionTitle>SLA · 30 DAYS</SectionTitle>
         {analytics ? (
           <>
             <Box>
-              <Text color={iris.muted}>{"uptime".padEnd(16)}</Text>
+              <Text color={theme.muted}>{"uptime".padEnd(16)}</Text>
               <Text color={uptimeColor(analytics.uptime30Day)}>
                 {bar(analytics.uptime30Day)} {fmtPct(analytics.uptime30Day, 3)}
               </Text>
             </Box>
             <StatLine label="outages" value={String(analytics.totalOutages30Day)} />
-            <StatLine label="downtime" value={`${analytics.downtimeMinutes30Day} min`} />
+            <StatLine
+              label="downtime"
+              value={`${analytics.downtimeMinutes30Day} min`}
+            />
             <StatLine label="avg latency 24h" value={fmtMs(analytics.avgLatency24h)} />
           </>
         ) : (
-          <Text color={iris.muted}>{loading ? "loading…" : "—"}</Text>
-        )}
-      </Box>
-
-      <Box marginTop={1} flexDirection="column">
-        <Text color={iris.indigo} bold>
-          LATENCY PERCENTILES
-        </Text>
-        {stats ? (
-          <>
-            <StatLine
-              label="uptime (all)"
-              value={fmtPct(stats.uptimePercentage)}
-              color={uptimeColor(stats.uptimePercentage)}
-            />
-            <StatLine label="p50" value={fmtMs(stats.p50ResponseTimeMs)} />
-            <StatLine label="p95" value={fmtMs(stats.p95ResponseTimeMs)} />
-            <StatLine label="p99" value={fmtMs(stats.p99ResponseTimeMs)} />
-            <StatLine label="checks" value={String(stats.totalChecks)} />
-          </>
-        ) : (
-          <Text color={iris.muted}>{loading ? "loading…" : "—"}</Text>
+          <Text color={theme.muted}>{loading ? "loading…" : "—"}</Text>
         )}
       </Box>
     </Box>
   );
 }
 
+// --- Incidents --------------------------------------------------------------
+
 export function IncidentList({
   incidents,
   selectedIndex,
   width,
   maxRows,
+  focused,
 }: {
   incidents: Incident[];
   selectedIndex: number;
   width: number;
   maxRows: number;
+  focused: boolean;
 }) {
+  const theme = useTheme();
   const win = windowSlice(incidents, selectedIndex, Math.max(1, maxRows));
   return (
     <Box
       flexDirection="column"
-      flexGrow={1}
+      width={width}
       borderStyle="round"
-      borderColor={iris.muted}
+      borderColor={focused ? theme.cyan : theme.muted}
       paddingX={1}
     >
-      <Text color={iris.indigo} bold>
-        INCIDENTS {incidents.length ? `(${incidents.length})` : ""}
-      </Text>
+      <SectionTitle>{`INCIDENTS ${incidents.length ? `(${incidents.length})` : ""}`}</SectionTitle>
       {incidents.length === 0 ? (
-        <Text color={iris.muted}>no incidents 🎉</Text>
+        <Text color={theme.muted}>no incidents 🎉</Text>
       ) : (
         <>
           <MoreRow count={win.hiddenBefore} up />
           {win.slice.map((inc, i) => {
             const selected = win.start + i === selectedIndex;
-            const titleWidth = Math.max(12, width - 30);
+            const titleWidth = Math.max(10, width - 20);
             return (
               <Box key={inc.id}>
-                <Text color={iris.cyan}>{selected ? ARROW + " " : "  "}</Text>
+                <Text color={theme.cyan}>{selected ? ARROW + " " : "  "}</Text>
                 <StatusDot status={inc.status} />
-                <Text bold={selected}>
+                <Text bold={selected} color={selected ? theme.text : undefined}>
                   {" " + truncate(inc.title, titleWidth).padEnd(titleWidth)}
                 </Text>
-                <Text color={iris.muted}>
-                  {" " + fmtDate(inc.startedAt).padEnd(12)}
-                </Text>
-                <Text color={iris.muted}>
-                  {fmtDuration(inc.startedAt, inc.resolvedAt).padStart(8)}
+                <Text color={theme.muted}>
+                  {fmtDuration(inc.startedAt, inc.resolvedAt).padStart(7)}
                 </Text>
               </Box>
             );
@@ -336,7 +517,151 @@ export function IncidentList({
   );
 }
 
-export function Footer({ error }: { error: string | undefined }) {
+export function IncidentDetail({
+  incident,
+  monitorName,
+  width,
+}: {
+  incident: Incident | undefined;
+  monitorName: (monitorId: number) => string;
+  width: number;
+}) {
+  const theme = useTheme();
+  if (!incident) {
+    return (
+      <Box flexGrow={1} borderStyle="round" borderColor={theme.muted} paddingX={1}>
+        <Text color={theme.muted}>select an incident</Text>
+      </Box>
+    );
+  }
+  const inner = Math.max(20, width - 4);
+  const ongoing = incident.status !== "RESOLVED";
+  return (
+    <Box
+      flexDirection="column"
+      flexGrow={1}
+      borderStyle="round"
+      borderColor={theme.cyan}
+      paddingX={1}
+    >
+      <Box justifyContent="space-between">
+        <Text bold color={theme.text}>
+          {truncate(incident.title, Math.max(12, inner - 14))}
+        </Text>
+        <Box gap={1}>
+          <StatusDot status={incident.status} />
+          <Text color={statusColor(incident.status)} bold>
+            {incident.status}
+          </Text>
+        </Box>
+      </Box>
+      <Text color={theme.muted}>{monitorName(incident.monitorId)}</Text>
+
+      <Box marginTop={1} flexDirection="column">
+        <SectionTitle>TIMELINE</SectionTitle>
+        <StatLine label="started" value={fmtDate(incident.startedAt)} />
+        <StatLine
+          label="resolved"
+          value={incident.resolvedAt ? fmtDate(incident.resolvedAt) : "ongoing"}
+          color={ongoing ? "yellow" : undefined}
+        />
+        <StatLine
+          label="duration"
+          value={fmtDuration(incident.startedAt, incident.resolvedAt)}
+          color={ongoing ? "red" : undefined}
+        />
+        <StatLine label="incident #" value={String(incident.id)} />
+        <StatLine label="monitor #" value={String(incident.monitorId)} />
+      </Box>
+    </Box>
+  );
+}
+
+// --- overlays / chrome ------------------------------------------------------
+
+export function ThemePicker({ selected }: { selected: number }) {
+  const theme = useTheme();
+  const { themes } = useThemeControls();
+  return (
+    <Box
+      flexDirection="column"
+      borderStyle="round"
+      borderColor={theme.cyan}
+      paddingX={2}
+      paddingY={1}
+    >
+      <Text color={theme.cyan} bold>
+        ◆ Theme
+      </Text>
+      <Box flexDirection="column" marginTop={1}>
+        {themes.map((t, i) => (
+          <Box key={t.name} gap={1}>
+            <Text color={i === selected ? theme.text : theme.muted}>
+              {(i === selected ? ARROW + " " : "  ") + t.label.padEnd(10)}
+            </Text>
+            <Text color={t.cyan}>{"████"}</Text>
+            <Text color={t.indigo}>{"████"}</Text>
+            <Text color={t.chart}>{"▁▃▅▇"}</Text>
+          </Box>
+        ))}
+      </Box>
+      <Box marginTop={1}>
+        <Text color={theme.muted}>j/k choose · enter apply · t/esc close</Text>
+      </Box>
+    </Box>
+  );
+}
+
+export function HelpOverlay() {
+  const theme = useTheme();
+  const rows: [string, string][] = [
+    ["1 / 2 / 3", "Jump to Overview / Monitors / Incidents"],
+    ["Tab / ⇧Tab", "Cycle views"],
+    ["j / k  ↓ / ↑", "Move selection"],
+    ["gg / G", "Top / bottom of list"],
+    ["⌃d / ⌃u", "Half-page down / up"],
+    ["t", "Cycle theme"],
+    ["T", "Open theme picker"],
+    ["r", "Refresh now"],
+    ["?", "Toggle this help"],
+    ["q / ⌃c", "Quit"],
+  ];
+  return (
+    <Box
+      flexDirection="column"
+      borderStyle="round"
+      borderColor={theme.cyan}
+      paddingX={2}
+      paddingY={1}
+    >
+      <Text color={theme.cyan} bold>
+        ◆ Keyboard shortcuts
+      </Text>
+      <Box flexDirection="column" marginTop={1}>
+        {rows.map(([k, d]) => (
+          <Box key={k} gap={1}>
+            <Text color={theme.indigo}>{k.padEnd(14)}</Text>
+            <Text color={theme.text}>{d}</Text>
+          </Box>
+        ))}
+      </Box>
+      <Box marginTop={1}>
+        <Text color={theme.muted}>press ? or esc to close</Text>
+      </Box>
+    </Box>
+  );
+}
+
+export function Footer({
+  view,
+  error,
+  themeLabel,
+}: {
+  view: View;
+  error: string | undefined;
+  themeLabel: string;
+}) {
+  const theme = useTheme();
   if (error) {
     return (
       <Box paddingX={1}>
@@ -344,11 +669,14 @@ export function Footer({ error }: { error: string | undefined }) {
       </Box>
     );
   }
+  const nav =
+    view === "overview"
+      ? "1/2/3 views · t theme · r reload"
+      : "j/k move · gg/G ends · ⌃d/⌃u page · 1/2/3 views";
   return (
-    <Box paddingX={1}>
-      <Text color={iris.muted}>
-        j/k move · h/l panes · gg/G ends · ⌃d/⌃u page · r reload · q quit
-      </Text>
+    <Box paddingX={1} justifyContent="space-between">
+      <Text color={theme.muted}>{`${nav} · ? help · q quit`}</Text>
+      <Text color={theme.muted}>{`theme: ${themeLabel}`}</Text>
     </Box>
   );
 }
