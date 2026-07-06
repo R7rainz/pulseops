@@ -30,12 +30,15 @@ COPY docs/app ./app
 COPY docs/components ./components
 COPY docs/lib ./lib
 
-# NEXT_PUBLIC_APP_URL (the "Back to app" link) is inlined into the client bundle
-# at BUILD time, so it must be a build arg — a runtime env is too late. Compose
-# wires it from APP_URL. Default keeps localhost dev working; a real-domain
-# deploy MUST rebuild this image after changing it.
+# NEXT_PUBLIC_* are inlined into the client bundle at BUILD time, so they must be
+# build args — a runtime env is too late. Compose wires NEXT_PUBLIC_APP_URL from
+# APP_URL; NEXT_PUBLIC_BASE_PATH (set to /docs by the prod overlay) serves the
+# app under a sub-path. Defaults keep localhost-at-root dev working; a real
+# deploy MUST rebuild this image after changing them.
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
+ARG NEXT_PUBLIC_BASE_PATH=
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
 
 RUN pnpm run build
 
