@@ -6,7 +6,7 @@ import type {
   MonitorAnalytics,
   MonitorCheck,
   MonitorStats,
-} from "@pulseops/cli/types";
+} from "../types.js";
 import { useTheme, useThemeControls } from "./theme-context.js";
 import {
   DOT,

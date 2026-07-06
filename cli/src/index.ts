@@ -14,10 +14,13 @@ const program = new Command();
 program
   .name("pulseops")
   .description(
-    "Official CLI for the PulseOps monitoring API.\n" +
-      "Sign in with `pulseops login`, or use an API key (--api-key / PULSEOPS_API_KEY).",
+    "PulseOps in your terminal — a scriptable CLI and a live TUI dashboard for\n" +
+      "your monitors, incidents, uptime and latency.\n\n" +
+      "Run `pulseops` with no command to open the dashboard, or use a subcommand\n" +
+      "below. Sign in with `pulseops login`, or use an API key (--api-key /\n" +
+      "PULSEOPS_API_KEY).",
   )
-  .version("0.1.0")
+  .version("1.0.0")
   .option(
     "--url <url>",
     "API base URL (env PULSEOPS_API_URL)",
@@ -38,6 +41,27 @@ registerWorkspaceCommands(program);
 registerMonitorCommands(program);
 registerIncidentCommands(program);
 registerHeartbeatCommand(program);
+
+/** Launch the Ink dashboard, honouring the global connection/auth flags. */
+async function runDashboard(): Promise<void> {
+  const opts = program.opts();
+  // Loaded lazily so `pulseops <subcommand>` never pays for Ink/React.
+  const { launchTui } = await import("./tui/launch.js");
+  await launchTui({
+    url: opts.url,
+    apiKey: opts.apiKey,
+    workspace: opts.workspace,
+  });
+}
+
+program
+  .command("tui")
+  .alias("dashboard")
+  .description("Open the live terminal dashboard (monitors, incidents, graphs)")
+  .action(runDashboard);
+
+// Bare `pulseops` (no subcommand) opens the dashboard.
+program.action(runDashboard);
 
 async function main(): Promise<void> {
   try {

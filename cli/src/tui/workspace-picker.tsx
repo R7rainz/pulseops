@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Text, useApp, useInput } from "ink";
-import type { PulseOpsClient } from "@pulseops/cli/client";
-import type { Workspace } from "@pulseops/cli/types";
+import type { PulseOpsClient } from "../client.js";
+import type { Workspace } from "../types.js";
 import { ARROW, iris } from "./theme.js";
 
 /** Lists the session user's workspaces and picks one (auto-picks a single one). */

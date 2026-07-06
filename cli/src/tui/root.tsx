@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { Box, Text } from "ink";
-import { resolveConfig, ConfigError, type Config } from "@pulseops/cli/config";
-import { PulseOpsClient } from "@pulseops/cli/client";
-import { loadCredentials, updateCredentials } from "@pulseops/cli/credentials";
+import {
+  resolveConfig,
+  ConfigError,
+  type Config,
+  type ConfigOverrides,
+} from "../config.js";
+import { PulseOpsClient } from "../client.js";
+import { loadCredentials, updateCredentials } from "../credentials.js";
 import { App } from "./app.js";
 import { Login } from "./login.js";
 import { WorkspacePicker } from "./workspace-picker.js";
@@ -14,13 +19,18 @@ type Boot =
   | { kind: "ready"; config: Config }
   | { kind: "error"; message: string };
 
-/** Decides what to show on launch: login → workspace pick → dashboard. */
-function bootstrap(): Boot {
+/**
+ * Decides what to show on launch: login → workspace pick → dashboard.
+ * `overrides` carry the CLI's global flags (--url / --api-key / --workspace) so
+ * the dashboard honours them just like the CLI subcommands do.
+ */
+function bootstrap(overrides: ConfigOverrides): Boot {
   const creds = loadCredentials();
-  const hasKey = Boolean(process.env.PULSEOPS_API_KEY);
+  const hasKey = Boolean(overrides.apiKey || process.env.PULSEOPS_API_KEY);
 
   if (!creds && !hasKey) {
     const apiUrl = (
+      overrides.url ||
       process.env.PULSEOPS_API_URL ||
       "http://localhost:4000"
     ).replace(/\/+$/, "");
@@ -29,7 +39,7 @@ function bootstrap(): Boot {
 
   let config: Config;
   try {
-    config = resolveConfig({});
+    config = resolveConfig(overrides);
   } catch (e) {
     return {
       kind: "error",
@@ -54,9 +64,9 @@ function makeClient(config: Config): PulseOpsClient {
   );
 }
 
-export function Root() {
-  const [boot, setBoot] = useState<Boot>(bootstrap);
-  const reboot = () => setBoot(bootstrap());
+export function Root({ overrides = {} }: { overrides?: ConfigOverrides }) {
+  const [boot, setBoot] = useState<Boot>(() => bootstrap(overrides));
+  const reboot = () => setBoot(bootstrap(overrides));
 
   if (boot.kind === "error") {
     return (

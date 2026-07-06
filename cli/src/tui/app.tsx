@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, useApp, useInput, useStdout } from "ink";
-import type { PulseOpsClient } from "@pulseops/cli/client";
-import type { Config } from "@pulseops/cli/config";
+import type { PulseOpsClient } from "../client.js";
+import type { Config } from "../config.js";
 import type {
   Incident,
   LiveMonitors,
@@ -9,7 +9,7 @@ import type {
   MonitorAnalytics,
   MonitorCheck,
   MonitorStats,
-} from "@pulseops/cli/types";
+} from "../types.js";
 import { usePoll, useClock } from "./hooks.js";
 import { ThemeProvider, useThemeControls } from "./theme-context.js";
 import {

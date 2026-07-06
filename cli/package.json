@@ -1,11 +1,11 @@
 {
-  "name": "@pulseops/cli",
-  "version": "0.1.0",
-  "description": "Official command-line client for the PulseOps programmatic API.",
+  "name": "pulseops",
+  "version": "1.0.0",
+  "description": "PulseOps in your terminal — a scriptable CLI and a live TUI dashboard for your monitors, incidents, uptime and latency.",
   "type": "module",
   "packageManager": "pnpm@10.33.0",
   "bin": {
-    "pulseops": "./dist/index.js"
+    "pulseops": "dist/index.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,20 +18,57 @@
     "./types": "./dist/types.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "pulseops",
+    "monitoring",
+    "uptime",
+    "status",
+    "incidents",
+    "observability",
+    "sre",
+    "devops",
+    "cli",
+    "tui",
+    "dashboard",
+    "terminal",
+    "ink"
+  ],
+  "homepage": "https://github.com/R7rainz/pulseops/tree/master/cli#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/R7rainz/pulseops.git",
+    "directory": "cli"
+  },
+  "bugs": {
+    "url": "https://github.com/R7rainz/pulseops/issues"
+  },
+  "license": "MIT",
+  "author": "rainz",
   "scripts": {
     "gen": "openapi-typescript \"${PULSEOPS_API_URL:-http://localhost:4000}/docs/openapi.json\" -o src/generated/schema.d.ts",
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "smoke": "node scripts/smoke.mjs",
+    "prepublishOnly": "tsc"
   },
   "dependencies": {
-    "commander": "^13.1.0"
+    "commander": "^13.1.0",
+    "ink": "^5.1.0",
+    "react": "^18.3.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/react": "^18.3.12",
+    "ink-testing-library": "^4.0.0",
     "openapi-typescript": "^7.5.0",
     "tsx": "^4.19.2",
     "typescript": "^6.0.3"
