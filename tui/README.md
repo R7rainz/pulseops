@@ -14,13 +14,29 @@ server.
 
 ## What it shows
 
+Three views, switched with the number keys or `Tab`:
+
+- **Overview** — a dashboard: fleet counters (total / up / down / degraded /
+  open incidents / average 30-day uptime) as stat cards, a colour-coded status
+  heatmap of every monitor, and the most recent incidents.
 - **Monitors** — live status/latency for every monitor (auto-refreshed from the
-  live cache), with a detail pane for the selected monitor: SLA over 30 days
-  (uptime bar, outages, downtime) and latency percentiles (p50/p95/p99).
-- **Incidents** — the workspace incident history, newest first, with duration.
+  live cache) beside a rich detail pane for the selected one: a **braille
+  latency graph** over the last checks, an **availability strip** (one coloured
+  block per check), live "now" stats, latency percentiles (p50/p95/p99) and SLA
+  over 30 days (uptime bar, outages, downtime).
+- **Incidents** — the workspace incident history (newest first) beside a detail
+  pane with the affected monitor and a start → resolve timeline.
 
 Long lists scroll within the viewport (`▲/▼ N more`), keeping the selection in
 view.
+
+## Themes
+
+Six built-in palettes — **Iris** (default), **Ember**, **Matrix**, **Grape**,
+**Nord** and **Mono**. Press `t` to cycle, or `T` to open a picker with live
+swatches. Your choice persists to `~/.config/pulseops/tui.json`. Themes re-skin
+the accents, bars and graphs; status colours stay semantic (green up / red down
+/ yellow degraded) so they always read clearly.
 
 ## Install & build
 
@@ -59,10 +75,14 @@ Navigation is vim-style (arrow keys also work for line movement):
 
 | Key              | Action                                   |
 | ---------------- | ---------------------------------------- |
+| `1` / `2` / `3`  | Jump to Overview / Monitors / Incidents  |
+| `Tab` / `⇧Tab`   | Cycle views                              |
 | `j` / `k`        | Move selection down / up (also `↓` / `↑`) |
-| `h` / `l`        | Switch pane — `h` Monitors, `l` Incidents |
 | `gg` / `G`       | Jump to top / bottom of the list          |
 | `Ctrl-d` / `Ctrl-u` | Half-page down / up                    |
+| `t`              | Cycle theme                              |
+| `T`              | Open the theme picker                    |
+| `?`              | Toggle the keyboard-shortcut help        |
 | `r`              | Refresh now                              |
 | `q` / `Ctrl-C`   | Quit                                     |
 
@@ -84,10 +104,12 @@ first data load resolves — verifies it mounts and shows real data without a TT
 
 ```
 src/
-  index.tsx      entry — resolves env config, renders <App>
-  app.tsx        state, polling, keybindings, layout
-  components.tsx Header, Tabs, MonitorList, DetailPane, IncidentList, Footer
-  hooks.ts       usePoll (interval + on-demand) and useClock
-  format.ts      latency/date/duration/uptime-bar + viewport windowing
-  theme.ts       Iris accent + status colours
+  index.tsx         entry — resolves env config, renders <App>
+  app.tsx           state, polling, keybindings, views, layout
+  components.tsx    Header, TabBar, Overview, Monitor/Incident list+detail, overlays, Footer
+  charts.tsx        Sparkline, LatencyGraph (braille), StatusStrip, StatusHeatmap, StatCard
+  hooks.ts          usePoll (interval + on-demand) and useClock
+  format.ts         latency/date/duration formatting, uptime bar, sparkline/braille, windowing
+  theme.ts          palettes, status colours, on-disk settings persistence
+  theme-context.tsx ThemeProvider + useTheme/useThemeControls
 ```

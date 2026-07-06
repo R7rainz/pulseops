@@ -56,6 +56,81 @@ export function bar(pct: number, width = 18): string {
   return "█".repeat(filled) + "░".repeat(Math.max(0, width - filled));
 }
 
+const SPARK = "▁▂▃▄▅▆▇█";
+
+/**
+ * A single-row sparkline from `values`, resampled to `width` chars. Empty or
+ * flat series render as a baseline. Nulls are treated as gaps (rendered low).
+ */
+export function sparkline(values: (number | null | undefined)[], width = 24): string {
+  const nums = values.map((v) => (v == null || Number.isNaN(v) ? null : v));
+  const present = nums.filter((v): v is number => v != null);
+  if (present.length === 0) return " ".repeat(width);
+  const min = Math.min(...present);
+  const max = Math.max(...present);
+  const span = max - min || 1;
+  const out: string[] = [];
+  for (let x = 0; x < width; x++) {
+    // Nearest-sample resample so short series still fill the width.
+    const idx = Math.floor((x / width) * nums.length);
+    const v = nums[Math.min(nums.length - 1, idx)];
+    if (v == null) {
+      out.push(" ");
+      continue;
+    }
+    const level = Math.round(((v - min) / span) * (SPARK.length - 1));
+    out.push(SPARK[Math.max(0, Math.min(SPARK.length - 1, level))]);
+  }
+  return out.join("");
+}
+
+// Braille cell = 2 dot-columns × 4 dot-rows; bit per dot, base U+2800.
+const BRAILLE_BITS = [
+  [0x01, 0x08],
+  [0x02, 0x10],
+  [0x04, 0x20],
+  [0x40, 0x80],
+];
+
+/**
+ * Renders `values` as a braille line chart: `height` rows of `width` chars,
+ * giving `width*2 × height*4` dot resolution. Returns one string per row (top
+ * first). Used for the latency-over-time graph in the monitor detail pane.
+ */
+export function brailleChart(
+  values: (number | null | undefined)[],
+  width: number,
+  height: number,
+): string[] {
+  const cols = Math.max(1, width) * 2;
+  const dotRows = Math.max(1, height) * 4;
+  const nums = values.map((v) => (v == null || Number.isNaN(v) ? null : v));
+  const present = nums.filter((v): v is number => v != null);
+  const grid = Array.from({ length: height }, () =>
+    new Array<number>(width).fill(0),
+  );
+  if (present.length === 0) {
+    return grid.map(() => " ".repeat(width));
+  }
+  const min = Math.min(...present);
+  const max = Math.max(...present);
+  const span = max - min || 1;
+  for (let x = 0; x < cols; x++) {
+    const idx = Math.floor((x / cols) * nums.length);
+    const v = nums[Math.min(nums.length - 1, idx)];
+    if (v == null) continue;
+    const norm = (v - min) / span; // 0 (min) .. 1 (max)
+    const dotY = Math.round((1 - norm) * (dotRows - 1)); // top = high value
+    const cellX = Math.floor(x / 2);
+    const cellY = Math.floor(dotY / 4);
+    if (cellX >= width || cellY >= height) continue;
+    grid[cellY][cellX] |= BRAILLE_BITS[dotY % 4][x % 2];
+  }
+  return grid.map((row) =>
+    row.map((mask) => (mask === 0 ? " " : String.fromCharCode(0x2800 + mask))).join(""),
+  );
+}
+
 /** Truncate to width with an ellipsis so rows never wrap. */
 export function truncate(s: string, width: number): string {
   if (s.length <= width) return s;
