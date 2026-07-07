@@ -150,3 +150,34 @@ export interface CreateMonitorInput {
 export type UpdateMonitorInput = Partial<CreateMonitorInput> & {
   isActive?: boolean;
 };
+
+/** The incident events a webhook can subscribe to. */
+export const WEBHOOK_EVENTS = ["incident.opened", "incident.resolved"] as const;
+export type WebhookEvent = (typeof WEBHOOK_EVENTS)[number];
+
+/** A workspace webhook endpoint (notification channel). */
+export interface Webhook {
+  id: number;
+  workspaceId: number;
+  name: string;
+  url: string;
+  /** Subscribed events (the API parses the stored JSON to an array). */
+  events: string[];
+  isActive: boolean;
+  lastTestedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWebhookInput {
+  url: string;
+  name?: string;
+  events?: string[];
+}
+
+export type UpdateWebhookInput = {
+  name?: string;
+  url?: string;
+  events?: string[];
+  isActive?: boolean;
+};

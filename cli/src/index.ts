@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { registerMonitorCommands } from "./commands/monitors.js";
 import { registerIncidentCommands } from "./commands/incidents.js";
+import { registerWebhookCommands } from "./commands/webhooks.js";
 import { registerHeartbeatCommand } from "./commands/heartbeat.js";
 import { registerAuthCommands } from "./commands/auth.js";
 import { registerWorkspaceCommands } from "./commands/workspaces.js";
@@ -20,7 +21,7 @@ program
       "below. Sign in with `pulseops login`, or use an API key (--api-key /\n" +
       "PULSEOPS_API_KEY).",
   )
-  .version("1.1.0")
+  .version("1.2.0")
   .option(
     "--url <url>",
     "API base URL (env PULSEOPS_API_URL)",
@@ -40,6 +41,7 @@ registerAuthCommands(program);
 registerWorkspaceCommands(program);
 registerMonitorCommands(program);
 registerIncidentCommands(program);
+registerWebhookCommands(program);
 registerHeartbeatCommand(program);
 
 /** Launch the Ink dashboard, honouring the global connection/auth flags. */
