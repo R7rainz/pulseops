@@ -20,6 +20,31 @@ pulseops              # open the live dashboard
 pulseops monitors ls  # …or run a command
 ```
 
+> ### ⚠️ Self-hosted — please clone & run your own instance
+>
+> **PulseOps is a self-hosted project. There is no public/hosted server** (it's a
+> solo open-source build, and running a public backend — Postgres, Redis, Kafka,
+> a domain, TLS — isn't something I can pay to keep online). This CLI is just the
+> **client**; on its own it has nothing to talk to and will fail to connect.
+>
+> For the real, full experience, **clone the repo and self-host** — it's one
+> command and you'll get your own private, fully-featured instance:
+>
+> ```bash
+> git clone https://github.com/R7rainz/pulseops.git
+> cd pulseops && docker compose up --build      # web, API, docs, DB, workers
+> ```
+>
+> Then point the CLI at your instance:
+>
+> ```bash
+> export PULSEOPS_API_URL=http://localhost:4000   # or https://your.host if deployed
+> pulseops login
+> ```
+>
+> Deploying to a real domain (free options included): see
+> [DEPLOY.md](https://github.com/R7rainz/pulseops/blob/master/DEPLOY.md).
+
 ---
 
 ## Contents
