@@ -62,6 +62,13 @@ Caddy provisions and renews the certificate automatically; certs persist in the
 `caddy_data` volume. To enable OAuth/SMTP, drop the real secrets in
 `backend/.env` (loaded automatically) — see [`.env.example`](./.env.example).
 
+For a full step-by-step runbook — including a **$0 / free-tier** path (Oracle
+Cloud Always-Free VM + a free DuckDNS domain) — see **[DEPLOY.md](./DEPLOY.md)**.
+
+> **Note:** PulseOps is **self-hosted** — there's no public/hosted instance to
+> sign up for. Run your own with the steps above; the [`pulseops`](./cli) npm CLI
+> then connects to it via `PULSEOPS_API_URL`.
+
 ## Repository layout
 
 | Path | What |
