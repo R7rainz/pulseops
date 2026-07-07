@@ -74,6 +74,20 @@ export function resolveConfig(overrides: ConfigOverrides): Config {
   return { apiUrl, auth, workspaceId, fromStoredSession };
 }
 
+/**
+ * Asserts the current auth can perform writes. v1 API keys are read-only, so
+ * mutations (create/update monitors, ack/resolve incidents) need a signed-in
+ * session from `pulseops login`.
+ */
+export function assertWritable(config: Config): void {
+  if (config.auth.mode === "key") {
+    throw new ConfigError(
+      "This action needs a signed-in session — API keys are read-only. " +
+        "Run `pulseops login` (writes also require an OWNER/ADMIN role).",
+    );
+  }
+}
+
 /** Asserts a workspace id is present for workspace-scoped commands. */
 export function requireWorkspace(config: Config): number {
   if (config.workspaceId == null) {

@@ -3,6 +3,7 @@ import { Box, useApp, useInput, useStdout } from "ink";
 import type { PulseOpsClient } from "../client.js";
 import type { Config } from "../config.js";
 import type {
+  CreateMonitorInput,
   Incident,
   LiveMonitors,
   Monitor,
@@ -23,9 +24,11 @@ import {
   Overview,
   TabBar,
   ThemePicker,
+  Toast,
   VIEWS,
   type View,
 } from "./components.js";
+import { ConfirmDialog, MonitorForm } from "./forms.js";
 
 const LIST_INTERVAL = 15_000;
 const LIVE_INTERVAL = 5_000;
@@ -34,6 +37,16 @@ const FLEET_ANALYTICS_INTERVAL = 60_000;
 const CHECKS_LIMIT = 60;
 
 type Overlay = "none" | "help" | "theme";
+
+/** An action overlay that owns keyboard input while open. */
+type Action =
+  | { kind: "form"; mode: "create" | "edit"; monitor?: Monitor }
+  | { kind: "confirm"; message: string; danger: boolean; run: () => Promise<unknown>; okMsg: string };
+
+interface ToastState {
+  text: string;
+  kind: "ok" | "err";
+}
 
 /** The dashboard, wrapped so every pane can read the active theme. */
 export function App(props: { client: PulseOpsClient; config: Config }) {
@@ -88,6 +101,19 @@ function Dashboard({
   const [themeSel, setThemeSel] = useState(0);
   const [monitorSel, setMonitorSel] = useState(0);
   const [incidentSel, setIncidentSel] = useState(0);
+
+  // Write actions (create/edit/pause/delete/ack/resolve).
+  const canWrite = config.auth.mode === "session";
+  const [action, setAction] = useState<Action | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState<string>();
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout>>();
+  const flash = (text: string, kind: "ok" | "err") => {
+    setToast({ text, kind });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 4000);
+  };
 
   // Keep selection in range as lists change size.
   useEffect(() => {
@@ -177,10 +203,70 @@ function Dashboard({
     incidentsPoll.refresh();
   };
 
+  // --- write actions ------------------------------------------------------
+
+  const requireWrite = (): boolean => {
+    if (!canWrite) {
+      flash("Read-only (API key) — run `pulseops login` to edit.", "err");
+      return false;
+    }
+    return true;
+  };
+
+  /** Run a mutation, flashing success/error and refreshing on success. */
+  const runWrite = async (
+    fn: () => Promise<unknown>,
+    okMsg: string,
+    refresh: () => void,
+  ): Promise<boolean> => {
+    setBusy(true);
+    try {
+      await fn();
+      flash(okMsg, "ok");
+      refresh();
+      return true;
+    } catch (e) {
+      flash(e instanceof Error ? e.message : String(e), "err");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitForm = async (input: CreateMonitorInput) => {
+    if (!action || action.kind !== "form") return;
+    const editing = action.mode === "edit" && action.monitor;
+    setBusy(true);
+    setFormError(undefined);
+    try {
+      if (editing) await client.updateMonitor(workspaceId, action.monitor!.id, input);
+      else await client.createMonitor(workspaceId, input);
+      monitorsPoll.refresh();
+      setAction(null);
+      flash(editing ? `updated ${input.name}` : `created ${input.name}`, "ok");
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmRun = async () => {
+    if (!action || action.kind !== "confirm") return;
+    const ok = await runWrite(action.run, action.okMsg, () => {
+      monitorsPoll.refresh();
+      incidentsPoll.refresh();
+    });
+    if (ok) setAction(null);
+  };
+
   // Tracks a pending `g` so a second `g` within the window triggers `gg` (top).
   const pendingG = useRef(false);
 
   useInput((input, key) => {
+    // A form/confirm overlay owns all input via its own component.
+    if (action) return;
+
     // Always-available quit.
     if (input === "q" || (key.ctrl && input === "c")) {
       exit();
@@ -239,6 +325,82 @@ function Dashboard({
     if (input === "r") {
       refreshAll();
       return;
+    }
+
+    // Write actions on the active view (guarded to signed-in sessions).
+    if (view === "monitors") {
+      if (input === "n") {
+        if (requireWrite()) {
+          setFormError(undefined);
+          setAction({ kind: "form", mode: "create" });
+        }
+        return;
+      }
+      if (selectedMonitor) {
+        const m = selectedMonitor;
+        if (input === "e") {
+          if (requireWrite()) {
+            setFormError(undefined);
+            setAction({ kind: "form", mode: "edit", monitor: m });
+          }
+          return;
+        }
+        if (input === "p") {
+          if (requireWrite()) {
+            const paused = m.status === "PAUSED";
+            void runWrite(
+              () =>
+                paused
+                  ? client.resumeMonitor(workspaceId, m.id)
+                  : client.pauseMonitor(workspaceId, m.id),
+              paused ? `resumed ${m.name}` : `paused ${m.name}`,
+              monitorsPoll.refresh,
+            );
+          }
+          return;
+        }
+        if (input === "c") {
+          if (requireWrite())
+            void runWrite(
+              () => client.runCheck(workspaceId, m.id),
+              `triggered a check for ${m.name}`,
+              monitorsPoll.refresh,
+            );
+          return;
+        }
+        if (input === "d" && !key.ctrl) {
+          if (requireWrite())
+            setAction({
+              kind: "confirm",
+              danger: true,
+              message: `Delete monitor "${m.name}" and all its history?`,
+              run: () => client.deleteMonitor(workspaceId, m.id),
+              okMsg: `deleted ${m.name}`,
+            });
+          return;
+        }
+      }
+    }
+    if (view === "incidents" && selectedIncident) {
+      const inc = selectedIncident;
+      if (input === "a") {
+        if (requireWrite())
+          void runWrite(
+            () => client.acknowledgeIncident(inc.id),
+            `acknowledged incident #${inc.id}`,
+            incidentsPoll.refresh,
+          );
+        return;
+      }
+      if (input === "R") {
+        if (requireWrite())
+          void runWrite(
+            () => client.resolveIncident(inc.id),
+            `resolved incident #${inc.id}`,
+            incidentsPoll.refresh,
+          );
+        return;
+      }
     }
 
     // List navigation applies to the active view's list (overview has none).
@@ -300,7 +462,24 @@ function Dashboard({
       />
       <TabBar view={view} />
 
-      {overlay === "help" ? (
+      {action?.kind === "form" ? (
+        <MonitorForm
+          mode={action.mode}
+          initial={action.monitor}
+          busy={busy}
+          submitError={formError}
+          onSubmit={submitForm}
+          onCancel={() => setAction(null)}
+        />
+      ) : action?.kind === "confirm" ? (
+        <ConfirmDialog
+          message={action.message}
+          danger={action.danger}
+          busy={busy}
+          onConfirm={confirmRun}
+          onCancel={() => setAction(null)}
+        />
+      ) : overlay === "help" ? (
         <HelpOverlay />
       ) : overlay === "theme" ? (
         <ThemePicker selected={themeSel} />
@@ -349,7 +528,8 @@ function Dashboard({
         </Box>
       )}
 
-      <Footer view={view} error={error} themeLabel={theme.label} />
+      {toast ? <Toast text={toast.text} kind={toast.kind} /> : null}
+      <Footer view={view} error={error} themeLabel={theme.label} canWrite={canWrite} />
     </Box>
   );
 }

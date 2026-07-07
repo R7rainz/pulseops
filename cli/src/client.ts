@@ -1,5 +1,6 @@
 import type { Auth, Config } from "./config.js";
 import type {
+  CreateMonitorInput,
   Envelope,
   Incident,
   IncidentWithMonitor,
@@ -10,6 +11,7 @@ import type {
   MonitorStats,
   ChecksMeta,
   SessionUser,
+  UpdateMonitorInput,
   Workspace,
 } from "./types.js";
 
@@ -109,6 +111,62 @@ export class PulseOpsClient {
     );
   }
 
+  // --- Monitor writes (session/JWT + OWNER|ADMIN only; API keys are read-only) --
+
+  createMonitor(
+    workspaceId: number,
+    input: CreateMonitorInput,
+  ): Promise<Monitor> {
+    return this.post<Monitor>(`/workspaces/${workspaceId}/monitors`, input);
+  }
+
+  updateMonitor(
+    workspaceId: number,
+    monitorId: number,
+    patch: UpdateMonitorInput,
+  ): Promise<Monitor> {
+    return this.patch<Monitor>(
+      `/workspaces/${workspaceId}/monitors/${monitorId}`,
+      patch,
+    );
+  }
+
+  deleteMonitor(workspaceId: number, monitorId: number): Promise<void> {
+    return this.del(`/workspaces/${workspaceId}/monitors/${monitorId}`);
+  }
+
+  pauseMonitor(workspaceId: number, monitorId: number): Promise<Monitor> {
+    return this.post<Monitor>(
+      `/workspaces/${workspaceId}/monitors/${monitorId}/pause`,
+      {},
+    );
+  }
+
+  resumeMonitor(workspaceId: number, monitorId: number): Promise<Monitor> {
+    return this.post<Monitor>(
+      `/workspaces/${workspaceId}/monitors/${monitorId}/resume`,
+      {},
+    );
+  }
+
+  /** Trigger an on-demand "check now" (pings synchronously, bypassing Kafka). */
+  runCheck(workspaceId: number, monitorId: number): Promise<unknown> {
+    return this.post<unknown>(
+      `/workspaces/${workspaceId}/monitors/${monitorId}/check`,
+      {},
+    );
+  }
+
+  // --- Incident writes ----------------------------------------------------
+
+  acknowledgeIncident(incidentId: number): Promise<Incident> {
+    return this.post<Incident>(`/incidents/${incidentId}/acknowledge`, {});
+  }
+
+  resolveIncident(incidentId: number): Promise<Incident> {
+    return this.post<Incident>(`/incidents/${incidentId}/resolve`, {});
+  }
+
   getAnalytics(
     workspaceId: number,
     monitorId: number,
@@ -142,6 +200,32 @@ export class PulseOpsClient {
   private async get<T>(path: string): Promise<T> {
     const env = await this.request<Envelope<T>>(path);
     return env.data;
+  }
+
+  /** Sends a JSON body with `method` and unwraps the `{ data }` envelope. */
+  private async send<T>(
+    path: string,
+    method: "POST" | "PATCH",
+    body: unknown,
+  ): Promise<T> {
+    const env = await this.request<Envelope<T>>(path, {
+      method,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body ?? {}),
+    });
+    return env.data;
+  }
+
+  private post<T>(path: string, body: unknown): Promise<T> {
+    return this.send<T>(path, "POST", body);
+  }
+
+  private patch<T>(path: string, body: unknown): Promise<T> {
+    return this.send<T>(path, "PATCH", body);
+  }
+
+  private async del(path: string): Promise<void> {
+    await this.request<unknown>(path, { method: "DELETE" });
   }
 
   private authHeaders(): Record<string, string> {
