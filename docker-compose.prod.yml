@@ -1,0 +1,56 @@
+# Production overlay: puts Caddy in front of the stack for automatic HTTPS and
+# path-based routing, and takes the app services off the public interface (they
+# are reached only over the internal network, by Caddy).
+#
+# Usage (after setting DOMAIN + the https URLs in .env — see .env.example):
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# The build step is required, not optional: PUBLIC_API_URL / APP_URL / DOCS_URL
+# are baked into the web/docs client bundles at build time.
+#
+# Requires Docker Compose v2.24+ for the `!override` merge tag.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: pulseops-caddy
+    restart: unless-stopped
+    depends_on:
+      - web
+      - api
+      - docs
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      - DOMAIN=${DOMAIN}
+      - ACME_EMAIL=${ACME_EMAIL:-}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Persist issued certificates + ACME account across restarts (avoids
+      # re-issuing on every deploy and hitting Let's Encrypt rate limits).
+      - caddy_data:/data
+      - caddy_config:/config
+
+  # The web app is served only through Caddy now — drop its public host port.
+  web:
+    ports: !override []
+
+  # The API is reached by browsers via Caddy at /api/v1; server-side callers use
+  # the internal network. No direct public port.
+  api:
+    ports: !override []
+
+  docs:
+    ports: !override []
+    build:
+      args:
+        # Serve the docs app under /docs (Next basePath). Baked at build time.
+        NEXT_PUBLIC_BASE_PATH: /docs
+
+volumes:
+  caddy_data:
+  caddy_config:
