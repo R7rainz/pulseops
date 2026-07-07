@@ -20,7 +20,7 @@ program
       "below. Sign in with `pulseops login`, or use an API key (--api-key /\n" +
       "PULSEOPS_API_KEY).",
   )
-  .version("1.0.0")
+  .version("1.0.1")
   .option(
     "--url <url>",
     "API base URL (env PULSEOPS_API_URL)",
@@ -74,6 +74,17 @@ async function main(): Promise<void> {
     if (err instanceof ApiError) {
       const prefix = err.status ? `API ${err.status}: ` : "";
       console.error(color.red("Error: ") + prefix + err.message);
+      // status 0 = couldn't reach the server. PulseOps is self-hosted, so this
+      // usually means there's no backend running — point people at their own.
+      if (err.status === 0) {
+        console.error(
+          color.dim(
+            "\nPulseOps is self-hosted — this CLI needs a backend to connect to.\n" +
+              "Run your own in one command:  git clone https://github.com/R7rainz/pulseops && cd pulseops && docker compose up\n" +
+              "Then set  PULSEOPS_API_URL  to your instance (default http://localhost:4000).",
+          ),
+        );
+      }
       process.exit(1);
     }
     console.error(
