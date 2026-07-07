@@ -9,9 +9,12 @@
   with latency graphs, an availability strip, a status heatmap and six themes.
   Just run `pulseops` with no command.
 
-It's a thin, typed wrapper over the [programmatic API](../docs)'s
-key-authenticated **read** surface (plus the heartbeat push endpoint), so
-anything you can see in the web dashboard you can also script or watch live.
+It's a thin, typed wrapper over the [programmatic API](../docs). Signed in with
+`pulseops login`, it can also **manage** your fleet — create/edit/pause/delete
+monitors and acknowledge/resolve incidents, from both the CLI and the dashboard.
+(Workspace **API keys** stay read-only: they unlock the read surface + heartbeat,
+but not writes.) So anything you do in the web dashboard you can also script or
+drive from the terminal.
 
 ```bash
 npm install -g pulseops
@@ -136,10 +139,20 @@ full keyboard-shortcut overlay.
 | `j` / `k` (↓ / ↑)   | Move selection                             |
 | `gg` / `G`          | Top / bottom of the list                   |
 | `Ctrl-d` / `Ctrl-u` | Half-page down / up                        |
+| `n` / `e`           | New / edit monitor (Monitors view)         |
+| `p` / `c` / `d`     | Pause·resume / check now / delete monitor  |
+| `a` / `R`           | Acknowledge / resolve incident (Incidents) |
 | `t` / `T`           | Cycle theme / open theme picker            |
 | `?`                 | Toggle the keyboard-shortcut help          |
 | `r`                 | Refresh now                                |
 | `q` / `Ctrl-C`      | Quit                                       |
+
+**Managing from the dashboard:** on the Monitors view, `n` opens a create form
+(Tab/↑↓ between fields, Enter to advance/submit, Esc to cancel); `e` edits the
+selected monitor, `p` pauses/resumes, `c` triggers a check, `d` deletes (with a
+confirm). On the Incidents view, `a` acknowledges and `R` resolves. These need a
+signed-in session (`pulseops login`) with an OWNER/ADMIN role — API-key sessions
+are read-only and the footer shows `read-only`.
 
 ---
 
@@ -267,10 +280,27 @@ pulseops monitors analytics <monitorId>   30-day SLA summary
 pulseops incidents list                   Incidents in the workspace, newest first
 pulseops incidents get <incidentId>       One incident, with its monitor
 pulseops heartbeat <monitorId>            Push a liveness signal (HEARTBEAT monitors)
+
+# Writes — need `pulseops login` (session) + an OWNER/ADMIN role; API keys are read-only
+pulseops monitors create -n <name> --url <url>   Create a monitor  [--type --method -i --timeout --expect --grace]
+pulseops monitors update <monitorId> [flags]     Update fields (alias: edit)
+pulseops monitors rm <monitorId> --yes           Delete a monitor (alias: delete)
+pulseops monitors pause|resume <monitorId>       Pause / resume checking
+pulseops monitors check <monitorId>              Run an on-demand "check now"
+pulseops incidents ack <incidentId>              Acknowledge an open incident
+pulseops incidents resolve <incidentId>          Resolve an incident
 ```
 
 Command groups have short aliases: **`monitors` → `mon`**, **`incidents` → `inc`**,
 **`heartbeat` → `hb`**. Every command accepts `--json` and `--help`.
+
+Example — create a monitor, then manage it:
+
+```bash
+pulseops monitors create -n "API" --url https://api.example.com/health -i 30
+pulseops monitors pause 41
+pulseops incidents resolve 552
+```
 
 ### `monitors list`
 

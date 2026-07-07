@@ -132,3 +132,21 @@ export interface Incident {
 export interface IncidentWithMonitor extends Incident {
   monitor?: Monitor;
 }
+
+/** Body for `POST /workspaces/:id/monitors`. Server applies defaults for omitted fields. */
+export interface CreateMonitorInput {
+  name: string;
+  type?: MonitorType;
+  /** Required for HTTP monitors; omitted for HEARTBEAT. */
+  url?: string;
+  method?: string;
+  intervalSeconds?: number;
+  timeoutMs?: number;
+  expectedStatus?: number;
+  gracePeriodSeconds?: number;
+}
+
+/** Body for `PATCH /workspaces/:id/monitors/:id` — any subset of the create fields, plus active toggle. */
+export type UpdateMonitorInput = Partial<CreateMonitorInput> & {
+  isActive?: boolean;
+};
