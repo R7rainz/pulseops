@@ -6,6 +6,10 @@ import { scalarThemeCss } from "@/lib/scalar-theme";
 import ThemeToggle from "@/components/ThemeToggle";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+// basePath-aware: Next doesn't prefix manual fetch() with basePath, so build the
+// same-origin spec URL ourselves ("/openapi.json" at root, "/docs/openapi.json"
+// when served under /docs).
+const SPEC_URL = `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/openapi.json`;
 
 export default function Page() {
   // Keep Scalar's own light/dark mode in lockstep with the app's `.dark` class
@@ -74,7 +78,7 @@ export default function Page() {
 
       <ApiReferenceReact
         configuration={{
-          url: "/openapi.json",
+          url: SPEC_URL,
           theme: "default",
           darkMode: isDark,
           hideDarkModeToggle: true,
