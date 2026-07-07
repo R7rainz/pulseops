@@ -620,8 +620,10 @@ export function HelpOverlay() {
     ["j / k  ↓ / ↑", "Move selection"],
     ["gg / G", "Top / bottom of list"],
     ["⌃d / ⌃u", "Half-page down / up"],
-    ["t", "Cycle theme"],
-    ["T", "Open theme picker"],
+    ["n / e", "New / edit monitor (Monitors)"],
+    ["p / c / d", "Pause·resume / check now / delete (Monitors)"],
+    ["a / R", "Acknowledge / resolve (Incidents)"],
+    ["t / T", "Cycle theme / theme picker"],
     ["r", "Refresh now"],
     ["?", "Toggle this help"],
     ["q / ⌃c", "Quit"],
@@ -652,14 +654,27 @@ export function HelpOverlay() {
   );
 }
 
+/** A transient status line for action results (success / error). */
+export function Toast({ text, kind }: { text: string; kind: "ok" | "err" }) {
+  return (
+    <Box paddingX={1}>
+      <Text color={kind === "ok" ? "green" : "red"}>
+        {(kind === "ok" ? "✓ " : "✖ ") + text}
+      </Text>
+    </Box>
+  );
+}
+
 export function Footer({
   view,
   error,
   themeLabel,
+  canWrite,
 }: {
   view: View;
   error: string | undefined;
   themeLabel: string;
+  canWrite: boolean;
 }) {
   const theme = useTheme();
   if (error) {
@@ -672,11 +687,15 @@ export function Footer({
   const nav =
     view === "overview"
       ? "1/2/3 views · t theme · r reload"
-      : "j/k move · gg/G ends · ⌃d/⌃u page · 1/2/3 views";
+      : view === "monitors"
+        ? "j/k move · n new · e edit · p pause · c check · d del · 1/2/3 views"
+        : "j/k move · a ack · R resolve · 1/2/3 views";
   return (
     <Box paddingX={1} justifyContent="space-between">
       <Text color={theme.muted}>{`${nav} · ? help · q quit`}</Text>
-      <Text color={theme.muted}>{`theme: ${themeLabel}`}</Text>
+      <Text color={theme.muted}>
+        {(canWrite ? "" : "read-only · ") + `theme: ${themeLabel}`}
+      </Text>
     </Box>
   );
 }

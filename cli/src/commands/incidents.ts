@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import { context, intArg } from "../context.js";
-import { requireWorkspace } from "../config.js";
+import { assertWritable, requireWorkspace } from "../config.js";
 import {
   color,
   dash,
@@ -70,4 +70,28 @@ export function registerIncidentCommands(program: Command): void {
         ]),
       );
     });
+
+  // --- writes (require `pulseops login` + OWNER/ADMIN) --------------------
+
+  const action = (
+    name: string,
+    describe: string,
+    fn: "acknowledgeIncident" | "resolveIncident",
+    ok: (id: number) => string,
+  ) =>
+    incidents
+      .command(name)
+      .argument("<incidentId>", "Incident id")
+      .description(describe)
+      .action(async (incidentId: string, _opts, command: Command) => {
+        const { client, config, json } = context(command);
+        assertWritable(config);
+        const id = intArg(incidentId, "incidentId");
+        const inc = await client[fn](id);
+        if (json) return printJson(inc);
+        console.log(color.green(ok(id)));
+      });
+
+  action("ack", "Acknowledge an open incident", "acknowledgeIncident", (id) => `✓ acknowledged incident #${id}`);
+  action("resolve", "Resolve an incident", "resolveIncident", (id) => `✓ resolved incident #${id}`);
 }
