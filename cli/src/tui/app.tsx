@@ -4,12 +4,14 @@ import type { PulseOpsClient } from "../client.js";
 import type { Config } from "../config.js";
 import type {
   CreateMonitorInput,
+  CreateWebhookInput,
   Incident,
   LiveMonitors,
   Monitor,
   MonitorAnalytics,
   MonitorCheck,
   MonitorStats,
+  Webhook,
 } from "../types.js";
 import { usePoll, useClock } from "./hooks.js";
 import { ThemeProvider, useThemeControls } from "./theme-context.js";
@@ -26,9 +28,11 @@ import {
   ThemePicker,
   Toast,
   VIEWS,
+  WebhookDetail,
+  WebhookList,
   type View,
 } from "./components.js";
-import { ConfirmDialog, MonitorForm } from "./forms.js";
+import { ConfirmDialog, MonitorForm, WebhookForm } from "./forms.js";
 
 const LIST_INTERVAL = 15_000;
 const LIVE_INTERVAL = 5_000;
@@ -41,6 +45,7 @@ type Overlay = "none" | "help" | "theme";
 /** An action overlay that owns keyboard input while open. */
 type Action =
   | { kind: "form"; mode: "create" | "edit"; monitor?: Monitor }
+  | { kind: "webhook-form"; mode: "create" | "edit"; webhook?: Webhook }
   | { kind: "confirm"; message: string; danger: boolean; run: () => Promise<unknown>; okMsg: string };
 
 interface ToastState {
@@ -89,21 +94,28 @@ function Dashboard({
     () => client.listIncidents(workspaceId),
     INCIDENT_INTERVAL,
   );
+  // Webhooks are a session-only module; skip the fetch (and its 403) in key mode.
+  const canWrite = config.auth.mode === "session";
+  const webhooksPoll = usePoll<Webhook[]>(
+    () => (canWrite ? client.listWebhooks(workspaceId) : Promise.resolve([])),
+    LIST_INTERVAL,
+  );
 
   const monitors = useMemo(() => monitorsPoll.data ?? [], [monitorsPoll.data]);
   const incidents = useMemo(
     () => incidentsPoll.data ?? [],
     [incidentsPoll.data],
   );
+  const webhooks = useMemo(() => webhooksPoll.data ?? [], [webhooksPoll.data]);
 
   const [view, setView] = useState<View>("overview");
   const [overlay, setOverlay] = useState<Overlay>("none");
   const [themeSel, setThemeSel] = useState(0);
   const [monitorSel, setMonitorSel] = useState(0);
   const [incidentSel, setIncidentSel] = useState(0);
+  const [webhookSel, setWebhookSel] = useState(0);
 
-  // Write actions (create/edit/pause/delete/ack/resolve).
-  const canWrite = config.auth.mode === "session";
+  // Write actions (create/edit/pause/delete/ack/resolve/webhooks).
   const [action, setAction] = useState<Action | null>(null);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string>();
@@ -124,9 +136,14 @@ function Dashboard({
     if (incidentSel > incidents.length - 1)
       setIncidentSel(Math.max(0, incidents.length - 1));
   }, [incidents.length, incidentSel]);
+  useEffect(() => {
+    if (webhookSel > webhooks.length - 1)
+      setWebhookSel(Math.max(0, webhooks.length - 1));
+  }, [webhooks.length, webhookSel]);
 
   const selectedMonitor = monitors[monitorSel];
   const selectedIncident = incidents[incidentSel];
+  const selectedWebhook = webhooks[webhookSel];
 
   const monitorName = useMemo(() => {
     const byId = new Map(monitors.map((m) => [m.id, m.name]));
@@ -201,6 +218,7 @@ function Dashboard({
     monitorsPoll.refresh();
     livePoll.refresh();
     incidentsPoll.refresh();
+    if (canWrite) webhooksPoll.refresh();
   };
 
   // --- write actions ------------------------------------------------------
@@ -251,11 +269,30 @@ function Dashboard({
     }
   };
 
+  const submitWebhookForm = async (input: CreateWebhookInput) => {
+    if (!action || action.kind !== "webhook-form") return;
+    const editing = action.mode === "edit" && action.webhook;
+    setBusy(true);
+    setFormError(undefined);
+    try {
+      if (editing) await client.updateWebhook(workspaceId, action.webhook!.id, input);
+      else await client.createWebhook(workspaceId, input);
+      webhooksPoll.refresh();
+      setAction(null);
+      flash(editing ? `updated webhook` : `created webhook`, "ok");
+    } catch (e) {
+      setFormError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const confirmRun = async () => {
     if (!action || action.kind !== "confirm") return;
     const ok = await runWrite(action.run, action.okMsg, () => {
       monitorsPoll.refresh();
       incidentsPoll.refresh();
+      if (canWrite) webhooksPoll.refresh();
     });
     if (ok) setAction(null);
   };
@@ -313,6 +350,7 @@ function Dashboard({
     if (input === "1") return setView("overview");
     if (input === "2") return setView("monitors");
     if (input === "3") return setView("incidents");
+    if (input === "4") return setView("webhooks");
     if (key.tab) {
       const idx = VIEWS.findIndex((v) => v.key === view);
       const next = key.shift
@@ -402,11 +440,69 @@ function Dashboard({
         return;
       }
     }
+    if (view === "webhooks") {
+      if (input === "n") {
+        if (requireWrite()) {
+          setFormError(undefined);
+          setAction({ kind: "webhook-form", mode: "create" });
+        }
+        return;
+      }
+      if (selectedWebhook) {
+        const w = selectedWebhook;
+        if (input === "e") {
+          if (requireWrite()) {
+            setFormError(undefined);
+            setAction({ kind: "webhook-form", mode: "edit", webhook: w });
+          }
+          return;
+        }
+        if (input === "x") {
+          if (requireWrite())
+            void runWrite(
+              () => client.toggleWebhook(workspaceId, w.id),
+              `toggled webhook #${w.id}`,
+              webhooksPoll.refresh,
+            );
+          return;
+        }
+        if (input === "s") {
+          if (requireWrite())
+            void runWrite(
+              () => client.testWebhook(workspaceId, w.id),
+              `sent a test to webhook #${w.id}`,
+              webhooksPoll.refresh,
+            );
+          return;
+        }
+        if (input === "d" && !key.ctrl) {
+          if (requireWrite())
+            setAction({
+              kind: "confirm",
+              danger: true,
+              message: `Delete webhook "${w.name || w.url}"?`,
+              run: () => client.deleteWebhook(workspaceId, w.id),
+              okMsg: `deleted webhook #${w.id}`,
+            });
+          return;
+        }
+      }
+    }
 
     // List navigation applies to the active view's list (overview has none).
     if (view === "overview") return;
-    const len = view === "monitors" ? monitors.length : incidents.length;
-    const setSel = view === "monitors" ? setMonitorSel : setIncidentSel;
+    const len =
+      view === "monitors"
+        ? monitors.length
+        : view === "incidents"
+          ? incidents.length
+          : webhooks.length;
+    const setSel =
+      view === "monitors"
+        ? setMonitorSel
+        : view === "incidents"
+          ? setIncidentSel
+          : setWebhookSel;
     const clamp = (n: number) => Math.max(0, Math.min(len - 1, n));
     if (len === 0) return;
 
@@ -471,6 +567,15 @@ function Dashboard({
           onSubmit={submitForm}
           onCancel={() => setAction(null)}
         />
+      ) : action?.kind === "webhook-form" ? (
+        <WebhookForm
+          mode={action.mode}
+          initial={action.webhook}
+          busy={busy}
+          submitError={formError}
+          onSubmit={submitWebhookForm}
+          onCancel={() => setAction(null)}
+        />
       ) : action?.kind === "confirm" ? (
         <ConfirmDialog
           message={action.message}
@@ -511,7 +616,7 @@ function Dashboard({
             width={width - listWidth}
           />
         </Box>
-      ) : (
+      ) : view === "incidents" ? (
         <Box>
           <IncidentList
             incidents={incidents}
@@ -523,6 +628,21 @@ function Dashboard({
           <IncidentDetail
             incident={selectedIncident}
             monitorName={monitorName}
+            width={width - listWidth}
+          />
+        </Box>
+      ) : (
+        <Box>
+          <WebhookList
+            webhooks={webhooks}
+            selectedIndex={webhookSel}
+            width={listWidth}
+            maxRows={bodyRows}
+            focused
+            canWrite={canWrite}
+          />
+          <WebhookDetail
+            webhook={selectedWebhook}
             width={width - listWidth}
           />
         </Box>

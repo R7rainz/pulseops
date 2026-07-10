@@ -6,6 +6,7 @@ import type {
   MonitorAnalytics,
   MonitorCheck,
   MonitorStats,
+  Webhook,
 } from "../types.js";
 import { useTheme, useThemeControls } from "./theme-context.js";
 import {
@@ -27,12 +28,13 @@ import {
 } from "./format.js";
 import { LatencyGraph, StatCard, StatusHeatmap, StatusStrip } from "./charts.js";
 
-export type View = "overview" | "monitors" | "incidents";
+export type View = "overview" | "monitors" | "incidents" | "webhooks";
 
 export const VIEWS: { key: View; label: string }[] = [
   { key: "overview", label: "Overview" },
   { key: "monitors", label: "Monitors" },
   { key: "incidents", label: "Incidents" },
+  { key: "webhooks", label: "Webhooks" },
 ];
 
 /** Merge a monitor's persisted fields with its live-cache state, preferring live. */
@@ -577,6 +579,118 @@ export function IncidentDetail({
   );
 }
 
+// --- Webhooks ---------------------------------------------------------------
+
+export function WebhookList({
+  webhooks,
+  selectedIndex,
+  width,
+  maxRows,
+  focused,
+  canWrite,
+}: {
+  webhooks: Webhook[];
+  selectedIndex: number;
+  width: number;
+  maxRows: number;
+  focused: boolean;
+  canWrite: boolean;
+}) {
+  const theme = useTheme();
+  const win = windowSlice(webhooks, selectedIndex, Math.max(1, maxRows));
+  return (
+    <Box
+      flexDirection="column"
+      width={width}
+      borderStyle="round"
+      borderColor={focused ? theme.cyan : theme.muted}
+      paddingX={1}
+    >
+      <SectionTitle>{`WEBHOOKS ${webhooks.length ? `(${webhooks.length})` : ""}`}</SectionTitle>
+      {!canWrite ? (
+        <Text color={theme.muted}>sign in (`pulseops login`) to manage webhooks</Text>
+      ) : webhooks.length === 0 ? (
+        <Text color={theme.muted}>no webhooks · press n to add</Text>
+      ) : (
+        <>
+          <MoreRow count={win.hiddenBefore} up />
+          {win.slice.map((w, i) => {
+            const selected = win.start + i === selectedIndex;
+            const label = w.name || w.url;
+            const labelWidth = Math.max(10, width - 10);
+            return (
+              <Box key={w.id}>
+                <Text color={theme.cyan}>{selected ? ARROW + " " : "  "}</Text>
+                <Text color={w.isActive ? "green" : "gray"}>{DOT}</Text>
+                <Text bold={selected} color={selected ? theme.text : undefined}>
+                  {" " + truncate(label, labelWidth).padEnd(labelWidth)}
+                </Text>
+              </Box>
+            );
+          })}
+          <MoreRow count={win.hiddenAfter} up={false} />
+        </>
+      )}
+    </Box>
+  );
+}
+
+export function WebhookDetail({
+  webhook,
+  width,
+}: {
+  webhook: Webhook | undefined;
+  width: number;
+}) {
+  const theme = useTheme();
+  if (!webhook) {
+    return (
+      <Box flexGrow={1} borderStyle="round" borderColor={theme.muted} paddingX={1}>
+        <Text color={theme.muted}>select a webhook</Text>
+      </Box>
+    );
+  }
+  const inner = Math.max(20, width - 4);
+  return (
+    <Box
+      flexDirection="column"
+      flexGrow={1}
+      borderStyle="round"
+      borderColor={theme.cyan}
+      paddingX={1}
+    >
+      <Box justifyContent="space-between">
+        <Text bold color={theme.text}>
+          {truncate(webhook.name || `webhook #${webhook.id}`, Math.max(12, inner - 12))}
+        </Text>
+        <Text color={webhook.isActive ? "green" : "gray"} bold>
+          {webhook.isActive ? "● active" : "● paused"}
+        </Text>
+      </Box>
+      <Text color={theme.muted}>{truncate(webhook.url, inner - 2)}</Text>
+
+      <Box marginTop={1} flexDirection="column">
+        <SectionTitle>SUBSCRIBED EVENTS</SectionTitle>
+        {webhook.events.length ? (
+          webhook.events.map((e) => (
+            <Text key={e} color={theme.text}>
+              {"• " + e}
+            </Text>
+          ))
+        ) : (
+          <Text color={theme.muted}>none</Text>
+        )}
+      </Box>
+
+      <Box marginTop={1} flexDirection="column">
+        <StatLine label="id" value={String(webhook.id)} />
+        <StatLine label="last tested" value={fmtRel(webhook.lastTestedAt)} />
+        <StatLine label="created" value={fmtDate(webhook.createdAt)} />
+      </Box>
+    </Box>
+  );
+}
+
 // --- overlays / chrome ------------------------------------------------------
 
 export function ThemePicker({ selected }: { selected: number }) {
@@ -615,14 +729,15 @@ export function ThemePicker({ selected }: { selected: number }) {
 export function HelpOverlay() {
   const theme = useTheme();
   const rows: [string, string][] = [
-    ["1 / 2 / 3", "Jump to Overview / Monitors / Incidents"],
+    ["1 / 2 / 3 / 4", "Overview / Monitors / Incidents / Webhooks"],
     ["Tab / ⇧Tab", "Cycle views"],
     ["j / k  ↓ / ↑", "Move selection"],
     ["gg / G", "Top / bottom of list"],
     ["⌃d / ⌃u", "Half-page down / up"],
-    ["n / e", "New / edit monitor (Monitors)"],
+    ["n / e", "New / edit (Monitors, Webhooks)"],
     ["p / c / d", "Pause·resume / check now / delete (Monitors)"],
     ["a / R", "Acknowledge / resolve (Incidents)"],
+    ["x / s / d", "Toggle / send test / delete (Webhooks)"],
     ["t / T", "Cycle theme / theme picker"],
     ["r", "Refresh now"],
     ["?", "Toggle this help"],
@@ -686,10 +801,12 @@ export function Footer({
   }
   const nav =
     view === "overview"
-      ? "1/2/3 views · t theme · r reload"
+      ? "1-4 views · t theme · r reload"
       : view === "monitors"
-        ? "j/k move · n new · e edit · p pause · c check · d del · 1/2/3 views"
-        : "j/k move · a ack · R resolve · 1/2/3 views";
+        ? "j/k move · n new · e edit · p pause · c check · d del · 1-4 views"
+        : view === "incidents"
+          ? "j/k move · a ack · R resolve · 1-4 views"
+          : "j/k move · n new · e edit · x toggle · s test · d del";
   return (
     <Box paddingX={1} justifyContent="space-between">
       <Text color={theme.muted}>{`${nav} · ? help · q quit`}</Text>

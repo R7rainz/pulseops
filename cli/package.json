@@ -1,6 +1,6 @@
 {
   "name": "pulseops",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "PulseOps in your terminal — a scriptable CLI and a live TUI dashboard for your monitors, incidents, uptime and latency.",
   "type": "module",
   "packageManager": "pnpm@10.33.0",
@@ -58,7 +58,8 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
-    "prepublishOnly": "tsc"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && tsc"
   },
   "dependencies": {
     "commander": "^13.1.0",

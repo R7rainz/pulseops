@@ -1,6 +1,7 @@
 import type { Auth, Config } from "./config.js";
 import type {
   CreateMonitorInput,
+  CreateWebhookInput,
   Envelope,
   Incident,
   IncidentWithMonitor,
@@ -12,6 +13,8 @@ import type {
   ChecksMeta,
   SessionUser,
   UpdateMonitorInput,
+  UpdateWebhookInput,
+  Webhook,
   Workspace,
 } from "./types.js";
 
@@ -165,6 +168,50 @@ export class PulseOpsClient {
 
   resolveIncident(incidentId: number): Promise<Incident> {
     return this.post<Incident>(`/incidents/${incidentId}/resolve`, {});
+  }
+
+  // --- Webhooks (session/JWT only; API keys have no access to this module) --
+
+  listWebhooks(workspaceId: number): Promise<Webhook[]> {
+    return this.get<Webhook[]>(`/workspaces/${workspaceId}/webhooks`);
+  }
+
+  createWebhook(
+    workspaceId: number,
+    input: CreateWebhookInput,
+  ): Promise<Webhook> {
+    return this.post<Webhook>(`/workspaces/${workspaceId}/webhooks`, input);
+  }
+
+  updateWebhook(
+    workspaceId: number,
+    webhookId: number,
+    patch: UpdateWebhookInput,
+  ): Promise<Webhook> {
+    return this.patch<Webhook>(
+      `/workspaces/${workspaceId}/webhooks/${webhookId}`,
+      patch,
+    );
+  }
+
+  deleteWebhook(workspaceId: number, webhookId: number): Promise<void> {
+    return this.del(`/workspaces/${workspaceId}/webhooks/${webhookId}`);
+  }
+
+  /** Flip a webhook's active flag. */
+  toggleWebhook(workspaceId: number, webhookId: number): Promise<Webhook> {
+    return this.post<Webhook>(
+      `/workspaces/${workspaceId}/webhooks/${webhookId}/toggle`,
+      {},
+    );
+  }
+
+  /** Send a test delivery to a webhook. */
+  testWebhook(workspaceId: number, webhookId: number): Promise<unknown> {
+    return this.post<unknown>(
+      `/workspaces/${workspaceId}/webhooks/${webhookId}/test`,
+      {},
+    );
   }
 
   getAnalytics(

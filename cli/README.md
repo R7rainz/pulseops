@@ -9,7 +9,7 @@
   with latency graphs, an availability strip, a status heatmap and six themes.
   Just run `pulseops` with no command.
 
-It's a thin, typed wrapper over the [programmatic API](../docs). Signed in with
+It's a thin, typed wrapper over the [programmatic API](https://github.com/R7rainz/pulseops/tree/master/docs). Signed in with
 `pulseops login`, it can also **manage** your fleet — create/edit/pause/delete
 monitors and acknowledge/resolve incidents, from both the CLI and the dashboard.
 (Workspace **API keys** stay read-only: they unlock the read surface + heartbeat,
@@ -117,7 +117,7 @@ Run `pulseops` with no subcommand (or `pulseops tui` / `pulseops dashboard`) to
 open the live terminal dashboard. It reuses your CLI login and honours the same
 global flags (`--url`, `--api-key`, `--workspace`).
 
-Three views, switched with the number keys or `Tab`:
+Four views, switched with the number keys or `Tab`:
 
 - **Overview** — fleet counters (total / up / down / degraded / open incidents /
   average 30-day uptime), a colour-coded status heatmap of every monitor, and
@@ -127,6 +127,8 @@ Three views, switched with the number keys or `Tab`:
   percentiles (p50/p95/p99) and the 30-day SLA block.
 - **Incidents** — incident history beside a detail pane with the affected
   monitor and a start → resolve timeline.
+- **Webhooks** — notification channels beside a detail pane (URL, subscribed
+  events, active state, last test).
 
 Press `t` to cycle themes (Iris, Ember, Matrix, Grape, Nord, Mono) or `T` for a
 picker; your choice persists to `~/.config/pulseops/tui.json`. Press `?` for the
@@ -134,14 +136,15 @@ full keyboard-shortcut overlay.
 
 | Key                 | Action                                     |
 | ------------------- | ------------------------------------------ |
-| `1` / `2` / `3`     | Jump to Overview / Monitors / Incidents    |
+| `1`…`4`             | Jump to Overview / Monitors / Incidents / Webhooks |
 | `Tab` / `⇧Tab`      | Cycle views                                |
 | `j` / `k` (↓ / ↑)   | Move selection                             |
 | `gg` / `G`          | Top / bottom of the list                   |
 | `Ctrl-d` / `Ctrl-u` | Half-page down / up                        |
-| `n` / `e`           | New / edit monitor (Monitors view)         |
+| `n` / `e`           | New / edit (Monitors, Webhooks)            |
 | `p` / `c` / `d`     | Pause·resume / check now / delete monitor  |
 | `a` / `R`           | Acknowledge / resolve incident (Incidents) |
+| `x` / `s` / `d`     | Toggle / send test / delete (Webhooks)     |
 | `t` / `T`           | Cycle theme / open theme picker            |
 | `?`                 | Toggle the keyboard-shortcut help          |
 | `r`                 | Refresh now                                |
@@ -150,9 +153,11 @@ full keyboard-shortcut overlay.
 **Managing from the dashboard:** on the Monitors view, `n` opens a create form
 (Tab/↑↓ between fields, Enter to advance/submit, Esc to cancel); `e` edits the
 selected monitor, `p` pauses/resumes, `c` triggers a check, `d` deletes (with a
-confirm). On the Incidents view, `a` acknowledges and `R` resolves. These need a
-signed-in session (`pulseops login`) with an OWNER/ADMIN role — API-key sessions
-are read-only and the footer shows `read-only`.
+confirm). On the Incidents view, `a` acknowledges and `R` resolves. On the
+Webhooks view, `n`/`e` create/edit a channel, `x` toggles it, `s` sends a test,
+`d` deletes. These need a signed-in session (`pulseops login`) with an
+OWNER/ADMIN role — API-key sessions are read-only and the footer shows
+`read-only`.
 
 ---
 
@@ -289,10 +294,17 @@ pulseops monitors pause|resume <monitorId>       Pause / resume checking
 pulseops monitors check <monitorId>              Run an on-demand "check now"
 pulseops incidents ack <incidentId>              Acknowledge an open incident
 pulseops incidents resolve <incidentId>          Resolve an incident
+pulseops webhooks list                           List notification channels
+pulseops webhooks create --url <url>             Create a webhook  [-n --name -e --events]
+pulseops webhooks update <id> [flags]            Update (--url -n -e --active/--inactive; alias: edit)
+pulseops webhooks toggle <id>                    Enable/disable
+pulseops webhooks test <id>                      Send a test delivery
+pulseops webhooks rm <id> --yes                  Delete a webhook (alias: delete)
 ```
 
 Command groups have short aliases: **`monitors` → `mon`**, **`incidents` → `inc`**,
-**`heartbeat` → `hb`**. Every command accepts `--json` and `--help`.
+**`webhooks` → `wh`**, **`heartbeat` → `hb`**. Every command accepts `--json` and
+`--help`.
 
 Example — create a monitor, then manage it:
 
@@ -496,7 +508,7 @@ PULSEOPS_API_URL=http://localhost:4000 pnpm gen   # → src/generated/schema.d.t
 ```
 
 The spec does not (yet) carry response schemas, so response models are
-hand-authored in [`src/types.ts`](src/types.ts) to mirror the backend's Prisma
+hand-authored in [`src/types.ts`](https://github.com/R7rainz/pulseops/blob/master/cli/src/types.ts) to mirror the backend's Prisma
 models and controllers. If the API's response shapes change, update that file.
 
 ---
@@ -528,6 +540,6 @@ mock client (no backend needed).
 
 The client is reused by a sibling package:
 
-- **[`@pulseops/mcp`](../mcp)** — a Model Context Protocol server that exposes
+- **[`@pulseops/mcp`](https://github.com/R7rainz/pulseops/tree/master/mcp)** — a Model Context Protocol server that exposes
   the same read API to LLM agents (e.g. Claude Desktop).
 ```
