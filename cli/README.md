@@ -9,7 +9,7 @@
   with latency graphs, an availability strip, a status heatmap and six themes.
   Just run `pulseops` with no command.
 
-It's a thin, typed wrapper over the [programmatic API](../docs). Signed in with
+It's a thin, typed wrapper over the [programmatic API](https://github.com/R7rainz/pulseops/tree/master/docs). Signed in with
 `pulseops login`, it can also **manage** your fleet — create/edit/pause/delete
 monitors and acknowledge/resolve incidents, from both the CLI and the dashboard.
 (Workspace **API keys** stay read-only: they unlock the read surface + heartbeat,
@@ -508,7 +508,7 @@ PULSEOPS_API_URL=http://localhost:4000 pnpm gen   # → src/generated/schema.d.t
 ```
 
 The spec does not (yet) carry response schemas, so response models are
-hand-authored in [`src/types.ts`](src/types.ts) to mirror the backend's Prisma
+hand-authored in [`src/types.ts`](https://github.com/R7rainz/pulseops/blob/master/cli/src/types.ts) to mirror the backend's Prisma
 models and controllers. If the API's response shapes change, update that file.
 
 ---
@@ -540,6 +540,6 @@ mock client (no backend needed).
 
 The client is reused by a sibling package:
 
-- **[`@pulseops/mcp`](../mcp)** — a Model Context Protocol server that exposes
+- **[`@pulseops/mcp`](https://github.com/R7rainz/pulseops/tree/master/mcp)** — a Model Context Protocol server that exposes
   the same read API to LLM agents (e.g. Claude Desktop).
 ```
