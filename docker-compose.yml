@@ -117,8 +117,8 @@ services:
       - REDIS_PORT=6379
       - REDIS_URL=redis://redis:6379
       - KAFKA_BROKERS=kafka:29092
-      - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets
-      - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics
+      - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets.v2
+      - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics.v2
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - NODE_ENV=production
       # Auth signing key. A shared dev default so the stack runs out of the box —
@@ -141,8 +141,8 @@ services:
         condition: service_healthy
     environment:
       - KAFKA_BROKERS=kafka:29092
-      - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets
-      - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics
+      - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets.v2
+      - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics.v2
       - KAFKA_CONSUMER_GROUP=pulseops-ping-workers
       - CONCURRENT_WORKERS=50
 
