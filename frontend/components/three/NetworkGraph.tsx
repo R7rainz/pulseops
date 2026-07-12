@@ -9,10 +9,10 @@ const NEIGHBORS = 3; // edges per node (deduped)
 const PULSES = 26; // telemetry "packets" travelling along edges
 const RADIUS = 2.55;
 
-const CYAN = new THREE.Color("#38e0f0");
-const INDIGO = new THREE.Color("#6366f1");
-const STEEL = new THREE.Color("#7f8794");
-const PULSE = new THREE.Color("#b6f2ff");
+const CYAN = new THREE.Color("#29a298"); // Osaka cyan
+const INDIGO = new THREE.Color("#268bd3"); // Osaka blue (node gradient endpoint)
+const STEEL = new THREE.Color("#0f6d76"); // teal edges
+const PULSE = new THREE.Color("#7fe8de"); // bright cyan telemetry pulse
 
 /** Even point distribution on a sphere (Fibonacci lattice). */
 function fibonacciSphere(count: number, radius: number): Float32Array {
