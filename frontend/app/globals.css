@@ -701,6 +701,20 @@
   animation: sheenSweep 6.5s ease-in-out infinite;
 }
 
+/* Clouds drifting inside a button's background (composited below the label,
+   so text contrast is preserved). Pair with .btn-primary. */
+@keyframes btnClouds {
+  0%, 100% { background-position: 12% 22%, 84% 78%; }
+  50% { background-position: 32% 46%, 64% 58%; }
+}
+.clouds-btn {
+  background-image:
+    radial-gradient(55% 150% at 25% 30%, color-mix(in oklab, #ffffff 22%, transparent), transparent 60%),
+    radial-gradient(52% 140% at 80% 74%, color-mix(in oklab, var(--signal-cyan) 62%, transparent), transparent 62%);
+  background-size: 200% 200%, 190% 190%;
+  animation: btnClouds 9s ease-in-out infinite;
+}
+
 /* Slowly drifting teal glow behind a card. */
 .ambient-glow-drift {
   position: relative;
@@ -773,7 +787,8 @@
   .ambient-sweep::after,
   .ambient-sheen::after,
   .ambient-glow-drift::before,
-  .btn-primary::after {
+  .btn-primary::after,
+  .clouds-btn {
     animation: none !important;
   }
   .reveal {
