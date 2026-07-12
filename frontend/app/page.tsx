@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { API_URL, DOCS_URL } from "@/lib/constants";
-import AmbientGlow from "@/components/AmbientGlow";
+import Clouds from "@/components/Clouds";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Brand } from "@/components/Brand";
 import { StatusDot } from "@/components/ui/status-badge";
@@ -106,7 +106,7 @@ export default async function RootPage() {
             opacity: 0.5,
           }}
         />
-        <AmbientGlow tone="vivid" />
+        <Clouds density="high" />
       </div>
 
       {/* NAV */}
@@ -183,7 +183,7 @@ export default async function RootPage() {
           className="fade-up mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
           style={{ animationDelay: "180ms" }}
         >
-          <MagneticButton href="/signup" className="btn btn-primary group px-7 py-3.5 text-base">
+          <MagneticButton href="/signup" className="btn btn-primary clouds-btn group px-7 py-3.5 text-base">
             Start monitoring
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </MagneticButton>
@@ -347,15 +347,18 @@ export default async function RootPage() {
         <div className="mx-auto max-w-3xl px-6">
           <Reveal>
             <div className="pulse-shell">
-              <div className="rounded-[calc(var(--radius)-1px)] px-8 py-14 text-center">
-                <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Ready to stop guessing?</h2>
-                <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-                  Create your first workspace in under a minute. No credit card required.
-                </p>
-                <Link href="/signup" className="btn btn-primary group mt-8 px-7 py-3.5 text-base">
-                  Get started free
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+              <div className="relative overflow-hidden rounded-[calc(var(--radius)-1px)] px-8 py-14 text-center">
+                <Clouds density="med" />
+                <div className="relative z-10">
+                  <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Ready to stop guessing?</h2>
+                  <p className="mx-auto mt-3 max-w-md text-muted-foreground">
+                    Create your first workspace in under a minute. No credit card required.
+                  </p>
+                  <Link href="/signup" className="btn btn-primary clouds-btn group mt-8 px-7 py-3.5 text-base">
+                    Get started free
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
               </div>
             </div>
           </Reveal>
