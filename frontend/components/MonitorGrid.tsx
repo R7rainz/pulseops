@@ -52,12 +52,12 @@ export default function MonitorGrid({ workspaceId, initialMonitors, canEdit }: M
           <div
             key={monitor.id}
             className={cn(
-              "glass group relative flex flex-col gap-4 overflow-hidden rounded-lg p-5 transition-colors duration-200",
+              "glass group relative flex flex-col gap-4 overflow-hidden rounded-lg p-5 transition-all duration-200 hover:-translate-y-1",
               isDown
                 ? "border-down/40"
                 : isDegraded
                   ? "border-degraded/40"
-                  : "hover:border-up/30",
+                  : "hover:border-signal/40",
             )}
           >
             {/* status accent strip */}
@@ -68,7 +68,7 @@ export default function MonitorGrid({ workspaceId, initialMonitors, canEdit }: M
                 href={`/workspaces/${workspaceId}/monitors/${monitor.id}`}
                 className="min-w-0 flex-1 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-up/50"
               >
-                <h3 className="truncate font-display text-base font-semibold tracking-tight text-foreground group-hover:text-up">
+                <h3 className="truncate font-display text-base font-semibold tracking-tight text-foreground group-hover:text-signal">
                   {monitor.name}
                 </h3>
                 <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{monitor.type === "HEARTBEAT" ? "Heartbeat (push)" : monitor.url}</p>

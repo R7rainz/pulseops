@@ -1,24 +1,31 @@
-## Dark Mode — Metallic Palette (v2) + Iris Signal
+## Theme — Solarized Osaka
 
-Black-dominant surfaces with a **metallic gray → white** neutral system, over which sits
-one confident telemetry accent — the **Iris signal**, a cyan→indigo gradient
-(`--signal-cyan #38E0F0` → `--signal-indigo #6366F1`, mid `--signal #45C8EE`). The metallic
-ramp (`--accent-deep/mid/light`, `--sheen-*`, `.gradient-signal`, textures) stays the chrome:
-surfaces, borders, structural washes. Iris is reserved for **CTAs, active states, focus rings,
-key data highlights and the WebGL emissive glow** — never stacked on the metallic gradient.
-`--primary` and `--ring` point at Iris, so buttons, focus, the cursor spotlight and hero
-shells inherit it automatically. Functional status colours (up / degraded / down) stay
-semantic and are never part of either ramp.
+**Dark (default):** a **near-black** base (`--background #00090C`) with **teal-tinted surfaces**
+(`--card #001A21`, `--surface #00131A`, teal hairline `--border #063540`), over which sits one
+telemetry accent — the **Blue→Cyan signal** (`--signal-indigo #268BD3` [Osaka blue] →
+`--signal-cyan #29A298`, mid `--signal #2B8FD0`). `--primary`/`--ring` point at the signal, so
+buttons, focus, cursor spotlight and shells inherit it. Status = semantic Solarized Osaka
+(up `#849900`, degraded `#B28500`, down `#DB302D`) and never part of the accent ramp. The
+teal `--accent-*`/`--sheen-*` ramps drive decorative washes + `AmbientGlow`.
 
-**Iris utilities:** `.text-signal-iris`, `.bg-signal-iris`, `.border-signal-iris`,
-`.glow-iris` (radial wash), `.border-iris-animated` (the Popular pricing frame). Charts read
-`--signal` / `--signal-indigo` via `lib/useThemeColors.ts`.
+**Light:** **Solarized Osaka Dawn** — warm paper base (`--background #FDF5E2`), ink `#576D74`,
+same Blue→Cyan signal + status accents.
 
-**WebGL signature:** `components/three/` — a fluid node-network graph (`NetworkGraph`) in a
-DPR-capped, bloom-lit `SignatureScene`, mounted by `components/HeroSignature.tsx`. It is
-code-split (`next/dynamic`, `ssr:false`), `aria-hidden`, and gated behind
-`useReducedMotion` + `useCapability`; reduced-motion / low-power / SSR get the CSS Iris aurora
-fallback. The loop pauses when the hero scrolls out of view.
+> Token names are kept from the previous "Iris" system (`--signal-indigo` now holds Osaka
+> **blue**; `*-iris` utilities are retargeted, not renamed) so nothing downstream broke.
+
+**Cards:** `.glass` (teal-tinted translucent + blur + teal inset highlight) is the single card
+chokepoint; `.glass-raised` for KPI tiles/modals; `.card-hover-signal` for lift + signal border
+glow. **Ambient (always-on, non-hover) motion:** `.ambient-sweep` (conic signal light around a
+card border via masked ring), `.ambient-sheen` + a baked sheen on `.btn-primary`,
+`.ambient-glow-drift` — all reduced-motion gated.
+
+**WebGL:** `components/three/` — (1) the hero **`NetworkGraph`** (fluid node-network, Osaka
+colors) via `HeroSignature`; (2) the **`ShaderCard`** / `FlowFieldScene` — a fullscreen GLSL
+value-noise flow used as the large cell of the landing features bento. Both are code-split
+(`next/dynamic ssr:false`), `aria-hidden`, gated behind `useReducedMotion` + `useCapability`
+(CSS fallback), and pause off-screen. Charts read `--signal`/`--signal-indigo` via
+`lib/useThemeColors.ts`.
 
 Tokens live in `app/globals.css` (the `.dark` block for dark, the light `:root` block for
 light). `@theme inline` maps them to Tailwind utilities (`bg-card`, `text-primary`,

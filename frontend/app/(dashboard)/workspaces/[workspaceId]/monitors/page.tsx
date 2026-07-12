@@ -84,6 +84,38 @@ export default async function MonitorsPage({
           </div>
         </div>
 
+        {/* KPI SUMMARY BENTO */}
+        {(() => {
+          const total = monitors.length;
+          const up = monitors.filter((m: { status: string }) => m.status === "UP").length;
+          const issues = monitors.filter(
+            (m: { status: string }) => m.status === "DOWN" || m.status === "DEGRADED",
+          ).length;
+          const latencies = monitors
+            .map((m: { lastResponseTime?: number | null }) => m.lastResponseTime)
+            .filter((n: unknown): n is number => typeof n === "number");
+          const avgLatency = latencies.length
+            ? Math.round(latencies.reduce((a: number, b: number) => a + b, 0) / latencies.length)
+            : null;
+          const upPct = total ? Math.round((up / total) * 100) : 100;
+          return (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <KpiCard label="Monitors" value={String(total)} accent="text-foreground" />
+              <KpiCard label="Currently up" value={`${upPct}%`} accent="text-up" />
+              <KpiCard
+                label="Open issues"
+                value={String(issues)}
+                accent={issues > 0 ? "text-down" : "text-muted-foreground"}
+              />
+              <KpiCard
+                label="Avg latency"
+                value={avgLatency != null ? `${avgLatency}ms` : "—"}
+                accent="text-signal"
+              />
+            </div>
+          );
+        })()}
+
         {/* CREATE FORM */}
         {canEdit ? (
           <div className="glass rounded-lg p-5 sm:p-6">
@@ -110,5 +142,16 @@ export default async function MonitorsPage({
         </div>
       </div>
     </main>
+  );
+}
+
+function KpiCard({ label, value, accent }: { label: string; value: string; accent: string }) {
+  return (
+    <div className="glass-raised rounded-xl p-4">
+      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+        {label}
+      </p>
+      <p className={`mt-1.5 font-display text-2xl font-semibold tabular-nums ${accent}`}>{value}</p>
+    </div>
   );
 }
