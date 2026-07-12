@@ -14,16 +14,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="relative min-h-dvh text-foreground selection:bg-primary/20 lg:grid lg:grid-cols-[1.05fr_1fr]">
       {/* LEFT — warm brand panel (desktop only) */}
       <aside className="relative hidden overflow-hidden text-white lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
-        {/* black → steel metallic gradient field */}
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(150deg,#111113_0%,#26282c_48%,#3d4046_100%)]" />
+        {/* near-black → teal Osaka gradient field */}
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(150deg,#00090c_0%,#00212b_48%,#063540_100%)]" />
         <div className="absolute inset-0 -z-10 overflow-hidden">
-          <div className="animate-drift absolute -left-1/4 -top-10 h-[65%] w-[70%] rounded-full bg-[#9aa0aa]/25 blur-3xl" />
+          <div className="animate-drift absolute -left-1/4 -top-10 h-[65%] w-[70%] rounded-full bg-[#14808a]/25 blur-3xl" />
           <div
-            className="animate-float absolute -bottom-10 right-0 h-[55%] w-[60%] rounded-full bg-[#e8eaee]/20 blur-3xl"
+            className="animate-float absolute -bottom-10 right-0 h-[55%] w-[60%] rounded-full bg-[#268bd3]/20 blur-3xl"
             style={{ animationDelay: "1.5s" }}
           />
           <div
-            className="animate-sway absolute left-1/3 top-1/3 h-[45%] w-[50%] rounded-full bg-[#565961]/35 blur-3xl"
+            className="animate-sway absolute left-1/3 top-1/3 h-[45%] w-[50%] rounded-full bg-[#0a4650]/35 blur-3xl"
             style={{ animationDelay: "3s" }}
           />
         </div>

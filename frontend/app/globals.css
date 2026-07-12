@@ -135,149 +135,165 @@
   --sidebar-ring: oklch(0.547 0.021 43.1);
 }
 
-/* ── PulseOps — LIGHT pastel theme (toggle alternative) ──────────────
-   Lavender = brand/accent · cyan/pink accents · green/amber/red = status. */
+/* ── PulseOps — Solarized Osaka DAWN (light theme) ───────────────────
+   Warm paper base (Solarized base3) · Blue→Cyan signal · green/yellow/red
+   = status. Same accents as dark, laid on cream. */
 :root {
-  --background: #f4f4f6;
-  --foreground: #2c2c2c;
-  --card: #ffffff;
-  --card-foreground: #2c2c2c;
-  --popover: #ffffff;
-  --popover-foreground: #2c2c2c;
-  --surface: #ffffff;
-  --surface-raised: #ececef;
-  --muted: #ececef;
-  --muted-foreground: #5e5e66;
-  --primary: #4f46e5;            /* Iris signal (indigo) — AA with white text */
+  --background: #fdf5e2;         /* Solarized base3 — warm paper */
+  --foreground: #576d74;         /* base1 — primary ink */
+  --card: #fffdf7;
+  --card-foreground: #576d74;
+  --popover: #fffdf7;
+  --popover-foreground: #576d74;
+  --surface: #faf2dd;
+  --surface-raised: #ede7d3;     /* base2 */
+  --muted: #ede7d3;
+  --muted-foreground: #6a7f80;
+  --primary: #1c7ec2;            /* Osaka blue (deepened for AA white text) */
   --primary-foreground: #ffffff;
-  --secondary: #ececef;
-  --secondary-foreground: #2c2c2c;
-  --accent: #ececef;
-  --accent-foreground: #2c2c2c;
-  --destructive: #d64550;
-  --border: #e3e3e7;
-  --input: #d7d7dc;
-  --ring: #4f46e5;
+  --secondary: #ede7d3;
+  --secondary-foreground: #576d74;
+  --accent: #ede7d3;
+  --accent-foreground: #576d74;
+  --destructive: #c62d29;
+  --border: #d8d0bd;
+  --input: #cfc7b2;
+  --ring: #268bd3;
 
-  --up: #1f9d63;
+  --up: #5f7a00;
   --up-foreground: #ffffff;
-  --degraded: #b9740c;
+  --degraded: #9a7100;
   --degraded-foreground: #ffffff;
-  --down: #d64550;
+  --down: #c62d29;
   --down-foreground: #ffffff;
-  --info: #357578;
-  --paused: #6c6c73;
+  --info: #1c7ec2;
+  --paused: #8a938f;
 
-  /* Metallic accent scale (v2) — graphite → steel → silver, legible on white */
-  --accent-deep: #33363b;
-  --accent-mid: #6b6f76;
-  --accent-light: #9aa0aa;
-  --gradient-signal: linear-gradient(135deg, #2f3237 0%, #6b6f76 50%, #9aa0aa 100%);
-  --gradient-glow: radial-gradient(circle at 30% 0%, rgba(51, 54, 59, 0.12), transparent 60%);
+  /* Teal wash ramp — decorative gradients / textures */
+  --accent-deep: #0f6d76;
+  --accent-mid: #29a298;
+  --accent-light: #7fd1c8;
+  --gradient-signal: linear-gradient(115deg, #1c7ec2 0%, #29a298 100%);
+  --gradient-glow: radial-gradient(circle at 30% 0%, rgba(38, 139, 211, 0.12), transparent 60%);
 
-  /* Iris signal (light) — slightly deeper hues so it reads on white */
-  --signal-cyan: #12a5c4;
-  --signal-indigo: #5b57e8;
-  --signal: #4f46e5;
-  --gradient-signal-iris: linear-gradient(115deg, #12a5c4 0%, #5b57e8 100%);
-  --glow-iris: radial-gradient(circle at 50% 0%, rgba(79, 70, 229, 0.16), transparent 62%);
+  /* Blue→Cyan signal (light). NOTE: --signal-indigo now holds Osaka BLUE
+     (name kept so existing *-iris utilities/useThemeColors keep working). */
+  --signal-cyan: #1a9e94;
+  --signal-indigo: #1c7ec2;
+  --signal: #1c7ec2;
+  --gradient-signal-iris: linear-gradient(115deg, #1c7ec2 0%, #1a9e94 100%);
+  --glow-iris: radial-gradient(circle at 50% 0%, rgba(41, 162, 152, 0.16), transparent 62%);
 
-  /* Metallic sheen — decorative background gradients (steel, visible on light bg) */
-  --sheen-deep: #5c6069;
-  --sheen-mid: #8b909a;
-  --sheen-light: #c2c6cd;
+  /* Teal sheen — decorative background glow (visible on cream) */
+  --sheen-deep: #2a8f96;
+  --sheen-mid: #59b7ae;
+  --sheen-light: #a7ddd6;
 
   --radius: 0.875rem;
-  --shadow-card: 0 1px 2px rgba(40, 40, 50, 0.06), 0 2px 6px rgba(40, 40, 50, 0.05),
-    0 20px 46px -22px rgba(80, 70, 110, 0.22);
+  --shadow-card: 0 1px 2px rgba(20, 40, 45, 0.06), 0 2px 6px rgba(20, 40, 45, 0.05),
+    0 20px 46px -22px rgba(10, 60, 70, 0.2);
 }
 
 /* ── PulseOps — Sleek dark palette v2 (DEFAULT) ─────────────
    Black-dominant (Pot Black → Onyx → Dark Elf) with a metallic
    gray→white accent gradient. Status colours stay semantic. */
 .dark {
-  /* Base / neutral scale */
-  --background: #161516;         /* Pot Black — app background */
-  --foreground: #ece7ea;
-  --card: #2c282c;               /* Black Onyx — cards / panels / modals */
-  --card-foreground: #ece7ea;
-  --popover: #2c282c;
-  --popover-foreground: #ece7ea;
-  --surface: #1e1b1e;            /* subtle raise off the base */
-  --surface-raised: #2c282c;     /* Onyx */
-  --muted: #2c282c;
-  --muted-foreground: #a79fa5;
-  --secondary: #2c282c;
-  --secondary-foreground: #ece7ea;
-  --accent: #2c282c;
-  --accent-foreground: #ece7ea;
-  --border: #3d3f43;             /* Dark Elf — clean 1px borders / dividers */
-  --input: #3d3f43;
+  /* Base / neutral scale — near-black base, teal-tinted surfaces */
+  --background: #00090c;         /* near-black */
+  --foreground: #9eabac;         /* Solarized base0 */
+  --card: #001a21;               /* teal-tinted raise */
+  --card-foreground: #c3cdcb;
+  --popover: #001a21;
+  --popover-foreground: #c3cdcb;
+  --surface: #00131a;            /* subtle raise off the base */
+  --surface-raised: #002128;
+  --muted: #001a21;
+  --muted-foreground: #74898f;
+  --secondary: #001a21;
+  --secondary-foreground: #c3cdcb;
+  --accent: #002128;
+  --accent-foreground: #c3cdcb;
+  --border: #063540;             /* teal hairline */
+  --input: #063540;
 
-  /* Accent scale (dark → light) — gradients, highlights, active states */
-  --accent-deep: #565961;        /* Steel */
-  --accent-mid: #9aa0aa;         /* Silver */
-  --accent-light: #e8eaee;       /* Near-white */
+  /* Teal wash ramp — decorative gradients / textures / AmbientGlow */
+  --accent-deep: #063540;
+  --accent-mid: #0f6d76;
+  --accent-light: #29a298;
 
-  /* Metallic sheen — decorative background gradients (steel → silver → white) */
-  --sheen-deep: #565961;
-  --sheen-mid: #9aa0aa;
-  --sheen-light: #f2f3f5;
+  /* Teal sheen — decorative background glow */
+  --sheen-deep: #0a4650;
+  --sheen-mid: #14808a;
+  --sheen-light: #29a298;
 
-  /* Iris signal — telemetry accent that complements the metallic base.
-     Cyan→indigo. Reserved for CTAs, active states, focus, key data and
-     the WebGL emissive glow. Silver/steel (--accent-*) stays the chrome. */
-  --signal-cyan: #38e0f0;
-  --signal-indigo: #6366f1;
-  --signal: #45c8ee;             /* mid — solid fills / focus ring */
-  --primary: #45c8ee;            /* brand accent = Iris signal */
-  --primary-foreground: #04171d; /* dark ink on cyan (AA) */
-  --ring: #5cccf0;
-  --destructive: #f4707e;
+  /* Blue→Cyan signal — the one telemetry accent. NOTE: --signal-indigo now
+     holds Osaka BLUE (token name kept so existing *-iris utilities +
+     useThemeColors keep working). */
+  --signal-cyan: #29a298;
+  --signal-indigo: #268bd3;
+  --signal: #2b8fd0;             /* mid — solid fills / focus ring */
+  --primary: #1c7ec2;            /* brand accent = Osaka blue (AA white text) */
+  --primary-foreground: #ffffff;
+  --ring: #268bd3;
+  --destructive: #db302d;
 
-  /* Status — semantic, tuned for black surfaces (unchanged meaning) */
-  --up: #86d9ad;
-  --up-foreground: #06140c;
-  --degraded: #f2c879;
-  --degraded-foreground: #2a1f06;
-  --down: #f4707e;
-  --down-foreground: #2a0608;
-  --info: #a8dadc;
-  --paused: #a79fa5;
+  /* Status — semantic Solarized Osaka (unchanged meaning) */
+  --up: #849900;
+  --up-foreground: #0a0f00;
+  --degraded: #b28500;
+  --degraded-foreground: #1f1500;
+  --down: #db302d;
+  --down-foreground: #2a0605;
+  --info: #268bd3;
+  --paused: #576d74;
 
-  /* Gradient system (see DESIGN.md — Sleek Palette v2) */
-  --gradient-signal: linear-gradient(
-    135deg,
-    var(--accent-deep) 0%,
-    var(--accent-mid) 50%,
-    var(--accent-light) 100%
-  );
+  /* Gradient system — Blue→Cyan signal + teal glow */
+  --gradient-signal: linear-gradient(115deg, var(--signal-indigo) 0%, var(--signal-cyan) 100%);
   --gradient-glow: radial-gradient(
     circle at 30% 0%,
-    color-mix(in oklab, var(--accent-light) 30%, transparent),
+    color-mix(in oklab, var(--accent-mid) 34%, transparent),
     transparent 60%
   );
 
-  /* Iris signal gradient + glow — the one confident accent sweep. */
-  --gradient-signal-iris: linear-gradient(115deg, var(--signal-cyan) 0%, var(--signal-indigo) 100%);
+  --gradient-signal-iris: linear-gradient(115deg, var(--signal-indigo) 0%, var(--signal-cyan) 100%);
   --glow-iris: radial-gradient(
     circle at 50% 0%,
     color-mix(in oklab, var(--signal-cyan) 34%, transparent),
     transparent 62%
   );
 
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.35),
-    0 24px 54px -24px rgba(0, 0, 0, 0.72);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.5),
+    0 28px 60px -28px rgba(0, 0, 0, 0.8);
 }
 
 @layer components {
-  /* Glass surface — translucent dark + blur. Use for panels/cards. */
+  /* Glass surface — teal-tinted translucent + blur. Use for panels/cards. */
   .glass {
-    background: color-mix(in oklab, var(--surface) 82%, transparent);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: color-mix(in oklab, var(--surface) 86%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border: 1px solid var(--border);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-card),
+      inset 0 1px 0 color-mix(in oklab, var(--signal-cyan) 10%, transparent);
+  }
+  /* Elevated glass — KPI tiles, modals, sheets. More opaque + lift. */
+  .glass-raised {
+    background: color-mix(in oklab, var(--surface-raised) 94%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-card),
+      inset 0 1px 0 color-mix(in oklab, var(--signal-cyan) 14%, transparent);
+  }
+  /* Signal hover — lift + teal/blue border glow (cards, tiles). */
+  .card-hover-signal {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .card-hover-signal:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, var(--signal) 55%, transparent);
+    box-shadow: var(--shadow-card),
+      0 18px 42px -18px color-mix(in oklab, var(--signal) 42%, transparent);
   }
   /* Gradient border shell — premium hairline frame around hero panels. */
   .pulse-shell {
@@ -321,10 +337,27 @@
     outline-offset: 2px;
   }
   .btn-primary {
+    position: relative;
+    overflow: hidden;
     background: var(--primary);
     color: var(--primary-foreground);
     border: 1px solid transparent;
     box-shadow: 0 6px 16px -8px color-mix(in oklab, var(--primary) 65%, transparent);
+  }
+  /* Always-on specular sheen sweeping across the primary CTA. */
+  .btn-primary::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 34%,
+      color-mix(in oklab, #ffffff 24%, transparent) 48%,
+      transparent 62%
+    );
+    background-size: 220% 100%;
+    animation: sheenSweep 6.5s ease-in-out infinite;
   }
   .btn-primary:hover:not(:disabled) {
     transform: translateY(-1px);
@@ -608,6 +641,83 @@
   will-change: transform;
 }
 
+/* ── Ambient (always-on, non-hover) motion for buttons & cards ──────
+   Cheap CSS only — reserve WebGL for the single showcase card. */
+@property --ambient-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes spinBorder {
+  to { --ambient-angle: 360deg; }
+}
+/* Slow signal light travelling around a card's border (preserves .glass). */
+.ambient-sweep {
+  position: relative;
+}
+.ambient-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--ambient-angle),
+    transparent 0deg,
+    color-mix(in oklab, var(--signal) 72%, transparent) 55deg,
+    color-mix(in oklab, var(--signal-cyan) 72%, transparent) 100deg,
+    transparent 155deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: spinBorder 14s linear infinite;
+}
+
+/* Slow specular highlight sweeping across a button. */
+@keyframes sheenSweep {
+  0% { background-position: -150% 0; }
+  55%, 100% { background-position: 250% 0; }
+}
+.ambient-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.ambient-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 32%,
+    color-mix(in oklab, #ffffff 22%, transparent) 48%,
+    transparent 64%
+  );
+  background-size: 220% 100%;
+  animation: sheenSweep 6.5s ease-in-out infinite;
+}
+
+/* Slowly drifting teal glow behind a card. */
+.ambient-glow-drift {
+  position: relative;
+  isolation: isolate;
+}
+.ambient-glow-drift::before {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--glow-iris);
+  opacity: 0.55;
+  pointer-events: none;
+  animation: drift 28s ease-in-out infinite;
+}
+
 /* Scroll reveal — pop + slide in when entering the viewport */
 .reveal {
   opacity: 0;
@@ -658,6 +768,12 @@
   .gradient-flow,
   .border-iris-animated,
   .animate-marquee {
+    animation: none !important;
+  }
+  .ambient-sweep::after,
+  .ambient-sheen::after,
+  .ambient-glow-drift::before,
+  .btn-primary::after {
     animation: none !important;
   }
   .reveal {

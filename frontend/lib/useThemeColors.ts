@@ -31,18 +31,18 @@ const TOKENS = {
 export type ThemeColors = Record<keyof typeof TOKENS, string>;
 
 const FALLBACK: ThemeColors = {
-  accentDeep: "#565961",
-  accentMid: "#9aa0aa",
-  accentLight: "#e8eaee",
-  signal: "#45c8ee",
-  signalIndigo: "#6366f1",
-  up: "#86d9ad",
-  down: "#f4707e",
-  degraded: "#f2c879",
-  border: "#3d3f43",
-  mutedForeground: "#a79fa5",
-  card: "#2c282c",
-  foreground: "#ece7ea",
+  accentDeep: "#063540",
+  accentMid: "#0f6d76",
+  accentLight: "#29a298",
+  signal: "#2b8fd0",
+  signalIndigo: "#268bd3",
+  up: "#849900",
+  down: "#db302d",
+  degraded: "#b28500",
+  border: "#063540",
+  mutedForeground: "#74898f",
+  card: "#001a21",
+  foreground: "#9eabac",
 };
 
 export function useThemeColors(): ThemeColors {
