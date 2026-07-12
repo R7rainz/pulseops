@@ -12,6 +12,7 @@ import AnimatedHeadline from "@/components/AnimatedHeadline";
 import MagneticButton from "@/components/MagneticButton";
 import CountUp from "@/components/CountUp";
 import { HeroSignature } from "@/components/HeroSignature";
+import { ShaderCard } from "@/components/three/ShaderCard";
 import PricingSection from "@/components/landing/PricingSection";
 import TerminalSection from "@/components/landing/TerminalSection";
 import TelemetrySection from "@/components/landing/TelemetrySection";
@@ -248,9 +249,26 @@ export default async function RootPage() {
           </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {/* WebGL showcase cell — the one true 3D moment in the bento */}
+            <Reveal className="md:col-span-2">
+              <div className="group relative h-full min-h-[15rem] overflow-hidden rounded-2xl border border-border">
+                <ShaderCard />
+                <div className="relative z-10 flex h-full flex-col justify-end p-7">
+                  <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-signal/40 bg-signal/10 text-signal">
+                    <Activity className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-display text-xl font-semibold tracking-tight">Live telemetry, rendered</h3>
+                  <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                    Every signal flowing through your stack — uptime, latency, SSL, incidents — in one
+                    calm, real-time view.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+
             {FEATURES.map((f, i) => (
-              <Reveal key={f.title} className="h-full" delay={(i % 3) * 80}>
-                <SpotlightCard className="glass h-full rounded-2xl p-6">
+              <Reveal key={f.title} className={`h-full ${i === 4 ? "md:col-span-2" : ""}`} delay={(i % 3) * 80}>
+                <SpotlightCard className={`glass h-full rounded-2xl p-6 ${i === 4 ? "ambient-sweep" : ""}`}>
                   <div className={`mb-5 grid h-11 w-11 place-items-center rounded-xl border ${f.accent}`}>{f.icon}</div>
                   <h3 className="font-display text-base font-semibold tracking-tight">{f.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
