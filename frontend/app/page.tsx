@@ -80,15 +80,10 @@ export default async function RootPage() {
       {/* SHINY METALLIC BACKGROUND — black base + silver glow behind the hero */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 bg-background" />
-        {/* silver focal glow behind the headline (reads on both themes) */}
-        <div
-          className="absolute inset-x-0 top-0 h-[75vh]"
-          style={{
-            background:
-              "radial-gradient(60% 55% at 50% -8%, color-mix(in oklab, var(--sheen-mid) 78%, transparent), transparent 68%)",
-            opacity: 0.42,
-          }}
-        />
+        {/* full-width clouds drifting behind the hero heading */}
+        <div className="absolute inset-x-0 top-0 h-[95vh]">
+          <Clouds density="high" />
+        </div>
         {/* diagonal metallic sheen (steel → silver) for a shiny feel */}
         <div
           className="absolute inset-0"
@@ -106,7 +101,6 @@ export default async function RootPage() {
             opacity: 0.5,
           }}
         />
-        <Clouds density="high" />
       </div>
 
       {/* NAV */}
