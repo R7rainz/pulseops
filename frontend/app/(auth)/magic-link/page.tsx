@@ -95,12 +95,16 @@ export default function MagicLinkPage() {
         )}
       </div>
 
-      <p className="fade-up mt-7" style={{ animationDelay: "160ms" }}>
-        <Link href="/login" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Back to sign in
-        </Link>
-      </p>
+      {/* The success state has its own "Back to sign in" link, so only show
+          this persistent one in the idle/error states (avoids a duplicate). */}
+      {status !== "success" && (
+        <p className="fade-up mt-7" style={{ animationDelay: "160ms" }}>
+          <Link href="/login" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to sign in
+          </Link>
+        </p>
+      )}
     </div>
   );
 }
