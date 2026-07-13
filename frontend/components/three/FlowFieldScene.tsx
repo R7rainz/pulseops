@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
 // Fullscreen clip-space quad (camera-independent) with a flowing value-noise
-// field in the Osaka Blue→Cyan signal over a near-black teal base. Cheap: one
-// triangle-ish quad, no postprocessing.
+// field. Colors are theme-driven (passed in), so it reads light on the light
+// theme and dark on dark. Cheap: one quad, no postprocessing.
 const vertexShader = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -19,9 +19,9 @@ const fragmentShader = /* glsl */ `
   precision highp float;
   varying vec2 vUv;
   uniform float uTime;
-  uniform vec3 uColorA;  // blue
-  uniform vec3 uColorB;  // cyan
-  uniform vec3 uBg;      // near-black teal
+  uniform vec3 uColorA;
+  uniform vec3 uColorB;
+  uniform vec3 uBg;
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float noise(vec2 p) {
@@ -43,23 +43,38 @@ const fragmentShader = /* glsl */ `
     float m = fbm(uv * 2.2 - vec2(t * 0.8, -t * 0.5) + n);
     float k = smoothstep(0.25, 0.9, m);
     vec3 col = mix(uColorA, uColorB, k);
-    col = mix(uBg, col, 0.32 + 0.5 * k);          // keep a dark base
+    col = mix(uBg, col, 0.32 + 0.5 * k);          // keep the theme base present
     float vign = smoothstep(1.15, 0.25, length(uv - 0.5));
-    gl_FragColor = vec4(col * vign, 1.0);
+    col = mix(uBg, col, vign);                     // edges fade to the theme bg
+    gl_FragColor = vec4(col, 1.0);
   }
 `;
 
-function FlowMesh() {
+interface Colors {
+  colorA: string;
+  colorB: string;
+  bg: string;
+}
+
+function FlowMesh({ colorA, colorB, bg }: Colors) {
   const mat = useRef<THREE.ShaderMaterial>(null);
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uColorA: { value: new THREE.Color("#268bd3") },
-      uColorB: { value: new THREE.Color("#29a298") },
-      uBg: { value: new THREE.Color("#001a21") },
+      uColorA: { value: new THREE.Color(colorA) },
+      uColorB: { value: new THREE.Color(colorB) },
+      uBg: { value: new THREE.Color(bg) },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+  // Re-tint live when the theme toggles.
+  useEffect(() => {
+    uniforms.uColorA.value.set(colorA);
+    uniforms.uColorB.value.set(colorB);
+    uniforms.uBg.value.set(bg);
+  }, [colorA, colorB, bg, uniforms]);
+
   useFrame((_, delta) => {
     if (mat.current) mat.current.uniforms.uTime.value += delta;
   });
@@ -76,7 +91,12 @@ function FlowMesh() {
   );
 }
 
-export default function FlowFieldScene({ paused = false }: { paused?: boolean }) {
+export default function FlowFieldScene({
+  paused = false,
+  colorA,
+  colorB,
+  bg,
+}: { paused?: boolean } & Colors) {
   return (
     <Canvas
       aria-hidden
@@ -85,7 +105,7 @@ export default function FlowFieldScene({ paused = false }: { paused?: boolean })
       gl={{ antialias: false, alpha: false, powerPreference: "high-performance" }}
       style={{ pointerEvents: "none" }}
     >
-      <FlowMesh />
+      <FlowMesh colorA={colorA} colorB={colorB} bg={bg} />
     </Canvas>
   );
 }

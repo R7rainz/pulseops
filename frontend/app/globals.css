@@ -641,6 +641,24 @@
   will-change: transform;
 }
 
+/* Hero shader dissolve — melts the flow-field into the page along a soft,
+   cloud-scalloped bottom edge (a base fade + trailing lobes) instead of a
+   straight seam, so the hero merges into the next section. */
+.hero-shader-fade {
+  -webkit-mask-image:
+    linear-gradient(to bottom, #000 40%, transparent 84%),
+    radial-gradient(56% 48% at 16% 88%, #000 0%, transparent 72%),
+    radial-gradient(66% 54% at 50% 96%, #000 0%, transparent 72%),
+    radial-gradient(56% 48% at 84% 88%, #000 0%, transparent 72%);
+  -webkit-mask-composite: source-over;
+  mask-image:
+    linear-gradient(to bottom, #000 40%, transparent 84%),
+    radial-gradient(56% 48% at 16% 88%, #000 0%, transparent 72%),
+    radial-gradient(66% 54% at 50% 96%, #000 0%, transparent 72%),
+    radial-gradient(56% 48% at 84% 88%, #000 0%, transparent 72%);
+  mask-composite: add;
+}
+
 /* ── Ambient (always-on, non-hover) motion for buttons & cards ──────
    Cheap CSS only — reserve WebGL for the single showcase card. */
 @property --ambient-angle {

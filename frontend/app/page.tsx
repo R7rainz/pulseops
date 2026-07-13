@@ -148,13 +148,14 @@ export default async function RootPage() {
       {/* HERO */}
       <div className="relative">
         {/* WebGL flow-field shader — full-width hero background (gated + CSS fallback) */}
-        <ShaderCard className="opacity-75" />
-        {/* scrim so the headline stays readable over the shader */}
+        <ShaderCard className="opacity-75 hero-shader-fade" />
+        {/* scrim so the headline stays readable — dims the centre, fades to
+            transparent (not solid bg) so it never re-introduces a hard edge */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "radial-gradient(78% 68% at 50% 34%, color-mix(in oklab, var(--background) 42%, transparent), var(--background) 84%)",
+              "radial-gradient(92% 78% at 50% 30%, color-mix(in oklab, var(--background) 52%, transparent) 0%, color-mix(in oklab, var(--background) 22%, transparent) 46%, transparent 80%)",
           }}
         />
         <section className="relative mx-auto max-w-3xl px-6 pb-16 pt-20 text-center sm:pt-28">
@@ -254,12 +255,14 @@ export default async function RootPage() {
             <Reveal className="md:col-span-2">
               <div className="group relative h-full min-h-[15rem] overflow-hidden rounded-2xl border border-border">
                 <ShaderCard />
+                {/* readability scrim — grounds the text on the theme card color */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card via-card/85 to-card/20" />
                 <div className="relative z-10 flex h-full flex-col justify-end p-7">
-                  <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-signal/40 bg-signal/10 text-signal">
+                  <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-signal/40 bg-signal/15 text-signal backdrop-blur-sm">
                     <Activity className="h-5 w-5" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold tracking-tight">Live telemetry, rendered</h3>
-                  <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                  <h3 className="font-display text-xl font-semibold tracking-tight text-foreground">Live telemetry, rendered</h3>
+                  <p className="mt-2 max-w-md text-sm leading-relaxed text-foreground/80">
                     Every signal flowing through your stack — uptime, latency, SSL, incidents — in one
                     calm, real-time view.
                   </p>
