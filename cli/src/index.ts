@@ -21,7 +21,7 @@ program
       "below. Sign in with `pulseops login`, or use an API key (--api-key /\n" +
       "PULSEOPS_API_KEY).",
   )
-  .version("1.2.0")
+  .version("1.3.0")
   .option(
     "--url <url>",
     "API base URL (env PULSEOPS_API_URL)",
