@@ -35,8 +35,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  // Slate (dark) is the default; light is opt-in via the toggle (cookie-driven, SSR — no flash).
-  const isDark = cookieStore.get("pulseops_theme")?.value !== "light";
+  // Light (Osaka Dawn) is the default; dark is opt-in via the toggle (cookie-driven, SSR — no flash).
+  const isDark = cookieStore.get("pulseops_theme")?.value === "dark";
   const hasCookieConsent = cookieStore.get("pulseops_cookie_consent")?.value === "accepted";
 
   return (

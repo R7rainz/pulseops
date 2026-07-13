@@ -11,7 +11,6 @@ import SpotlightCard from "@/components/SpotlightCard";
 import AnimatedHeadline from "@/components/AnimatedHeadline";
 import MagneticButton from "@/components/MagneticButton";
 import CountUp from "@/components/CountUp";
-import { HeroSignature } from "@/components/HeroSignature";
 import { ShaderCard } from "@/components/three/ShaderCard";
 import PricingSection from "@/components/landing/PricingSection";
 import TerminalSection from "@/components/landing/TerminalSection";
@@ -81,7 +80,13 @@ export default async function RootPage() {
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 bg-background" />
         {/* full-width clouds drifting behind the hero heading */}
-        <div className="absolute inset-x-0 top-0 h-[95vh]">
+        <div
+          className="absolute inset-x-0 top-0 h-[95vh]"
+          style={{
+            maskImage: "linear-gradient(to bottom, #000 60%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to bottom, #000 60%, transparent 100%)",
+          }}
+        >
           <Clouds density="high" />
         </div>
         {/* diagonal metallic sheen (steel → silver) for a shiny feel */}
@@ -148,8 +153,17 @@ export default async function RootPage() {
 
       {/* HERO */}
       <div className="relative">
-        {/* WebGL signature — fluid node-network graph (gated + CSS fallback) */}
-        <HeroSignature />
+        {/* WebGL flow-field shader — full-width hero background (gated + CSS fallback) */}
+        <ShaderCard className="opacity-75 hero-shader-fade" />
+        {/* scrim so the headline stays readable — dims the centre, fades to
+            transparent (not solid bg) so it never re-introduces a hard edge */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(92% 78% at 50% 30%, color-mix(in oklab, var(--background) 52%, transparent) 0%, color-mix(in oklab, var(--background) 22%, transparent) 46%, transparent 80%)",
+          }}
+        />
         <section className="relative mx-auto max-w-3xl px-6 pb-16 pt-20 text-center sm:pt-28">
         <div className="fade-up inline-flex items-center gap-2.5 rounded-full border border-border bg-surface/70 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
           <span className="relative flex h-2 w-2">
@@ -247,12 +261,14 @@ export default async function RootPage() {
             <Reveal className="md:col-span-2">
               <div className="group relative h-full min-h-[15rem] overflow-hidden rounded-2xl border border-border">
                 <ShaderCard />
+                {/* readability scrim — grounds the text on the theme card color */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card via-card/85 to-card/20" />
                 <div className="relative z-10 flex h-full flex-col justify-end p-7">
-                  <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-signal/40 bg-signal/10 text-signal">
+                  <div className="mb-4 grid h-11 w-11 place-items-center rounded-xl border border-signal/40 bg-signal/15 text-signal backdrop-blur-sm">
                     <Activity className="h-5 w-5" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold tracking-tight">Live telemetry, rendered</h3>
-                  <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
+                  <h3 className="font-display text-xl font-semibold tracking-tight text-foreground">Live telemetry, rendered</h3>
+                  <p className="mt-2 max-w-md text-sm leading-relaxed text-foreground/80">
                     Every signal flowing through your stack — uptime, latency, SSL, incidents — in one
                     calm, real-time view.
                   </p>

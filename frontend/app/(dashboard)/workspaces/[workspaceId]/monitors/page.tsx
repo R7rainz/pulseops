@@ -6,6 +6,7 @@ import { Plus, Crown, Zap } from "lucide-react";
 import CreateMonitorForm from "./create-monitor-form";
 import MonitorView from "./monitor-view";
 import MembersPanel from "@/components/MembersPanel";
+import { ShaderCard } from "@/components/three/ShaderCard";
 
 export default async function MonitorsPage({
   params,
@@ -61,8 +62,12 @@ export default async function MonitorsPage({
   const canEdit = role === "OWNER" || role === "ADMIN";
 
   return (
-    <main className="min-h-dvh p-6 md:p-10">
-      <div className="mx-auto max-w-7xl space-y-8">
+    <main className="relative min-h-dvh p-6 md:p-10">
+      {/* decorative flow-field accent — top-right corner, dissolving inward */}
+      <div className="pointer-events-none absolute right-0 top-0 h-[360px] w-[68%] overflow-hidden">
+        <ShaderCard className="shader-corner-fade opacity-50" />
+      </div>
+      <div className="relative z-10 mx-auto max-w-7xl space-y-8">
 
         {/* HEADER */}
         <div className="flex flex-col justify-between gap-4 border-b border-border pb-5 md:flex-row md:items-center">
