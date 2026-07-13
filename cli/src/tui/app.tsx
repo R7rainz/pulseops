@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Box, useApp, useInput, useStdout } from "ink";
+import type { ReactNode } from "react";
+import { Box, Text, useApp, useInput, useStdout } from "ink";
 import type { PulseOpsClient } from "../client.js";
 import type { Config } from "../config.js";
 import type {
@@ -75,12 +76,28 @@ function Dashboard({
   const workspaceId = config.workspaceId!;
   useClock(1000); // re-render so "updated 3s ago" stays current
 
-  const width = stdout?.columns ?? 100;
-  const rows = stdout?.rows ?? 24;
-  const listWidth = Math.max(30, Math.min(48, Math.floor(width * 0.36)));
-  // Rows available to a list after header (3), tabs (1), borders+title (3),
-  // scroll hints (2) and footer (1).
-  const bodyRows = Math.max(3, rows - 10);
+  // Track terminal size so the layout fills the window and reflows on resize.
+  const [size, setSize] = useState(() => ({
+    columns: stdout?.columns ?? 100,
+    rows: stdout?.rows ?? 24,
+  }));
+  useEffect(() => {
+    if (!stdout || typeof stdout.on !== "function") return;
+    const onResize = () =>
+      setSize({ columns: stdout.columns ?? 100, rows: stdout.rows ?? 24 });
+    stdout.on("resize", onResize);
+    return () => {
+      stdout.off?.("resize", onResize);
+    };
+  }, [stdout]);
+  const width = size.columns;
+  const rows = size.rows;
+  const listWidth = Math.max(32, Math.min(52, Math.floor(width * 0.34)));
+  // Vertical budget: header (3) + tab bar (1) + footer (1) = 5 rows of chrome.
+  const bodyHeight = Math.max(4, rows - 5);
+  // Rows a scrolling list can show inside its panel (border 2 + title 1 + 2 hints).
+  const bodyRows = Math.max(3, bodyHeight - 5);
+  const tooSmall = width < 72 || rows < 18;
 
   const monitorsPoll = usePoll<Monitor[]>(
     () => client.listMonitors(workspaceId),
@@ -346,19 +363,18 @@ function Dashboard({
       return;
     }
 
-    // View switching: number keys, Tab / Shift-Tab.
+    // View switching: number keys, Tab / Shift-Tab, or ←/→.
     if (input === "1") return setView("overview");
     if (input === "2") return setView("monitors");
     if (input === "3") return setView("incidents");
     if (input === "4") return setView("webhooks");
-    if (key.tab) {
+    const cycleView = (dir: 1 | -1) => {
       const idx = VIEWS.findIndex((v) => v.key === view);
-      const next = key.shift
-        ? (idx - 1 + VIEWS.length) % VIEWS.length
-        : (idx + 1) % VIEWS.length;
-      setView(VIEWS[next].key);
-      return;
-    }
+      setView(VIEWS[(idx + dir + VIEWS.length) % VIEWS.length].key);
+    };
+    if (key.tab) return cycleView(key.shift ? -1 : 1);
+    if (key.rightArrow) return cycleView(1);
+    if (key.leftArrow) return cycleView(-1);
 
     if (input === "r") {
       refreshAll();
@@ -547,109 +563,165 @@ function Dashboard({
     detail?.id === id ? detail : undefined;
   const d = detailFor(selectedMonitor?.id);
 
-  return (
-    <Box flexDirection="column" width={width}>
-      <Header
-        workspaceId={workspaceId}
-        apiUrl={config.apiUrl}
-        updatedAt={updatedAt}
-        refreshing={refreshing}
-        connected={connected}
+  // Guard tiny terminals so the layout never breaks (btop does the same).
+  if (tooSmall) {
+    return (
+      <Box width={width} height={rows} alignItems="center" justifyContent="center">
+        <Box
+          flexDirection="column"
+          alignItems="center"
+          borderStyle="round"
+          borderColor="yellow"
+          paddingX={3}
+          paddingY={1}
+        >
+          <Text color="yellow" bold>
+            ◆ PulseOps — terminal too small
+          </Text>
+          <Text color="gray">
+            {`resize to at least 72×18  ·  now ${width}×${rows}`}
+          </Text>
+          <Text color="gray">press q to quit</Text>
+        </Box>
+      </Box>
+    );
+  }
+
+  const isOverlay = action != null || overlay !== "none";
+  const panelGap = width >= 100 ? 1 : 0;
+  const detailWidth = width - listWidth - panelGap;
+
+  let body: ReactNode;
+  if (action?.kind === "form") {
+    body = (
+      <MonitorForm
+        mode={action.mode}
+        initial={action.monitor}
+        busy={busy}
+        submitError={formError}
+        onSubmit={submitForm}
+        onCancel={() => setAction(null)}
       />
-      <TabBar view={view} />
-
-      {action?.kind === "form" ? (
-        <MonitorForm
-          mode={action.mode}
-          initial={action.monitor}
-          busy={busy}
-          submitError={formError}
-          onSubmit={submitForm}
-          onCancel={() => setAction(null)}
-        />
-      ) : action?.kind === "webhook-form" ? (
-        <WebhookForm
-          mode={action.mode}
-          initial={action.webhook}
-          busy={busy}
-          submitError={formError}
-          onSubmit={submitWebhookForm}
-          onCancel={() => setAction(null)}
-        />
-      ) : action?.kind === "confirm" ? (
-        <ConfirmDialog
-          message={action.message}
-          danger={action.danger}
-          busy={busy}
-          onConfirm={confirmRun}
-          onCancel={() => setAction(null)}
-        />
-      ) : overlay === "help" ? (
-        <HelpOverlay />
-      ) : overlay === "theme" ? (
-        <ThemePicker selected={themeSel} />
-      ) : view === "overview" ? (
-        <Overview
+    );
+  } else if (action?.kind === "webhook-form") {
+    body = (
+      <WebhookForm
+        mode={action.mode}
+        initial={action.webhook}
+        busy={busy}
+        submitError={formError}
+        onSubmit={submitWebhookForm}
+        onCancel={() => setAction(null)}
+      />
+    );
+  } else if (action?.kind === "confirm") {
+    body = (
+      <ConfirmDialog
+        message={action.message}
+        danger={action.danger}
+        busy={busy}
+        onConfirm={confirmRun}
+        onCancel={() => setAction(null)}
+      />
+    );
+  } else if (overlay === "help") {
+    body = <HelpOverlay />;
+  } else if (overlay === "theme") {
+    body = <ThemePicker selected={themeSel} />;
+  } else if (view === "overview") {
+    body = (
+      <Overview
+        monitors={monitors}
+        incidents={incidents}
+        live={livePoll.data}
+        analytics={fleetAnalytics}
+        width={width}
+        height={bodyHeight}
+      />
+    );
+  } else if (view === "monitors") {
+    body = (
+      <Box flexGrow={1} gap={panelGap}>
+        <MonitorList
           monitors={monitors}
-          incidents={incidents}
           live={livePoll.data}
-          analytics={fleetAnalytics}
-          width={width}
+          selectedIndex={monitorSel}
+          width={listWidth}
+          maxRows={bodyRows}
+          focused
         />
-      ) : view === "monitors" ? (
-        <Box>
-          <MonitorList
-            monitors={monitors}
-            live={livePoll.data}
-            selectedIndex={monitorSel}
-            width={listWidth}
-            maxRows={bodyRows}
-            focused
-          />
-          <MonitorDetail
-            monitor={selectedMonitor}
-            live={livePoll.data}
-            stats={d?.stats}
-            analytics={d?.analytics}
-            checks={d?.checks}
-            loading={detailLoading}
-            width={width - listWidth}
-          />
-        </Box>
-      ) : view === "incidents" ? (
-        <Box>
-          <IncidentList
-            incidents={incidents}
-            selectedIndex={incidentSel}
-            width={listWidth}
-            maxRows={bodyRows}
-            focused
-          />
-          <IncidentDetail
-            incident={selectedIncident}
-            monitorName={monitorName}
-            width={width - listWidth}
-          />
-        </Box>
-      ) : (
-        <Box>
-          <WebhookList
-            webhooks={webhooks}
-            selectedIndex={webhookSel}
-            width={listWidth}
-            maxRows={bodyRows}
-            focused
-            canWrite={canWrite}
-          />
-          <WebhookDetail
-            webhook={selectedWebhook}
-            width={width - listWidth}
-          />
-        </Box>
-      )}
+        <MonitorDetail
+          monitor={selectedMonitor}
+          live={livePoll.data}
+          stats={d?.stats}
+          analytics={d?.analytics}
+          checks={d?.checks}
+          loading={detailLoading}
+          width={detailWidth}
+        />
+      </Box>
+    );
+  } else if (view === "incidents") {
+    body = (
+      <Box flexGrow={1} gap={panelGap}>
+        <IncidentList
+          incidents={incidents}
+          selectedIndex={incidentSel}
+          width={listWidth}
+          maxRows={bodyRows}
+          focused
+        />
+        <IncidentDetail
+          incident={selectedIncident}
+          monitorName={monitorName}
+          width={detailWidth}
+        />
+      </Box>
+    );
+  } else {
+    body = (
+      <Box flexGrow={1} gap={panelGap}>
+        <WebhookList
+          webhooks={webhooks}
+          selectedIndex={webhookSel}
+          width={listWidth}
+          maxRows={bodyRows}
+          focused
+          canWrite={canWrite}
+        />
+        <WebhookDetail webhook={selectedWebhook} width={detailWidth} />
+      </Box>
+    );
+  }
 
-      {toast ? <Toast text={toast.text} kind={toast.kind} /> : null}
-      <Footer view={view} error={error} themeLabel={theme.label} canWrite={canWrite} />
+  return (
+    <Box flexDirection="column" width={width} height={rows}>
+      {/* Fixed chrome — flexShrink 0 so Yoga never compresses it to fit. */}
+      <Box flexDirection="column" flexShrink={0}>
+        <Header
+          workspaceId={workspaceId}
+          apiUrl={config.apiUrl}
+          updatedAt={updatedAt}
+          refreshing={refreshing}
+          connected={connected}
+        />
+        <TabBar view={view} />
+      </Box>
+      {/* Body fills the middle and clips anything taller than the viewport. */}
+      <Box
+        flexGrow={1}
+        flexShrink={1}
+        flexDirection="column"
+        overflow="hidden"
+        alignItems={isOverlay ? "center" : "stretch"}
+        justifyContent={isOverlay ? "center" : "flex-start"}
+      >
+        {body}
+      </Box>
+      <Box flexDirection="column" flexShrink={0}>
+        {toast ? <Toast text={toast.text} kind={toast.kind} /> : null}
+        <Footer view={view} error={error} themeLabel={theme.label} canWrite={canWrite} />
+      </Box>
     </Box>
   );
 }

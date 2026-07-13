@@ -95,7 +95,9 @@ const BRAILLE_BITS = [
 /**
  * Renders `values` as a braille line chart: `height` rows of `width` chars,
  * giving `width*2 × height*4` dot resolution. Returns one string per row (top
- * first). Used for the latency-over-time graph in the monitor detail pane.
+ * first). The line is **interpolated** across the width and **connected**
+ * (vertical runs are filled between adjacent samples) so it reads as a
+ * continuous line rather than scattered dots. Used for the latency graph.
  */
 export function brailleChart(
   values: (number | null | undefined)[],
@@ -115,16 +117,43 @@ export function brailleChart(
   const min = Math.min(...present);
   const max = Math.max(...present);
   const span = max - min || 1;
+  const lastIdx = nums.length - 1;
+
+  // Linear-interpolate the value at a fractional sample index (null on a gap).
+  const sampleAt = (x: number): number | null => {
+    const t = lastIdx === 0 ? 0 : (x / (cols - 1 || 1)) * lastIdx;
+    const i0 = Math.floor(t);
+    const i1 = Math.min(lastIdx, i0 + 1);
+    const v0 = nums[i0];
+    const v1 = nums[i1];
+    if (v0 == null && v1 == null) return null;
+    if (v0 == null) return v1!;
+    if (v1 == null) return v0;
+    return v0 + (v1 - v0) * (t - i0);
+  };
+
+  const dotYOf = (v: number) =>
+    Math.round((1 - (v - min) / span) * (dotRows - 1)); // top = high value
+
+  const plot = (x: number, dotY: number) => {
+    const cellX = x >> 1;
+    const cellY = dotY >> 2;
+    if (cellX < width && cellY < height && dotY >= 0)
+      grid[cellY][cellX] |= BRAILLE_BITS[dotY % 4][x % 2];
+  };
+
+  let prevY: number | null = null;
   for (let x = 0; x < cols; x++) {
-    const idx = Math.floor((x / cols) * nums.length);
-    const v = nums[Math.min(nums.length - 1, idx)];
-    if (v == null) continue;
-    const norm = (v - min) / span; // 0 (min) .. 1 (max)
-    const dotY = Math.round((1 - norm) * (dotRows - 1)); // top = high value
-    const cellX = Math.floor(x / 2);
-    const cellY = Math.floor(dotY / 4);
-    if (cellX >= width || cellY >= height) continue;
-    grid[cellY][cellX] |= BRAILLE_BITS[dotY % 4][x % 2];
+    const v = sampleAt(x);
+    if (v == null) {
+      prevY = null;
+      continue;
+    }
+    const y = dotYOf(v);
+    // Connect to the previous column by filling the vertical run between them.
+    const from = prevY == null ? y : prevY;
+    for (let yy = Math.min(from, y); yy <= Math.max(from, y); yy++) plot(x, yy);
+    prevY = y;
   }
   return grid.map((row) =>
     row.map((mask) => (mask === 0 ? " " : String.fromCharCode(0x2800 + mask))).join(""),

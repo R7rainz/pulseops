@@ -26,7 +26,7 @@ export function Sparkline({
 export function LatencyGraph({
   values,
   width,
-  height = 5,
+  height = 6,
 }: {
   values: (number | null | undefined)[];
   width: number;
@@ -34,24 +34,35 @@ export function LatencyGraph({
 }) {
   const theme = useTheme();
   const nums = values.filter((v): v is number => v != null && !Number.isNaN(v));
-  const plotWidth = Math.max(8, width - 8);
-  const rows = brailleChart(values, plotWidth, height);
-  const max = nums.length ? Math.max(...nums) : 0;
-  const min = nums.length ? Math.min(...nums) : 0;
 
   if (nums.length === 0) {
     return <Text color={theme.muted}>no latency samples yet</Text>;
   }
 
+  const GUTTER = 7; // right-aligned y-labels
+  const plotWidth = Math.max(8, width - GUTTER - 1);
+  const rows = brailleChart(values, plotWidth, height);
+  const max = Math.max(...nums);
+  const min = Math.min(...nums);
+  const mid = (max + min) / 2;
+  const midRow = Math.floor((rows.length - 1) / 2);
+
   return (
     <Box flexDirection="column">
       {rows.map((row, i) => {
-        // Label the top row with the max and the bottom row with the min.
+        // A left y-axis with max / mid / min labels; other rows just the axis.
         const label =
-          i === 0 ? fmtMs(max) : i === rows.length - 1 ? fmtMs(min) : "";
+          i === 0
+            ? fmtMs(max)
+            : i === rows.length - 1
+              ? fmtMs(min)
+              : i === midRow
+                ? fmtMs(mid)
+                : "";
         return (
           <Box key={i}>
-            <Text color={theme.muted}>{label.padStart(7)} </Text>
+            <Text color={theme.muted}>{label.padStart(GUTTER)}</Text>
+            <Text color={theme.muted}>│</Text>
             <Text color={theme.chart}>{row}</Text>
           </Box>
         );

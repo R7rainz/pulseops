@@ -153,12 +153,14 @@ export function Overview({
   live,
   analytics,
   width,
+  height = 20,
 }: {
   monitors: Monitor[];
   incidents: Incident[];
   live: LiveMonitors | undefined;
   analytics: MonitorAnalytics[] | undefined;
   width: number;
+  height?: number;
 }) {
   const theme = useTheme();
   const states = monitors.map((m) => effectiveState(m, live));
@@ -178,10 +180,10 @@ export function Overview({
   const fleetInner = Math.max(10, width - recentWidth - 8);
   const cols = Math.max(6, Math.floor(fleetInner / 2));
 
-  const recent = incidents.slice(0, 6);
+  const recent = incidents.slice(0, Math.max(4, height - 10));
 
   return (
-    <Box flexDirection="column">
+    <Box flexDirection="column" flexGrow={1}>
       <Box gap={1}>
         <StatCard label="MONITORS" value={String(monitors.length)} color={theme.cyan} />
         <StatCard
@@ -208,7 +210,7 @@ export function Overview({
         />
       </Box>
 
-      <Box marginTop={1} gap={2}>
+      <Box marginTop={1} gap={2} flexGrow={1}>
         <Box
           flexDirection="column"
           flexGrow={1}
@@ -377,11 +379,12 @@ export function MonitorDetail({
     <Box
       flexDirection="column"
       flexGrow={1}
+      overflow="hidden"
       borderStyle="round"
       borderColor={theme.cyan}
       paddingX={1}
     >
-      <Box justifyContent="space-between">
+      <Box justifyContent="space-between" flexShrink={0}>
         <Text bold color={theme.text}>
           {truncate(monitor.name, Math.max(12, inner - 14))}
         </Text>
@@ -396,12 +399,12 @@ export function MonitorDetail({
         {monitor.method} {truncate(monitor.url, inner - 6)}
       </Text>
 
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={1} flexDirection="column" flexShrink={0}>
         <SectionTitle>{`LATENCY · LAST ${ordered.length} CHECKS`}</SectionTitle>
         {loading && ordered.length === 0 ? (
           <Text color={theme.muted}>loading…</Text>
         ) : (
-          <LatencyGraph values={latencies} width={inner} height={5} />
+          <LatencyGraph values={latencies} width={inner} height={7} />
         )}
         <Box marginTop={1} flexDirection="column">
           <Text color={theme.muted}>availability</Text>
@@ -409,7 +412,7 @@ export function MonitorDetail({
         </Box>
       </Box>
 
-      <Box marginTop={1} flexDirection="row" gap={2}>
+      <Box marginTop={1} flexDirection="row" gap={2} flexShrink={0}>
         <Box flexDirection="column">
           <SectionTitle>NOW</SectionTitle>
           <StatLine label="type" value={monitor.type} />
@@ -440,7 +443,7 @@ export function MonitorDetail({
         </Box>
       </Box>
 
-      <Box marginTop={1} flexDirection="column">
+      <Box marginTop={1} flexDirection="column" flexShrink={0}>
         <SectionTitle>SLA · 30 DAYS</SectionTitle>
         {analytics ? (
           <>
@@ -542,6 +545,7 @@ export function IncidentDetail({
     <Box
       flexDirection="column"
       flexGrow={1}
+      overflow="hidden"
       borderStyle="round"
       borderColor={theme.cyan}
       paddingX={1}
@@ -655,6 +659,7 @@ export function WebhookDetail({
     <Box
       flexDirection="column"
       flexGrow={1}
+      overflow="hidden"
       borderStyle="round"
       borderColor={theme.cyan}
       paddingX={1}
@@ -730,7 +735,7 @@ export function HelpOverlay() {
   const theme = useTheme();
   const rows: [string, string][] = [
     ["1 / 2 / 3 / 4", "Overview / Monitors / Incidents / Webhooks"],
-    ["Tab / ⇧Tab", "Cycle views"],
+    ["Tab / ← →", "Cycle views"],
     ["j / k  ↓ / ↑", "Move selection"],
     ["gg / G", "Top / bottom of list"],
     ["⌃d / ⌃u", "Half-page down / up"],
@@ -808,11 +813,15 @@ export function Footer({
           ? "j/k move · a ack · R resolve · 1-4 views"
           : "j/k move · n new · e edit · x toggle · s test · d del";
   return (
-    <Box paddingX={1} justifyContent="space-between">
-      <Text color={theme.muted}>{`${nav} · ? help · q quit`}</Text>
-      <Text color={theme.muted}>
-        {(canWrite ? "" : "read-only · ") + `theme: ${themeLabel}`}
-      </Text>
+    <Box paddingX={1} justifyContent="space-between" flexWrap="nowrap">
+      <Box flexShrink={1} overflow="hidden">
+        <Text color={theme.muted} wrap="truncate-end">{`${nav} · ? help · q quit`}</Text>
+      </Box>
+      <Box flexShrink={0} marginLeft={2}>
+        <Text color={theme.muted}>
+          {(canWrite ? "" : "read-only · ") + `theme: ${themeLabel}`}
+        </Text>
+      </Box>
     </Box>
   );
 }

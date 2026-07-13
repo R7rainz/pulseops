@@ -117,7 +117,11 @@ Run `pulseops` with no subcommand (or `pulseops tui` / `pulseops dashboard`) to
 open the live terminal dashboard. It reuses your CLI login and honours the same
 global flags (`--url`, `--api-key`, `--workspace`).
 
-Four views, switched with the number keys or `Tab`:
+It runs **full-screen** (like `btop` — the alternate screen buffer, so your
+scrollback is left untouched) and reflows on resize. In a very small terminal it
+shows a "too small" hint until you resize to at least 72×18.
+
+Four views, switched with the number keys, `Tab`, or `←`/`→`:
 
 - **Overview** — fleet counters (total / up / down / degraded / open incidents /
   average 30-day uptime), a colour-coded status heatmap of every monitor, and
@@ -137,7 +141,7 @@ full keyboard-shortcut overlay.
 | Key                 | Action                                     |
 | ------------------- | ------------------------------------------ |
 | `1`…`4`             | Jump to Overview / Monitors / Incidents / Webhooks |
-| `Tab` / `⇧Tab`      | Cycle views                                |
+| `Tab` / `⇧Tab` / `← →` | Cycle views                             |
 | `j` / `k` (↓ / ↑)   | Move selection                             |
 | `gg` / `G`          | Top / bottom of the list                   |
 | `Ctrl-d` / `Ctrl-u` | Half-page down / up                        |
