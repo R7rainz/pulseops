@@ -11,7 +11,6 @@ import SpotlightCard from "@/components/SpotlightCard";
 import AnimatedHeadline from "@/components/AnimatedHeadline";
 import MagneticButton from "@/components/MagneticButton";
 import CountUp from "@/components/CountUp";
-import { HeroSignature } from "@/components/HeroSignature";
 import { ShaderCard } from "@/components/three/ShaderCard";
 import PricingSection from "@/components/landing/PricingSection";
 import TerminalSection from "@/components/landing/TerminalSection";
@@ -148,8 +147,16 @@ export default async function RootPage() {
 
       {/* HERO */}
       <div className="relative">
-        {/* WebGL signature — fluid node-network graph (gated + CSS fallback) */}
-        <HeroSignature />
+        {/* WebGL flow-field shader — full-width hero background (gated + CSS fallback) */}
+        <ShaderCard className="opacity-75" />
+        {/* scrim so the headline stays readable over the shader */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(78% 68% at 50% 34%, color-mix(in oklab, var(--background) 42%, transparent), var(--background) 84%)",
+          }}
+        />
         <section className="relative mx-auto max-w-3xl px-6 pb-16 pt-20 text-center sm:pt-28">
         <div className="fade-up inline-flex items-center gap-2.5 rounded-full border border-border bg-surface/70 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
           <span className="relative flex h-2 w-2">
