@@ -641,22 +641,19 @@
   will-change: transform;
 }
 
-/* Hero shader dissolve — melts the flow-field into the page along a soft,
-   cloud-scalloped bottom edge (a base fade + trailing lobes) instead of a
-   straight seam, so the hero merges into the next section. */
+/* Hero shader dissolve — the flow-field is solid up top and melts outward on a
+   long elliptical curve, reaching fully transparent well before the hero ends,
+   so it blends into the next section with no straight seam. */
 .hero-shader-fade {
-  -webkit-mask-image:
-    linear-gradient(to bottom, #000 40%, transparent 84%),
-    radial-gradient(56% 48% at 16% 88%, #000 0%, transparent 72%),
-    radial-gradient(66% 54% at 50% 96%, #000 0%, transparent 72%),
-    radial-gradient(56% 48% at 84% 88%, #000 0%, transparent 72%);
-  -webkit-mask-composite: source-over;
-  mask-image:
-    linear-gradient(to bottom, #000 40%, transparent 84%),
-    radial-gradient(56% 48% at 16% 88%, #000 0%, transparent 72%),
-    radial-gradient(66% 54% at 50% 96%, #000 0%, transparent 72%),
-    radial-gradient(56% 48% at 84% 88%, #000 0%, transparent 72%);
-  mask-composite: add;
+  -webkit-mask-image: radial-gradient(130% 108% at 50% -12%, #000 30%, rgba(0, 0, 0, 0.35) 62%, transparent 90%);
+  mask-image: radial-gradient(130% 108% at 50% -12%, #000 30%, rgba(0, 0, 0, 0.35) 62%, transparent 90%);
+}
+
+/* Corner variant — flow anchored to the top-right corner, dissolving inward.
+   Used as a decorative dashboard accent (different placement from the hero). */
+.shader-corner-fade {
+  -webkit-mask-image: radial-gradient(135% 135% at 100% 0%, #000 16%, rgba(0, 0, 0, 0.4) 48%, transparent 82%);
+  mask-image: radial-gradient(135% 135% at 100% 0%, #000 16%, rgba(0, 0, 0, 0.4) 48%, transparent 82%);
 }
 
 /* ── Ambient (always-on, non-hover) motion for buttons & cards ──────

@@ -80,7 +80,13 @@ export default async function RootPage() {
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 bg-background" />
         {/* full-width clouds drifting behind the hero heading */}
-        <div className="absolute inset-x-0 top-0 h-[95vh]">
+        <div
+          className="absolute inset-x-0 top-0 h-[95vh]"
+          style={{
+            maskImage: "linear-gradient(to bottom, #000 60%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to bottom, #000 60%, transparent 100%)",
+          }}
+        >
           <Clouds density="high" />
         </div>
         {/* diagonal metallic sheen (steel → silver) for a shiny feel */}
