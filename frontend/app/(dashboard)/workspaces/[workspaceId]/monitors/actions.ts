@@ -191,11 +191,18 @@ export async function triggerCheck(formData: FormData) {
     );
 
     if (!res.ok) {
-      setToast(cookieStore, "Failed to trigger check", "error");
+      // 429 = per-monitor cooldown or rate limit — relay the API's message
+      // ("try again in Ns") instead of a generic failure.
+      if (res.status === 429) {
+        const body = await res.json().catch(() => null);
+        setToast(cookieStore, body?.message ?? "Slow down — check is on cooldown", "info");
+      } else {
+        setToast(cookieStore, "Failed to trigger check", "error");
+      }
       return;
     }
 
-    setToast(cookieStore, "Check queued for execution", "info");
+    setToast(cookieStore, "Check completed");
   } catch (error) {
     console.error("Network error triggering check:", error);
   }

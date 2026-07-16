@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { statusMeta } from "@/lib/status";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ConfirmSubmit } from "@/components/ui/confirm-submit";
+import { PendingSubmit } from "@/components/ui/pending-submit";
 import {
   pauseMonitor,
   resumeMonitor,
@@ -121,9 +122,9 @@ export default function MonitorGrid({ workspaceId, initialMonitors, canEdit }: M
                   <form action={triggerCheck}>
                     <input type="hidden" name="workspaceId" value={workspaceId} />
                     <input type="hidden" name="monitorId" value={monitor.id} />
-                    <button type="submit" className="icon-btn hover:text-info hover:border-info/40" title="Run check now" aria-label="Run check now">
+                    <PendingSubmit className="icon-btn hover:text-info hover:border-info/40" title="Run check now" aria-label="Run check now">
                       <RefreshCw className="h-4 w-4" />
-                    </button>
+                    </PendingSubmit>
                   </form>
                 )}
                 <form action={deleteMonitor}>
