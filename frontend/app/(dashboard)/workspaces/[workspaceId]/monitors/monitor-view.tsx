@@ -6,6 +6,7 @@ import { Trash2, Play, Pause, RefreshCw, LayoutGrid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusBadge, StatusDot } from "@/components/ui/status-badge";
 import { ConfirmSubmit } from "@/components/ui/confirm-submit";
+import { PendingSubmit } from "@/components/ui/pending-submit";
 import { pauseMonitor, resumeMonitor, triggerCheck, deleteMonitor } from "./actions";
 import MonitorGrid from "@/components/MonitorGrid";
 
@@ -186,9 +187,9 @@ export default function MonitorView({
                             <form action={triggerCheck}>
                               <input type="hidden" name="workspaceId" value={workspaceId} />
                               <input type="hidden" name="monitorId" value={node.id} />
-                              <button type="submit" className="icon-btn h-8 w-8 hover:text-info hover:border-info/40" title="Run check now" aria-label="Run check now">
+                              <PendingSubmit className="icon-btn h-8 w-8 hover:text-info hover:border-info/40" title="Run check now" aria-label="Run check now">
                                 <RefreshCw className="h-3.5 w-3.5" />
-                              </button>
+                              </PendingSubmit>
                             </form>
                           )}
                           <form action={deleteMonitor}>

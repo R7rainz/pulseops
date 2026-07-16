@@ -1,5 +1,6 @@
 import type { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
+import { redis } from "../../lib/redis";
 import { checkMonitor } from "./monitor.engine";
 import {
     assertWorkspaceAccess,
@@ -81,6 +82,11 @@ export async function getWorkspaceMonitorsService(
     return monitors;
 }
 
+// Minimum gap between on-demand "check now" runs for a single monitor. A
+// manual re-check sooner than this carries no new information and only adds
+// load on the target site and our DB.
+const MANUAL_CHECK_COOLDOWN_SECONDS = 15;
+
 export async function runMonitorCheckNowService(
     userId: number,
     monitorId: number,
@@ -104,6 +110,28 @@ export async function runMonitorCheckNowService(
 
     if (!membership) {
         throw new Error("You do not have access to this workspace");
+    }
+
+    // Per-monitor cooldown: at most one manual check per window, shared across
+    // every user/tab/instance (keyed by monitor, not requester), so spamming
+    // "check now" can't hammer the target site or flood our own pipeline.
+    // SET NX EX is atomic — whoever wins the set owns this window.
+    const cooldownKey = `monitor:${monitorId}:manual-check-cooldown`;
+    const acquired = await redis.set(
+        cooldownKey,
+        "1",
+        "EX",
+        MANUAL_CHECK_COOLDOWN_SECONDS,
+        "NX",
+    );
+
+    if (acquired !== "OK") {
+        const retryInSeconds = Math.max(await redis.ttl(cooldownKey), 1);
+        const error = new Error(
+            `This monitor was just checked — try again in ${retryInSeconds}s`,
+        ) as Error & { statusCode: number };
+        error.statusCode = 429;
+        throw error;
     }
 
     return checkMonitor(monitor);

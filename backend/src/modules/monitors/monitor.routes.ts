@@ -74,9 +74,17 @@ export async function monitorRoutes(app: FastifyInstance) {
     getLiveMonitorsController as any,
   );
 
+  // On-demand checks do real network + DB work per request, so they get a
+  // much tighter per-IP budget than the global limit. A per-monitor Redis
+  // cooldown in the service additionally protects the target site itself.
   app.post(
     "/workspaces/:workspaceId/monitors/:monitorId/check",
-    { preHandler: write },
+    {
+      preHandler: write,
+      config: {
+        rateLimit: { max: 10, timeWindow: "1 minute" },
+      },
+    },
     runMonitorCheckController as any,
   );
 
