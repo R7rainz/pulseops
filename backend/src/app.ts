@@ -35,10 +35,27 @@ export async function buildApp() {
         credentials: true,
     });
 
+    // Key rate-limit buckets by caller identity, not IP: the Next.js server
+    // proxies ALL browser traffic (server components, actions, live polling),
+    // so every request arrives from one IP — an IP-keyed limit makes the whole
+    // frontend share a single bucket, and one user spamming can 429 everyone's
+    // reads and blank the dashboard (same story behind Caddy in production).
+    // Bearer token / API key follows the actual user through any proxy; IP
+    // remains the fallback for anonymous routes (login/signup brute force).
+    // Route-level overrides (auth, check-now) inherit this keyGenerator.
     await app.register(rateLimit, {
         global: true,
-        max: 100,
+        max: 300,
         timeWindow: "1 minute",
+        keyGenerator: (request) => {
+            const auth = request.headers.authorization;
+            const apiKey = request.headers["x-api-key"];
+            return (
+                (typeof auth === "string" && auth) ||
+                (typeof apiKey === "string" && apiKey) ||
+                request.ip
+            );
+        },
     });
 
     // OpenAPI docs for the programmatic API. Registered before routes so its
