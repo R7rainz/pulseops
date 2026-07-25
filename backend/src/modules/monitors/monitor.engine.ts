@@ -1,16 +1,32 @@
 import type { Monitor } from "../../generated/prisma/client";
 import { prisma } from "../../lib/db";
 import { redis } from "../../lib/redis";
+import { BlockedTargetError, assertPublicUrl } from "../../lib/ssrf";
 import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 import { inspectSslCertificate } from "./tls.inspector";
+
+// Cap on manually-followed redirects. Each hop is re-validated against the SSRF
+// guard, so this only bounds work, not safety.
+const MAX_REDIRECTS = 5;
+
+// How close to expiry a certificate has to be before the monitor degrades.
+// Configurable so operators can get more than a week of warning; a per-monitor
+// override belongs on the Monitor row and is not built yet.
+const SSL_EXPIRY_WARNING_DAYS = Number(process.env.SSL_EXPIRY_WARNING_DAYS ?? 7);
 
 export type PingResult = {
   isUp: boolean;
   statusCode: number;
   latencyMs: number;
+  // Why the check failed, when it failed. Null on success. Previously this was
+  // never populated on the HTTP path, so every outage looked identical.
+  errorMessage: string | null;
   tlsIssuer: string | null;
   tlsValidTo: Date | null;
   tlsDaysRemaining: number | null;
+  // Whether the certificate actually validated (chain, expiry, hostname).
+  tlsValid: boolean | null;
+  tlsError: string | null;
 };
 
 // Performs the actual network work for a single monitor. Used by the
@@ -22,26 +38,77 @@ export async function performPing(monitor: Monitor): Promise<PingResult> {
   const startTime = performance.now();
   let isUp = false;
   let statusCode = 0;
+  let errorMessage: string | null = null;
 
   try {
+    // Re-validate on every probe, not just at save time — DNS can be re-pointed
+    // at private space after the monitor was created (rebinding).
+    await assertPublicUrl(monitor.url);
+
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
       monitor.timeoutMs,
     );
 
-    const response = await fetch(monitor.url, {
-      signal: controller.signal,
-      method: monitor.method,
-      cache: "no-store",
-    });
+    let response: Response;
+    try {
+      response = await fetch(monitor.url, {
+        signal: controller.signal,
+        method: monitor.method,
+        cache: "no-store",
+        // Don't let a public URL bounce us into the private range. Redirects
+        // are followed manually below so each hop is re-validated.
+        redirect: "manual",
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
-    clearTimeout(timeoutId);
+    // Follow redirects ourselves, re-checking every Location against the guard.
+    let hops = 0;
+    while (
+      response.status >= 300 &&
+      response.status < 400 &&
+      response.headers.get("location") &&
+      hops < MAX_REDIRECTS
+    ) {
+      const next = new URL(response.headers.get("location")!, monitor.url).toString();
+      await assertPublicUrl(next);
+
+      const hopController = new AbortController();
+      const hopTimeout = setTimeout(() => hopController.abort(), monitor.timeoutMs);
+      try {
+        response = await fetch(next, {
+          signal: hopController.signal,
+          method: monitor.method,
+          cache: "no-store",
+          redirect: "manual",
+        });
+      } finally {
+        clearTimeout(hopTimeout);
+      }
+      hops += 1;
+    }
+
     statusCode = response.status;
     isUp = statusCode === monitor.expectedStatus;
+    if (!isUp) {
+      errorMessage = `Expected HTTP ${monitor.expectedStatus}, got ${statusCode}`;
+    }
   } catch (error) {
     isUp = false;
-    statusCode = 500;
+    // statusCode 0 means "never got an HTTP response" — distinct from a real
+    // server-side 500, which the old code was indistinguishable from.
+    statusCode = 0;
+    errorMessage =
+      error instanceof BlockedTargetError
+        ? `Blocked: ${error.message}`
+        : error instanceof Error && error.name === "AbortError"
+          ? `Timed out after ${monitor.timeoutMs}ms`
+          : error instanceof Error
+            ? error.message
+            : "Unknown error";
   }
 
   const latencyMs = Math.round(performance.now() - startTime);
@@ -52,9 +119,12 @@ export async function performPing(monitor: Monitor): Promise<PingResult> {
     isUp,
     statusCode,
     latencyMs,
+    errorMessage,
     tlsIssuer: sslData?.issuer ?? null,
     tlsValidTo: sslData?.validTo ?? null,
     tlsDaysRemaining: sslData?.daysRemaining ?? null,
+    tlsValid: sslData?.valid ?? null,
+    tlsError: sslData?.error ?? null,
   };
 }
 
@@ -63,8 +133,25 @@ export async function performPing(monitor: Monitor): Promise<PingResult> {
 // transaction, Redis live-state, and webhook notifications. Shared by both
 // the on-demand check path and the Kafka metrics consumer.
 export async function applyCheckResult(monitor: Monitor, pingResult: PingResult) {
-  const { isUp: currentAttemptUp, statusCode, latencyMs, tlsIssuer, tlsValidTo, tlsDaysRemaining } = pingResult;
-  const isSslFailing = tlsDaysRemaining !== null && tlsDaysRemaining <= 7;
+  const {
+    isUp: currentAttemptUp,
+    statusCode,
+    latencyMs,
+    errorMessage,
+    tlsIssuer,
+    tlsValidTo,
+    tlsDaysRemaining,
+    tlsValid,
+    tlsError,
+  } = pingResult;
+
+  // A cert nearing expiry degrades the monitor; a cert that fails verification
+  // outright (expired, self-signed, wrong hostname) is an SSL failure too — it
+  // was previously ignored entirely.
+  const sslExpiringSoon =
+    tlsDaysRemaining !== null && tlsDaysRemaining <= SSL_EXPIRY_WARNING_DAYS;
+  const sslInvalid = tlsValid === false;
+  const isSslFailing = sslExpiringSoon || sslInvalid;
 
   const now = new Date();
   const isUnderMaintenance =
@@ -105,7 +192,11 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
       if (crossedThreshold && !isUnderMaintenance) {
         newlyTriggeredIncident = true;
         if (isSslFailing && currentAttemptUp) {
-          incidentTitle = `SSL/TLS Degradation: Certificate expires in ${tlsDaysRemaining} days`;
+          incidentTitle = sslInvalid
+            ? `SSL/TLS Failure: ${tlsError ?? "certificate did not validate"}`
+            : `SSL/TLS Degradation: Certificate expires in ${tlsDaysRemaining} days`;
+        } else if (errorMessage) {
+          incidentTitle = `Node Offline: ${errorMessage}`;
         }
       }
     }
@@ -124,6 +215,7 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
         status: targetStatus === "DEGRADED" ? "DEGRADED" : (currentAttemptUp ? "UP" : "DOWN"),
         statusCode: statusCode,
         responseTimeMs: latencyMs,
+        errorMessage: errorMessage ?? tlsError,
       },
     }),
     prisma.monitor.update({
@@ -261,9 +353,14 @@ export async function recordHeartbeat(monitor: Monitor) {
       isUp: true,
       statusCode: 200,
       latencyMs: 0,
+      errorMessage: null,
       tlsIssuer: monitor.tlsIssuer,
       tlsValidTo: monitor.tlsValidTo,
       tlsDaysRemaining: monitor.tlsDaysRemaining,
+      // Heartbeats carry no TLS handshake of their own — leave the verdict
+      // unknown rather than asserting the stored cert is still valid.
+      tlsValid: null,
+      tlsError: null,
     },
   );
 }

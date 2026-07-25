@@ -21,6 +21,9 @@ interface Workspace {
 interface ApiKey {
   id: number;
   name: string;
+  // Non-secret leading fragment of the key. The full value only ever exists at
+  // creation time — the server stores a hash.
+  keyPrefix: string;
   scope: "READ_ONLY" | "READ_WRITE";
   lastUsedAt: string | null;
   isActive: boolean;
@@ -161,6 +164,7 @@ export default async function WorkspaceSettingsPage({
                       </span>
                     </div>
                     <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+                      {key.keyPrefix && <span className="text-foreground/70">{key.keyPrefix}… · </span>}
                       {key.isActive ? (
                         <>
                           Created {new Date(key.createdAt).toLocaleDateString()}

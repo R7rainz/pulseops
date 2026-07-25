@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 
 export type AccessTokenPayload = {
@@ -13,9 +14,46 @@ export type MfaTokenPayload = {
   purpose: "mfa";
 };
 
-const rawSecret = process.env.JWT_SECRET;
-if (!rawSecret) throw new Error("JWT_SECRET is missing");
-const JWT_SECRET: string = rawSecret;
+// This value shipped as a working default in docker-compose.yml, so it is
+// public: anyone who has read the repo can forge session tokens signed with it.
+// Refuse to start rather than run with it.
+const LEAKED_DEFAULT_SECRET =
+  "a3f1c09e7b2d48561fae90c3d7b6528e14aa9f0c5d3e2b7a8c6f4e1d0b9a8c7d";
+
+function resolveSecret(): string {
+  const raw = process.env.JWT_SECRET?.trim();
+
+  if (raw === LEAKED_DEFAULT_SECRET) {
+    throw new Error(
+      "JWT_SECRET is set to the old public default from docker-compose.yml. " +
+        "That value is committed to the repository and anyone can forge tokens " +
+        "with it. Generate a new one:  openssl rand -hex 32",
+    );
+  }
+
+  if (raw) {
+    if (raw.length < 32) {
+      throw new Error(
+        "JWT_SECRET is too short — use at least 32 characters (openssl rand -hex 32).",
+      );
+    }
+    return raw;
+  }
+
+  // Unset. Rather than shipping a predictable fallback, mint a random one for
+  // this process so `docker compose up` still works with zero configuration.
+  // Sessions won't survive a restart, and the warning says so — a visible,
+  // self-correcting annoyance is much better than a silently forgeable key.
+  const ephemeral = crypto.randomBytes(32).toString("hex");
+  console.warn(
+    "\n[SECURITY] JWT_SECRET is not set — generated a random one for this process.\n" +
+      "           All sessions will be invalidated when the API restarts.\n" +
+      "           Set JWT_SECRET in your .env to persist logins:  openssl rand -hex 32\n",
+  );
+  return ephemeral;
+}
+
+const JWT_SECRET: string = resolveSecret();
 
 export function signAccessToken(payload: AccessTokenPayload): string {
   return jwt.sign(payload, JWT_SECRET, {

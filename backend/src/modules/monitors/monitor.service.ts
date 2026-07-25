@@ -1,9 +1,11 @@
 import type { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
 import { prisma } from "../../lib/db";
 import { redis } from "../../lib/redis";
+import { assertPublicUrl } from "../../lib/ssrf";
 import { checkMonitor } from "./monitor.engine";
 import {
     assertWorkspaceAccess,
+    assertWorkspaceRole,
     type AccessContext,
 } from "../../middleware/workspace-access.middleware";
 
@@ -12,17 +14,13 @@ export async function createMonitorService(
     workspaceId: number,
     input: CreateMonitorInput,
 ) {
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId,
-            },
-        },
-    });
+    await assertWorkspaceRole(userId, workspaceId);
 
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
+    // Reject unreachable/internal targets at save time so the user gets a clear
+    // error instead of a monitor that silently fails every check. The probe
+    // re-validates before each request — this is UX, not the security boundary.
+    if (input.type !== "HEARTBEAT" && input.url) {
+        await assertPublicUrl(input.url);
     }
 
     const workspace = await prisma.workspace.findUnique({
@@ -99,18 +97,10 @@ export async function runMonitorCheckNowService(
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
     // Per-monitor cooldown: at most one manual check per window, shared across
     // every user/tab/instance (keyed by monitor, not requester), so spamming
@@ -279,18 +269,10 @@ export async function pauseMonitorService(userId: number, monitorId: number) {
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
     const updatedMonitor = await prisma.monitor.update({
         where: {
@@ -316,18 +298,10 @@ export async function resumeMonitorService(userId: number, monitorId: number) {
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
     const updatedMonitor = await prisma.monitor.update({
         where: {
@@ -357,17 +331,13 @@ export async function updateMonitorService(
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
+    if (input.url) {
+        await assertPublicUrl(input.url);
     }
 
     const updatedMonitor = await prisma.monitor.update({
@@ -391,18 +361,10 @@ export async function deleteMonitorService(userId: number, monitorId: number) {
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
     const deletedMonitor = await prisma.monitor.delete({
         where: {

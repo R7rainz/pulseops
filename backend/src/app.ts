@@ -5,6 +5,7 @@ import swagger from "@fastify/swagger";
 import scalarApiReference from "@scalar/fastify-api-reference";
 import { scalarThemeCss } from "./lib/scalar-theme";
 import { ZodError } from "zod";
+import { BlockedTargetError } from "./lib/ssrf";
 import { authRoutes } from "./modules/auth/auth.routes";
 import { workspaceRoutes } from "./modules/workspaces/workspace.routes";
 import { monitorRoutes } from "./modules/monitors/monitor.routes";
@@ -125,6 +126,12 @@ export async function buildApp() {
         if (error instanceof ZodError) {
             const messages = error.issues.map((issue) => issue.message).join("; ");
             return response.status(400).send({ message: messages || "Invalid input" });
+        }
+
+        // A blocked target is bad user input, not a server fault — surface the
+        // reason so the user can see *why* their URL was rejected.
+        if (error instanceof BlockedTargetError) {
+            return response.status(400).send({ message: error.message });
         }
 
         request.log.error(error);

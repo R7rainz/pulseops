@@ -115,11 +115,28 @@ model Workspace {
   razorpaySubId      String?
   subscriptionStatus String?
 
-  members          WorkspaceMember[]
-  monitors         Monitor[]
-  webhookEndpoints WebhookEndpoint[]
-  apiKeys          ApiKey[]
-  workspaceInvites WorkspaceInvite[]
+  members           WorkspaceMember[]
+  monitors          Monitor[]
+  webhookEndpoints  WebhookEndpoint[]
+  apiKeys           ApiKey[]
+  workspaceInvites  WorkspaceInvite[]
+  processedPayments ProcessedPayment[]
+}
+
+// Replay guard for Razorpay. Both the client-side verify callback and the
+// server-side webhook record the provider's event/payment id here before
+// acting on it; the unique constraint makes a re-POSTed (or redelivered)
+// payload a no-op instead of a second upgrade.
+model ProcessedPayment {
+  id          Int      @id @default(autoincrement())
+  workspaceId Int
+  reference   String   @unique
+  kind        String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
 }
 
 model WorkspaceMember {
@@ -221,11 +238,15 @@ enum ApiKeyScope {
   READ_WRITE
 }
 
+// API keys are stored hashed, never raw — the plaintext is shown exactly once
+// at creation. `keyPrefix` is the non-secret leading fragment, kept so the UI
+// can identify a key ("po_a1b2c3…") without being able to reconstruct it.
 model ApiKey {
   id          Int         @id @default(autoincrement())
   workspaceId Int
   name        String
-  key         String      @unique
+  keyHash     String      @unique
+  keyPrefix   String
   scope       ApiKeyScope @default(READ_ONLY)
   lastUsedAt  DateTime?
   isActive    Boolean     @default(true)

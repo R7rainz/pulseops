@@ -16,7 +16,7 @@ import {
 } from "./monitor.controller";
 import { requireApiKey } from "../../middleware/api-key.middleware";
 import { requireRole } from "../../middleware/rbac.middleware";
-import { requireWorkspaceAccess } from "../../middleware/workspace-access.middleware";
+import { requireScope, requireWorkspaceAccess } from "../../middleware/workspace-access.middleware";
 import { getMonitorAnalyticsController } from "./monitor.analytics";
 
 // Only routes with a `schema.tags` entry are surfaced in the OpenAPI spec
@@ -34,8 +34,10 @@ const monitorIdParams = {
 export async function monitorRoutes(app: FastifyInstance) {
   // Reads accept a JWT (workspace member) OR a workspace API key.
   const apiRead = [requireWorkspaceAccess];
-  // Writes remain browser/JWT-only in v1 — API keys can't mutate.
-  const write = [requireAuth, requireRole(["OWNER", "ADMIN"])];
+  // Writes remain browser/JWT-only in v1 — requireAuth rejects key-auth outright.
+  // requireScope is a no-op for JWT callers, but it means a READ_ONLY key can
+  // never mutate if key-auth is ever extended to these routes.
+  const write = [requireAuth, requireRole(["OWNER", "ADMIN"]), requireScope("READ_WRITE")];
 
   app.post(
     "/workspaces/:workspaceId/monitors",

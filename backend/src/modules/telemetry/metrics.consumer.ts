@@ -9,8 +9,11 @@ type GoPingResult = {
     status_code: number;
     latency: number; // nanoseconds — Go time.Duration marshals as an int64
     is_up: boolean;
+    error?: string;
     tls_issuer?: string;
     tls_days_left?: number;
+    tls_valid?: boolean;
+    tls_error?: string;
     timestamp: string;
 };
 
@@ -51,12 +54,15 @@ export async function startMetricsConsumer() {
                         isUp: payload.is_up,
                         statusCode: payload.status_code,
                         latencyMs: Math.round(payload.latency / 1_000_000),
+                        errorMessage: payload.error || null,
                         tlsIssuer: payload.tls_issuer || null,
                         tlsDaysRemaining: payload.tls_days_left ?? null,
                         tlsValidTo:
                             payload.tls_days_left != null
                                 ? new Date(Date.now() + payload.tls_days_left * 86_400_000)
                                 : null,
+                        tlsValid: payload.tls_valid ?? null,
+                        tlsError: payload.tls_error || null,
                     };
 
                     await applyCheckResult(monitor, pingResult);

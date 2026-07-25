@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import axios from "axios";
 import { prisma } from "../../lib/db";
+import { assertPublicUrl } from "../../lib/ssrf";
+import { assertWorkspaceRole } from "../../middleware/workspace-access.middleware";
 import type { CreateWebhookInput, UpdateWebhookInput } from "./webhook.schema";
 
 function ensureMembership(userId: number, workspaceId: number) {
@@ -14,8 +16,8 @@ export async function createWebhookService(
   workspaceId: number,
   input: CreateWebhookInput,
 ) {
-  const membership = await ensureMembership(userId, workspaceId);
-  if (!membership) throw new Error("You do not have access to this workspace");
+  await assertWorkspaceRole(userId, workspaceId);
+  await assertPublicUrl(input.url);
 
   const secret = crypto.randomBytes(16).toString("hex");
 
@@ -72,8 +74,8 @@ export async function updateWebhookService(
   });
   if (!webhook) throw new Error("Webhook not found");
 
-  const membership = await ensureMembership(userId, webhook.workspaceId);
-  if (!membership) throw new Error("You do not have access to this workspace");
+  await assertWorkspaceRole(userId, webhook.workspaceId);
+  if (input.url) await assertPublicUrl(input.url);
 
   const data: Record<string, unknown> = {};
   if (input.name !== undefined) data.name = input.name;
@@ -96,8 +98,7 @@ export async function deleteWebhookService(userId: number, webhookId: number) {
   });
   if (!webhook) throw new Error("Webhook not found");
 
-  const membership = await ensureMembership(userId, webhook.workspaceId);
-  if (!membership) throw new Error("You do not have access to this workspace");
+  await assertWorkspaceRole(userId, webhook.workspaceId);
 
   return prisma.webhookEndpoint.delete({ where: { id: webhookId } });
 }
@@ -108,8 +109,7 @@ export async function toggleWebhookService(userId: number, webhookId: number) {
   });
   if (!webhook) throw new Error("Webhook not found");
 
-  const membership = await ensureMembership(userId, webhook.workspaceId);
-  if (!membership) throw new Error("You do not have access to this workspace");
+  await assertWorkspaceRole(userId, webhook.workspaceId);
 
   const updated = await prisma.webhookEndpoint.update({
     where: { id: webhookId },
@@ -126,8 +126,7 @@ export async function testWebhookService(userId: number, webhookId: number) {
   });
   if (!webhook) throw new Error("Webhook not found");
 
-  const membership = await ensureMembership(userId, webhook.workspaceId);
-  if (!membership) throw new Error("You do not have access to this workspace");
+  await assertWorkspaceRole(userId, webhook.workspaceId);
 
   const payload = {
     event: "test",
@@ -145,7 +144,10 @@ export async function testWebhookService(userId: number, webhookId: number) {
   let isSuccess = false;
 
   try {
+    await assertPublicUrl(webhook.url);
+
     const res = await axios.post(webhook.url, payload, {
+      maxRedirects: 0,
       timeout: 10000,
       headers: {
         "Content-Type": "application/json",

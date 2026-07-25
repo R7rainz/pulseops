@@ -3,6 +3,7 @@ import IORedis from "ioredis";
 import axios from "axios";
 import crypto from "crypto";
 import { prisma } from "../lib/db";
+import { assertPublicUrl } from "../lib/ssrf";
 
 const connection = new IORedis({
   host: process.env.REDIS_HOST || "localhost",
@@ -44,8 +45,11 @@ export function startWebhookRetryWorker() {
       let isSuccess = false;
 
       try {
+        await assertPublicUrl(url);
+
         const response = await axios.post(url, payload, {
           timeout: 5000,
+          maxRedirects: 0,
           headers: {
             "Content-Type": "application/json",
             "User-Agent": "PulseOps-Webhook/1.0",
