@@ -8,6 +8,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,11 +18,76 @@ import (
 
 type Target struct {
 	ID             int    `json:"id"`
+	Type           string `json:"type"`
 	URL            string `json:"url"`
 	Method         string `json:"method"`
 	ExpectedStatus int    `json:"expected_status"`
-	TimeoutMs      int    `json:"timeout_ms"`
-	WorkspaceID    int    `json:"workspace_id"`
+	// "200", "2xx", "200-299", "200,204". Empty falls back to ExpectedStatus.
+	ExpectedStatusMatch string `json:"expected_status_match"`
+	TimeoutMs           int    `json:"timeout_ms"`
+	WorkspaceID         int    `json:"workspace_id"`
+
+	// Per-type configuration.
+	TCPPort            int    `json:"tcp_port"`
+	DNSRecordType      string `json:"dns_record_type"`
+	DNSExpectedValue   string `json:"dns_expected_value"`
+	Keyword            string `json:"keyword"`
+	KeywordShouldExist bool   `json:"keyword_should_exist"`
+}
+
+// statusMatches evaluates a response code against the monitor's expectation.
+// Supports an exact code, a wildcard class ("2xx"), an inclusive range
+// ("200-299"), and a comma-separated list — a bare Int couldn't express
+// "any success".
+func statusMatches(code int, target Target) bool {
+	spec := strings.TrimSpace(target.ExpectedStatusMatch)
+	if spec == "" {
+		expected := target.ExpectedStatus
+		if expected == 0 {
+			expected = 200
+		}
+		return code == expected
+	}
+
+	for _, part := range strings.Split(spec, ",") {
+		part = strings.ToLower(strings.TrimSpace(part))
+		if part == "" {
+			continue
+		}
+
+		switch {
+		case strings.HasSuffix(part, "xx") && len(part) == 3:
+			if class, err := strconv.Atoi(part[:1]); err == nil && code/100 == class {
+				return true
+			}
+		case strings.Contains(part, "-"):
+			bounds := strings.SplitN(part, "-", 2)
+			lo, errLo := strconv.Atoi(strings.TrimSpace(bounds[0]))
+			hi, errHi := strconv.Atoi(strings.TrimSpace(bounds[1]))
+			if errLo == nil && errHi == nil && code >= lo && code <= hi {
+				return true
+			}
+		default:
+			if exact, err := strconv.Atoi(part); err == nil && code == exact {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// applyTLSInfo copies certificate details off a successful response.
+func applyTLSInfo(result *Result, resp *http.Response) {
+	if resp.TLS == nil || len(resp.TLS.PeerCertificates) == 0 {
+		return
+	}
+	cert := resp.TLS.PeerCertificates[0]
+	result.TLSIssuer = cert.Issuer.CommonName
+	result.TLSDaysLeft = int(time.Until(cert.NotAfter).Hours() / 24)
+	// We got here through a verifying transport, so the chain is good.
+	valid := true
+	result.TLSValid = &valid
 }
 
 type Result struct {
@@ -158,6 +225,16 @@ func probe(client *http.Client, target Target) Result {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	// Non-HTTP check types have their own probes (see probes.go).
+	switch strings.ToUpper(target.Type) {
+	case "TCP":
+		return probeTCP(ctx, target, result)
+	case "DNS":
+		return probeDNS(ctx, target, result)
+	case "KEYWORD":
+		return probeKeyword(client, ctx, target, result)
+	}
+
 	req, err := http.NewRequestWithContext(ctx, method, target.URL, nil)
 	if err != nil {
 		result.StatusCode = 0
@@ -185,11 +262,7 @@ func probe(client *http.Client, target Target) Result {
 	result.Latency = time.Since(startTime)
 	result.StatusCode = resp.StatusCode
 
-	expectedStatus := target.ExpectedStatus
-	if expectedStatus == 0 {
-		expectedStatus = 200
-	}
-	if resp.StatusCode == expectedStatus {
+	if statusMatches(resp.StatusCode, target) {
 		result.IsUp = true
 	} else {
 		result.Error = http.StatusText(resp.StatusCode)
@@ -198,14 +271,7 @@ func probe(client *http.Client, target Target) Result {
 		}
 	}
 
-	if resp.TLS != nil && len(resp.TLS.PeerCertificates) > 0 {
-		cert := resp.TLS.PeerCertificates[0]
-		result.TLSIssuer = cert.Issuer.CommonName
-		result.TLSDaysLeft = int(time.Until(cert.NotAfter).Hours() / 24)
-		// We got here through a verifying transport, so the chain is good.
-		valid := true
-		result.TLSValid = &valid
-	}
+	applyTLSInfo(&result, resp)
 
 	// Drain (a bounded prefix of) the body before closing so the connection can
 	// actually be reused — closing without reading defeats keep-alive.
