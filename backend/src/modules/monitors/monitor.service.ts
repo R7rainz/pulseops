@@ -57,6 +57,23 @@ export async function createMonitorService(
             timeoutMs: input.timeoutMs,
             expectedStatus: input.expectedStatus,
             gracePeriodSeconds: input.gracePeriodSeconds,
+            // Per-type configuration. Omitted keys stay null, which each probe
+            // treats as "not configured".
+            expectedStatusMatch: input.expectedStatusMatch ?? null,
+            tcpPort: input.tcpPort ?? null,
+            dnsRecordType: input.dnsRecordType ?? null,
+            dnsExpectedValue: input.dnsExpectedValue ?? null,
+            keyword: input.keyword ?? null,
+            ...(input.keywordShouldExist !== undefined && {
+                keywordShouldExist: input.keywordShouldExist,
+            }),
+            sslWarningDays: input.sslWarningDays ?? null,
+            ...(input.alertCooldownSeconds !== undefined && {
+                alertCooldownSeconds: input.alertCooldownSeconds,
+            }),
+            ...(input.reminderIntervalSeconds !== undefined && {
+                reminderIntervalSeconds: input.reminderIntervalSeconds,
+            }),
         },
     });
 

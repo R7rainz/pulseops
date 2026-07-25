@@ -3,6 +3,7 @@ import { prisma } from "../../lib/db";
 import { redis } from "../../lib/redis";
 import { BlockedTargetError, assertPublicUrl } from "../../lib/ssrf";
 import { dispatchNotification } from "../notifications/notification.dispatch";
+import { probeDns, probeTcp, statusMatches } from "./probes";
 import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 import { inspectSslCertificate } from "./tls.inspector";
 
@@ -40,6 +41,24 @@ export async function performPing(monitor: Monitor): Promise<PingResult> {
   let isUp = false;
   let statusCode = 0;
   let errorMessage: string | null = null;
+
+  // TCP and DNS aren't HTTP requests at all, so they short-circuit before the
+  // fetch path. Their Node implementations mirror the Go engine's probes so
+  // check-now and the scheduled check agree.
+  if (monitor.type === "TCP" || monitor.type === "DNS") {
+    const outcome = monitor.type === "TCP" ? await probeTcp(monitor) : await probeDns(monitor);
+    return {
+      isUp: outcome.isUp,
+      statusCode: 0,
+      latencyMs: outcome.latencyMs,
+      errorMessage: outcome.errorMessage,
+      tlsIssuer: null,
+      tlsValidTo: null,
+      tlsDaysRemaining: null,
+      tlsValid: null,
+      tlsError: null,
+    };
+  }
 
   try {
     // Re-validate on every probe, not just at save time — DNS can be re-pointed
@@ -93,9 +112,27 @@ export async function performPing(monitor: Monitor): Promise<PingResult> {
     }
 
     statusCode = response.status;
-    isUp = statusCode === monitor.expectedStatus;
+    isUp = statusMatches(statusCode, monitor);
     if (!isUp) {
-      errorMessage = `Expected HTTP ${monitor.expectedStatus}, got ${statusCode}`;
+      errorMessage = `Expected HTTP ${monitor.expectedStatusMatch || monitor.expectedStatus}, got ${statusCode}`;
+    }
+
+    // KEYWORD monitors additionally assert on the body — the difference
+    // between "the server answered" and "the page is actually right".
+    if (isUp && monitor.type === "KEYWORD") {
+      if (!monitor.keyword) {
+        isUp = false;
+        errorMessage = "Keyword check requires a keyword";
+      } else {
+        const body = await response.text();
+        const found = body.includes(monitor.keyword);
+        if (found !== monitor.keywordShouldExist) {
+          isUp = false;
+          errorMessage = monitor.keywordShouldExist
+            ? `Keyword "${monitor.keyword}" not found in response body`
+            : `Keyword "${monitor.keyword}" was present but should be absent`;
+        }
+      }
     }
   } catch (error) {
     isUp = false;
@@ -149,8 +186,9 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
   // A cert nearing expiry degrades the monitor; a cert that fails verification
   // outright (expired, self-signed, wrong hostname) is an SSL failure too — it
   // was previously ignored entirely.
+  const sslThresholdDays = monitor.sslWarningDays ?? SSL_EXPIRY_WARNING_DAYS;
   const sslExpiringSoon =
-    tlsDaysRemaining !== null && tlsDaysRemaining <= SSL_EXPIRY_WARNING_DAYS;
+    tlsDaysRemaining !== null && tlsDaysRemaining <= sslThresholdDays;
   const sslInvalid = tlsValid === false;
   const isSslFailing = sslExpiringSoon || sslInvalid;
 

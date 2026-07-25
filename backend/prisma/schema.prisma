@@ -207,6 +207,9 @@ enum MonitorStatus {
 enum MonitorType {
   HTTP
   HEARTBEAT
+  TCP
+  DNS
+  KEYWORD
 }
 
 model Monitor {
@@ -219,6 +222,18 @@ model Monitor {
   intervalSeconds     Int           @default(60)
   timeoutMs           Int           @default(5000)
   expectedStatus      Int           @default(200)
+  // "200", "2xx", "200-299", "200,204" — a single Int made "any 2xx"
+  // inexpressible. Null falls back to expectedStatus for older monitors.
+  expectedStatusMatch String?
+  // TCP: port to connect to. DNS: record type + optional expected value.
+  // KEYWORD: substring the body must (or must not) contain.
+  tcpPort             Int?
+  dnsRecordType       String?
+  dnsExpectedValue    String?
+  keyword             String?
+  keywordShouldExist  Boolean       @default(true)
+  // Per-monitor SSL warning threshold; falls back to SSL_EXPIRY_WARNING_DAYS.
+  sslWarningDays      Int?
   gracePeriodSeconds  Int           @default(60)
   status              MonitorStatus @default(UP)
   consecutiveFailures Int           @default(0)

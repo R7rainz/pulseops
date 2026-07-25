@@ -21,11 +21,18 @@ export function getLastSuccessfulDispatchAt(): Date | null {
 
 type DueMonitor = {
     id: number;
+    type: string;
     url: string;
     method: string;
     expectedStatus: number;
+    expectedStatusMatch: string | null;
     timeoutMs: number;
     workspaceId: number;
+    tcpPort: number | null;
+    dnsRecordType: string | null;
+    dnsExpectedValue: string | null;
+    keyword: string | null;
+    keywordShouldExist: boolean;
 };
 
 async function dispatchDueMonitors() {
@@ -52,7 +59,9 @@ async function dispatchDueMonitors() {
             SELECT c."id"
             FROM "Monitor" c
             WHERE c."isActive" = TRUE
-              AND c."type" = 'HTTP'
+              -- HEARTBEAT monitors are push-based and never dispatched; every
+              -- other type is probed by the Go engine.
+              AND c."type" <> 'HEARTBEAT'
               AND (c."nextCheckAt" IS NULL OR c."nextCheckAt" <= NOW())
               AND (
                     c."dispatchedAt" IS NULL
@@ -66,11 +75,18 @@ async function dispatchDueMonitors() {
             FOR UPDATE SKIP LOCKED
         )
         RETURNING m."id",
+                  m."type",
                   m."url",
                   m."method",
                   m."expectedStatus",
+                  m."expectedStatusMatch",
                   m."timeoutMs",
-                  m."workspaceId"
+                  m."workspaceId",
+                  m."tcpPort",
+                  m."dnsRecordType",
+                  m."dnsExpectedValue",
+                  m."keyword",
+                  m."keywordShouldExist"
     `;
 
     if (claimed.length === 0) {
@@ -85,11 +101,18 @@ async function dispatchDueMonitors() {
                 key: monitor.workspaceId.toString(), // keeps per-workspace ordering on one partition
                 value: JSON.stringify({
                     id: monitor.id,
+                    type: monitor.type,
                     url: monitor.url,
                     method: monitor.method,
                     expected_status: monitor.expectedStatus,
+                    expected_status_match: monitor.expectedStatusMatch ?? "",
                     timeout_ms: monitor.timeoutMs,
                     workspace_id: monitor.workspaceId,
+                    tcp_port: monitor.tcpPort ?? 0,
+                    dns_record_type: monitor.dnsRecordType ?? "",
+                    dns_expected_value: monitor.dnsExpectedValue ?? "",
+                    keyword: monitor.keyword ?? "",
+                    keyword_should_exist: monitor.keywordShouldExist,
                 }),
             })),
         });
