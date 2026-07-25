@@ -2,6 +2,7 @@ import type { Monitor } from "../../generated/prisma/client";
 import { prisma } from "../../lib/db";
 import { redis } from "../../lib/redis";
 import { BlockedTargetError, assertPublicUrl } from "../../lib/ssrf";
+import { dispatchNotification } from "../notifications/notification.dispatch";
 import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 import { inspectSslCertificate } from "./tls.inspector";
 
@@ -303,30 +304,67 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
     .set(`monitor:${monitor.id}:live`, JSON.stringify(liveState), "EX", 300)
     .catch((err: any) => console.error("[ENGINE] Redis live write failed:", err));
 
-  // Blast Webhooks
+  // Fan out alerts. Legacy WebhookEndpoint delivery is kept alongside the newer
+  // notification channels so existing endpoints keep firing after the upgrade.
   if (newlyTriggeredIncident) {
     const createdIncident = txResults[incidentCreateIndex];
+    const message = errorMessage
+      ? `Monitor [${monitor.name}] is ${targetStatus}: ${errorMessage}`
+      : `CRITICAL ALERT: Monitor [${monitor.name}] flagged as ${targetStatus}. Target URL: ${monitor.url}`;
+    const at = new Date().toISOString();
 
     sendWebhookNotifications(monitor.workspaceId, {
       event: "incident.opened",
       incidentId: createdIncident.id,
       monitorId: monitor.id,
       workspaceId: monitor.workspaceId,
-      message: `CRITICAL ALERT: Monitor [${monitor.name}] flagged as ${targetStatus}. Target URL: ${monitor.url}`,
-      timestamp: new Date().toISOString(),
+      message,
+      timestamp: at,
     }).catch(err => console.error("[ENGINE] Webhook open failed:", err));
+
+    dispatchNotification(monitor.workspaceId, {
+      event: "incident.opened",
+      incidentId: createdIncident.id,
+      monitorId: monitor.id,
+      workspaceId: monitor.workspaceId,
+      monitorName: monitor.name,
+      monitorUrl: monitor.url,
+      status: targetStatus,
+      title: incidentTitle,
+      message,
+      timestamp: at,
+    }).catch(err => console.error("[ENGINE] Notification open failed:", err));
   }
 
   if (activeIncidentsToResolve.length > 0) {
     activeIncidentsToResolve.forEach(incident => {
+      const at = new Date().toISOString();
+      const message = `RECOVERY: Monitor [${monitor.name}] stabilized. All clear.`;
+
       sendWebhookNotifications(monitor.workspaceId, {
         event: "incident.resolved",
         incidentId: incident.id,
         monitorId: monitor.id,
         workspaceId: monitor.workspaceId,
-        message: `RECOVERY: Monitor [${monitor.name}] stabilized. All clear.`,
-        timestamp: new Date().toISOString(),
+        message,
+        timestamp: at,
       }).catch(err => console.error("[ENGINE] Webhook resolve failed:", err));
+
+      dispatchNotification(monitor.workspaceId, {
+        event: "incident.resolved",
+        incidentId: incident.id,
+        monitorId: monitor.id,
+        workspaceId: monitor.workspaceId,
+        monitorName: monitor.name,
+        monitorUrl: monitor.url,
+        status: targetStatus,
+        title: incident.title ?? "Incident resolved",
+        message,
+        timestamp: at,
+        durationMs: incident.startedAt
+          ? Date.now() - new Date(incident.startedAt).getTime()
+          : null,
+      }).catch(err => console.error("[ENGINE] Notification resolve failed:", err));
     });
   }
 

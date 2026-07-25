@@ -9,6 +9,7 @@ import scalarApiReference from "@scalar/fastify-api-reference";
 import { scalarThemeCss } from "./lib/scalar-theme";
 import { ZodError } from "zod";
 import { BlockedTargetError } from "./lib/ssrf";
+import { ChannelConfigError } from "./modules/notifications/types";
 
 // How long the dispatcher may go without a successful tick before this instance
 // reports not-ready. Generous relative to the 15s tick so a single slow tick or
@@ -19,6 +20,7 @@ import { workspaceRoutes } from "./modules/workspaces/workspace.routes";
 import { monitorRoutes } from "./modules/monitors/monitor.routes";
 import { incidentRoutes } from "./modules/incidents/incident.routes";
 import { webhookRoutes } from "./modules/webhooks/webhook.routes";
+import { notificationRoutes } from "./modules/notifications/notification.routes";
 import { publicStatusRoutes } from "./modules/status/status.routes";
 import { inviteRoutes } from "./modules/workspaces/invite.routes";
 import { billingRoutes } from "./modules/billing/billing.routes";
@@ -148,6 +150,12 @@ export async function buildApp() {
             return response.status(400).send({ message: error.message });
         }
 
+        // Likewise a misconfigured alert channel: the adapter's message names
+        // the actual problem ("must be a hooks.slack.com URL").
+        if (error instanceof ChannelConfigError) {
+            return response.status(400).send({ message: error.message });
+        }
+
         request.log.error(error);
         const statusCode = error.statusCode && error.statusCode < 500 ? error.statusCode : 500;
         return response.status(statusCode).send({
@@ -233,6 +241,10 @@ export async function buildApp() {
     });
 
     await app.register(webhookRoutes, {
+        prefix: "/api/v1",
+    });
+
+    await app.register(notificationRoutes, {
         prefix: "/api/v1",
     });
 

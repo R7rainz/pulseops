@@ -3,12 +3,13 @@ import { API_URL, DOCS_URL } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { apiFetch } from "@/lib/apiFetch";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Key, Settings, ShieldAlert, UserPlus, Zap, ChevronRight, BookOpen } from "lucide-react";
+import { ArrowLeft, Trash2, Key, Settings, ShieldAlert, UserPlus, Zap, ChevronRight, BookOpen, Bell } from "lucide-react";
 import { revokeApiKey, updateWorkspaceName } from "./actions";
 import { ConfirmSubmit } from "@/components/ui/confirm-submit";
 import DeleteWorkspaceButton from "./delete-button";
 import CreateApiKeyForm from "./create-apikey-form";
 import TeamMembers from "./team-members";
+import ChannelManager, { type ChannelData } from "./channel-manager";
 
 interface Workspace {
   id: number;
@@ -51,9 +52,10 @@ export default async function WorkspaceSettingsPage({
   let workspace: Workspace | null = null;
   let apiKeys: ApiKey[] = [];
   let members: Member[] = [];
+  let channels: ChannelData[] = [];
   let currentUserId: number | null = null;
   try {
-    const [wsRes, keysRes, membersRes, meRes] = await Promise.all([
+    const [wsRes, keysRes, membersRes, meRes, channelsRes] = await Promise.all([
       apiFetch(
         `${API_URL}/api/v1/workspaces/${workspaceId}`,
         { token, cookieStore, cache: "no-store" },
@@ -68,6 +70,10 @@ export default async function WorkspaceSettingsPage({
       ),
       apiFetch(
         `${API_URL}/api/v1/auth/me`,
+        { token, cookieStore, cache: "no-store" },
+      ),
+      apiFetch(
+        `${API_URL}/api/v1/workspaces/${workspaceId}/channels`,
         { token, cookieStore, cache: "no-store" },
       ),
     ]);
@@ -87,6 +93,10 @@ export default async function WorkspaceSettingsPage({
     if (meRes.ok) {
       const meData = await meRes.json();
       currentUserId = meData.data?.id ?? null;
+    }
+    if (channelsRes.ok) {
+      const channelsData = await channelsRes.json();
+      channels = channelsData.data || [];
     }
 
     if (wsRes.status === 401 || wsRes.status === 403) {
@@ -192,6 +202,11 @@ export default async function WorkspaceSettingsPage({
           )}
 
           {canEdit && <CreateApiKeyForm workspaceId={workspaceId} />}
+        </section>
+
+        {/* Alert channels */}
+        <section className="glass rounded-lg p-6">
+          <ChannelManager workspaceId={workspaceId} channels={channels} canEdit={canEdit} />
         </section>
 
         {/* Team */}

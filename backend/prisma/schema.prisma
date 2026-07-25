@@ -115,12 +115,56 @@ model Workspace {
   razorpaySubId      String?
   subscriptionStatus String?
 
-  members           WorkspaceMember[]
-  monitors          Monitor[]
-  webhookEndpoints  WebhookEndpoint[]
-  apiKeys           ApiKey[]
-  workspaceInvites  WorkspaceInvite[]
-  processedPayments ProcessedPayment[]
+  members              WorkspaceMember[]
+  monitors             Monitor[]
+  webhookEndpoints     WebhookEndpoint[]
+  apiKeys              ApiKey[]
+  workspaceInvites     WorkspaceInvite[]
+  processedPayments    ProcessedPayment[]
+  notificationChannels NotificationChannel[]
+}
+
+// Where alerts go. Until now the only transport was a generic HTTP webhook
+// carrying a PulseOps-shaped payload — so users could not get an email, and
+// could not point it at a Slack/Discord incoming webhook and have it render.
+//
+// `config` holds the per-type settings (see channels/ for the shape each
+// adapter expects): EMAIL {to}, SLACK/DISCORD {webhookUrl}, PAGERDUTY
+// {routingKey}, WEBHOOK {url, secret}.
+model NotificationChannel {
+  id          Int                     @id @default(autoincrement())
+  workspaceId Int
+  type        NotificationChannelType
+  name        String
+  config      Json
+  events      String[]
+  isActive    Boolean                 @default(true)
+  // Consecutive delivery failures. Used to trip a circuit breaker so a
+  // permanently dead endpoint isn't retried on every single incident forever.
+  failureCount    Int       @default(0)
+  disabledUntil   DateTime?
+  lastDeliveredAt DateTime?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  workspace Workspace                    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  deliveries NotificationDeliveryLog[]
+
+  @@index([workspaceId])
+}
+
+model NotificationDeliveryLog {
+  id             BigInt   @id @default(autoincrement())
+  channelId      Int
+  event          String
+  isSuccess      Boolean
+  responseStatus Int?
+  detail         String?
+  createdAt      DateTime @default(now())
+
+  channel NotificationChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
 }
 
 // Replay guard for Razorpay. Both the client-side verify callback and the
@@ -281,6 +325,14 @@ model Incident {
 enum ApiKeyScope {
   READ_ONLY
   READ_WRITE
+}
+
+enum NotificationChannelType {
+  EMAIL
+  SLACK
+  DISCORD
+  PAGERDUTY
+  WEBHOOK
 }
 
 // API keys are stored hashed, never raw — the plaintext is shown exactly once
