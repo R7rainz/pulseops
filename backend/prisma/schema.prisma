@@ -190,16 +190,31 @@ model Monitor {
   updatedAt           DateTime      @updatedAt
   maintenanceStartAt  DateTime?
   maintenanceEndAt    DateTime?
+  // When this monitor is next due. Lets the scheduler ask Postgres for exactly
+  // the due rows instead of loading every active monitor and filtering in
+  // application memory on each 15s tick.
+  nextCheckAt         DateTime?
+  // Set when a check is dispatched, cleared when its result lands. Stops a
+  // monitor slower than the tick interval from being dispatched repeatedly.
+  dispatchedAt        DateTime?
 
-  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  checks    MonitorCheck[]
-  incidents Incident[]
+  workspace    Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  checks       MonitorCheck[]
+  dailyRollups MonitorCheckDaily[]
+  incidents    Incident[]
 
   @@index([workspaceId])
+  // The scheduler's hot query: active, due, not already in flight.
+  @@index([isActive, nextCheckAt])
 }
 
+// The highest-volume table in the system: one row per check, per monitor. At
+// the 30s minimum interval a single monitor writes ~2.9M rows/year, so the id
+// is BigInt (an Int4 sequence tops out at 2.147B and would overflow) and the
+// retention job in telemetry/retention.ts prunes raw rows once they've been
+// rolled up into MonitorCheckDaily.
 model MonitorCheck {
-  id             Int           @id @default(autoincrement())
+  id             BigInt        @id @default(autoincrement())
   monitorId      Int
   status         MonitorStatus
   statusCode     Int?
@@ -209,8 +224,36 @@ model MonitorCheck {
 
   monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
 
-  @@index([monitorId])
+  // Every hot query is "this monitor, newest first" or "these monitors, since
+  // T" — a composite index serves both. The bare [monitorId] index it replaces
+  // forced a sort over the whole monitor's history.
+  @@index([monitorId, checkedAt])
   @@index([checkedAt])
+}
+
+// Daily per-monitor rollup of MonitorCheck. Long-range views (30d analytics,
+// the 90d public status page) read this instead of scanning raw checks, which
+// is what lets retention drop the raw rows.
+model MonitorCheckDaily {
+  id            BigInt   @id @default(autoincrement())
+  monitorId     Int
+  day           DateTime @db.Date
+  totalChecks   Int
+  upChecks      Int
+  downChecks    Int
+  degradedChecks Int
+  avgResponseMs Int?
+  minResponseMs Int?
+  maxResponseMs Int?
+  p50ResponseMs Int?
+  p95ResponseMs Int?
+  p99ResponseMs Int?
+  createdAt     DateTime @default(now())
+
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@unique([monitorId, day])
+  @@index([day])
 }
 
 enum IncidentStatus {
@@ -231,6 +274,8 @@ model Incident {
 
   @@index([monitorId])
   @@index([status])
+  // Incident lists are always ordered by startedAt desc.
+  @@index([startedAt])
 }
 
 enum ApiKeyScope {
@@ -276,7 +321,7 @@ model WebhookEndpoint {
 }
 
 model WebhookDeliveryLog {
-  id             Int      @id @default(autoincrement())
+  id             BigInt   @id @default(autoincrement())
   webhookId      Int
   url            String
   requestPayload Json
@@ -286,6 +331,10 @@ model WebhookDeliveryLog {
   createdAt      DateTime @default(now())
 
   webhook WebhookEndpoint @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  // Also unbounded, and previously had no index at all — the delivery-log view
+  // was a sequential scan.
+  @@index([webhookId, createdAt])
 }
 
 // An invite is one of two kinds, distinguished by `email`:

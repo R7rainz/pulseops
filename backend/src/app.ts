@@ -1,3 +1,6 @@
+// Side-effect import: teaches JSON.stringify how to handle the BigInt primary
+// keys on MonitorCheck / WebhookDeliveryLog. Must come before route setup.
+import "./lib/bigint-json";
 import Fastify, { type FastifyInstance, type FastifyError } from "fastify";
 import cors from "@fastify/cors";
 import rateLimit from "@fastify/rate-limit";
