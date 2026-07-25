@@ -26,6 +26,7 @@ import { startWebhookRetryWorker, stopWebhookRetryWorker } from "./workers/webho
 import { closeWebhookQueue } from "./modules/webhooks/webhook.queue";
 import { connectKafka, kafkaProducer, kafkaConsumer } from "./lib/kafka";
 import { startMetricsConsumer } from "./modules/telemetry/metrics.consumer";
+import { startRetentionScheduler, stopRetentionScheduler } from "./modules/telemetry/retention";
 import {
     getLastSuccessfulDispatchAt,
     startMonitorDispatchScheduler,
@@ -261,6 +262,7 @@ export async function start(app: FastifyInstance) {
         await startMetricsConsumer();
         startMonitorDispatchScheduler();
         startHeartbeatScheduler();
+        startRetentionScheduler();
         startWebhookRetryWorker();
 
         const port = Number(process.env.PORT) || 4000;
@@ -308,6 +310,7 @@ export function setupShutdownHandlers(app: FastifyInstance) {
 
         stopMonitorDispatchScheduler();
         stopHeartbeatScheduler();
+        stopRetentionScheduler();
 
         await step("HTTP server close", () => app.close());
         await step("Kafka producer disconnect", () => kafkaProducer.disconnect());
