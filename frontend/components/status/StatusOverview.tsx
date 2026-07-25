@@ -1,4 +1,4 @@
-import { AlertTriangle, ServerCrash, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ServerCrash, ShieldCheck, Wrench } from "lucide-react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { cn } from "@/lib/utils";
 
@@ -6,14 +6,21 @@ export interface PublicMonitor {
   id: number;
   name: string;
   status: "UP" | "DOWN" | "PAUSED";
+  // Inside a declared maintenance window — shown as planned work rather than
+  // an outage, which the page previously couldn't distinguish.
+  underMaintenance?: boolean;
   uptimeHistory: number[];
 }
 
 export interface StatusData {
   workspaceName: string;
-  systemState: "OPERATIONAL" | "PARTIAL_OUTAGE" | "MAJOR_OUTAGE";
-  metrics: { total: number; down: number; paused: number };
+  description?: string | null;
+  systemState: "OPERATIONAL" | "PARTIAL_OUTAGE" | "MAJOR_OUTAGE" | "UNDER_MAINTENANCE";
+  metrics: { total: number; down: number; paused: number; maintenance?: number };
   monitors: PublicMonitor[];
+  // Server-stamped collection time, so the page doesn't claim to be fresher
+  // than the 30s revalidation window allows.
+  generatedAt?: string;
 }
 
 const SYSTEM = {
@@ -38,6 +45,13 @@ const SYSTEM = {
     bg: "bg-down/10",
     border: "border-down/30",
   },
+  UNDER_MAINTENANCE: {
+    icon: Wrench,
+    title: "Scheduled maintenance",
+    text: "text-degraded",
+    bg: "bg-degraded/10",
+    border: "border-degraded/30",
+  },
 } as const;
 
 export function StatusOverview({ data }: { data: StatusData }) {
@@ -57,6 +71,9 @@ export function StatusOverview({ data }: { data: StatusData }) {
           <p className="mt-0.5 text-sm text-muted-foreground">
             {metrics.total} {metrics.total === 1 ? "monitor" : "monitors"}
             {metrics.down > 0 && <span className="text-down"> · {metrics.down} down</span>}
+            {(metrics.maintenance ?? 0) > 0 && (
+              <span className="text-degraded"> · {metrics.maintenance} in maintenance</span>
+            )}
             {metrics.paused > 0 && <span> · {metrics.paused} paused</span>}
           </p>
         </div>
@@ -74,7 +91,13 @@ export function StatusOverview({ data }: { data: StatusData }) {
               <div key={node.id} className="glass rounded-lg p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <span className="truncate font-display text-sm font-medium text-foreground">{node.name}</span>
-                  <StatusBadge status={node.status} size="sm" />
+                  {node.underMaintenance ? (
+                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-degraded/30 bg-degraded/10 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-degraded">
+                      <Wrench className="h-3 w-3" aria-hidden="true" /> maintenance
+                    </span>
+                  ) : (
+                    <StatusBadge status={node.status} size="sm" />
+                  )}
                 </div>
                 <div className="flex h-8 items-end gap-px" role="img" aria-label={`90-day uptime history for ${node.name}`}>
                   {node.uptimeHistory.map((ratio, i) => (
