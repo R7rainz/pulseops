@@ -223,7 +223,12 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
       data: {
         status: targetStatus,
         consecutiveFailures: updatedFailures,
-        lastCheckedAt: new Date(),
+        lastCheckedAt: now,
+        // The result landed, so this monitor is no longer in flight and its
+        // next check is one interval out. Clearing dispatchedAt is what lets
+        // the scheduler pick it up again.
+        dispatchedAt: null,
+        nextCheckAt: new Date(now.getTime() + monitor.intervalSeconds * 1000),
         // Persist the latest latency/status so the UI can show last-known
         // stats even after the 5-minute Redis live cache expires.
         lastResponseTime: latencyMs,
@@ -235,7 +240,11 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
     }),
   ];
 
+  // Remembered so the insert can be dropped if a concurrent result wins the
+  // race to open the incident (see the P2002 handling below).
+  let incidentCreateIndex = -1;
   if (newlyTriggeredIncident) {
+    incidentCreateIndex = transactionQueries.length;
     transactionQueries.push(
       prisma.incident.create({
         data: {
@@ -262,7 +271,26 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
     );
   }
 
-  const txResults = await prisma.$transaction(transactionQueries);
+  let txResults: any[];
+  try {
+    txResults = await prisma.$transaction(transactionQueries);
+  } catch (error) {
+    // A unique partial index allows only one active incident per monitor. If a
+    // concurrent result opened one first, that's the correct outcome — not an
+    // error to retry. Re-run without the incident insert so the check result
+    // and monitor state still land.
+    if (
+      newlyTriggeredIncident &&
+      (error as { code?: string }).code === "P2002"
+    ) {
+      newlyTriggeredIncident = false;
+      txResults = await prisma.$transaction(
+        transactionQueries.filter((_, i) => i !== incidentCreateIndex),
+      );
+    } else {
+      throw error;
+    }
+  }
 
   // Write live state to Redis for the live-monitors endpoint
   const liveState = {
@@ -277,7 +305,7 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
 
   // Blast Webhooks
   if (newlyTriggeredIncident) {
-    const createdIncident = txResults[2];
+    const createdIncident = txResults[incidentCreateIndex];
 
     sendWebhookNotifications(monitor.workspaceId, {
       event: "incident.opened",

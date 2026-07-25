@@ -117,8 +117,28 @@ export function startWebhookRetryWorker() {
 
   worker.on("failed", (job, error) => {
     console.log(`Webhook retry job ${job?.id} failed:`, error.message);
+
+    // Final attempt exhausted. Previously this was logged and forgotten, with
+    // no operator-visible signal that a webhook had permanently stopped being
+    // delivered. The delivery log row carries the detail; this makes the
+    // give-up itself explicit.
+    if (job && job.attemptsMade >= (job.opts.attempts ?? 1)) {
+      console.error(
+        `[WEBHOOK_RETRY] GIVING UP on job ${job.id} after ${job.attemptsMade} attempts — ` +
+          `endpoint ${job.data?.url} is not accepting deliveries: ${error.message}`,
+      );
+    }
   });
 
   console.log("[WEBHOOK_RETRY] Worker started");
   return worker;
+}
+
+// Closes the worker (waiting for in-flight jobs) and its Redis connection.
+export async function stopWebhookRetryWorker() {
+  if (worker) {
+    await worker.close();
+    worker = null;
+  }
+  await connection.quit().catch(() => {});
 }

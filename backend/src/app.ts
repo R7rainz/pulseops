@@ -9,6 +9,11 @@ import scalarApiReference from "@scalar/fastify-api-reference";
 import { scalarThemeCss } from "./lib/scalar-theme";
 import { ZodError } from "zod";
 import { BlockedTargetError } from "./lib/ssrf";
+
+// How long the dispatcher may go without a successful tick before this instance
+// reports not-ready. Generous relative to the 15s tick so a single slow tick or
+// a lost leader-lock race doesn't flap readiness.
+const DISPATCH_STALE_MS = 3 * 60 * 1000;
 import { authRoutes } from "./modules/auth/auth.routes";
 import { workspaceRoutes } from "./modules/workspaces/workspace.routes";
 import { monitorRoutes } from "./modules/monitors/monitor.routes";
@@ -17,10 +22,15 @@ import { webhookRoutes } from "./modules/webhooks/webhook.routes";
 import { publicStatusRoutes } from "./modules/status/status.routes";
 import { inviteRoutes } from "./modules/workspaces/invite.routes";
 import { billingRoutes } from "./modules/billing/billing.routes";
-import { startWebhookRetryWorker } from "./workers/webhook.worker";
+import { startWebhookRetryWorker, stopWebhookRetryWorker } from "./workers/webhook.worker";
+import { closeWebhookQueue } from "./modules/webhooks/webhook.queue";
 import { connectKafka, kafkaProducer, kafkaConsumer } from "./lib/kafka";
 import { startMetricsConsumer } from "./modules/telemetry/metrics.consumer";
-import { startMonitorDispatchScheduler, stopMonitorDispatchScheduler } from "./modules/monitors/monitor.scheduler";
+import {
+    getLastSuccessfulDispatchAt,
+    startMonitorDispatchScheduler,
+    stopMonitorDispatchScheduler,
+} from "./modules/monitors/monitor.scheduler";
 import { startHeartbeatScheduler, stopHeartbeatScheduler } from "./modules/monitors/heartbeat.scheduler";
 import { prisma } from "./lib/db";
 import { redis } from "./lib/redis";
@@ -144,10 +154,57 @@ export async function buildApp() {
         });
     });
 
+    // Bound every dependency probe. Without a timeout a wedged dependency makes
+    // the health endpoint itself hang, which reads as a timeout to the
+    // orchestrator rather than as the "degraded" it actually is.
+    const withTimeout = <T>(p: Promise<T>, ms = 2000): Promise<boolean> =>
+        Promise.race([
+            p.then(() => true),
+            new Promise<boolean>((resolve) => setTimeout(() => resolve(false), ms)),
+        ]).catch(() => false);
+
+    // Liveness: is the process itself up? Deliberately checks nothing external —
+    // a slow database must not get the container killed and restarted, which
+    // only removes capacity while the database is already struggling.
+    app.get("/live", async (_request, response) =>
+        response.status(200).send({ status: "ok", service: "pulseops-api" }),
+    );
+
+    // Readiness: should this instance receive traffic / is the pipeline actually
+    // working? Kafka is included because its absence is otherwise invisible —
+    // the API stays "healthy" while silently running no checks at all.
+    app.get("/ready", async (_request, response) => {
+        const [dbOk, redisOk] = await Promise.all([
+            withTimeout(prisma.$queryRaw`SELECT 1`),
+            withTimeout(redis.ping()),
+        ]);
+
+        // The dispatcher writes a timestamp on every successful tick. If that
+        // has gone stale, results have stopped flowing even though the process
+        // and its datastores look fine.
+        const lastDispatch = getLastSuccessfulDispatchAt();
+        const dispatchAgeMs = lastDispatch ? Date.now() - lastDispatch.getTime() : null;
+        const dispatchOk = dispatchAgeMs === null ? true : dispatchAgeMs < DISPATCH_STALE_MS;
+
+        const ready = dbOk && redisOk && dispatchOk;
+        return response.status(ready ? 200 : 503).send({
+            status: ready ? "ok" : "degraded",
+            service: "pulseops-api",
+            checks: {
+                database: dbOk,
+                redis: redisOk,
+                dispatch: dispatchOk,
+                dispatchAgeMs,
+            },
+        });
+    });
+
+    // Kept for backwards compatibility with existing probes and compose
+    // healthchecks — same semantics as /ready.
     app.get("/health", async (_request, response) => {
         const [dbOk, redisOk] = await Promise.all([
-            prisma.$queryRaw`SELECT 1`.then(() => true).catch(() => false),
-            redis.ping().then(() => true).catch(() => false),
+            withTimeout(prisma.$queryRaw`SELECT 1`),
+            withTimeout(redis.ping()),
         ]);
 
         const healthy = dbOk && redisOk;
@@ -216,17 +273,68 @@ export async function start(app: FastifyInstance) {
     }
 }
 
+// Hard cap on shutdown. Any single close can hang (a wedged Kafka broker, an
+// in-flight webhook retry); this guarantees the process still exits so an
+// orchestrator doesn't have to SIGKILL it.
+const SHUTDOWN_TIMEOUT_MS = 20000;
+
 export function setupShutdownHandlers(app: FastifyInstance) {
+    let shuttingDown = false;
+
+    const shutdown = async (reason: string) => {
+        // A second signal while already draining shouldn't restart the sequence.
+        if (shuttingDown) return;
+        shuttingDown = true;
+
+        app.log.info(`[SHUTDOWN] ${reason}. Powering down tracking engines...`);
+
+        const forceExit = setTimeout(() => {
+            app.log.error("[SHUTDOWN] Timed out waiting for clean close — forcing exit.");
+            process.exit(1);
+        }, SHUTDOWN_TIMEOUT_MS);
+        forceExit.unref();
+
+        // Stop taking on new work first, then close consumers, then the things
+        // they depend on. Each step is isolated so one failure can't strand the
+        // rest — previously the BullMQ worker, both extra Redis connections and
+        // Prisma were simply never closed.
+        const step = async (label: string, fn: () => Promise<unknown>) => {
+            try {
+                await fn();
+            } catch (error) {
+                app.log.error(`[SHUTDOWN] ${label} failed: ${(error as Error).message}`);
+            }
+        };
+
+        stopMonitorDispatchScheduler();
+        stopHeartbeatScheduler();
+
+        await step("HTTP server close", () => app.close());
+        await step("Kafka producer disconnect", () => kafkaProducer.disconnect());
+        await step("Kafka consumer disconnect", () => kafkaConsumer.disconnect());
+        await step("Webhook worker close", () => stopWebhookRetryWorker());
+        await step("Webhook queue close", () => closeWebhookQueue());
+        await step("Redis quit", () => redis.quit());
+        await step("Prisma disconnect", () => prisma.$disconnect());
+
+        clearTimeout(forceExit);
+        app.log.info("[SHUTDOWN] Clean shutdown complete.");
+        process.exit(0);
+    };
+
     const signals: NodeJS.Signals[] = ["SIGINT", "SIGTERM"];
     signals.forEach((signal) => {
-        process.on(signal, async () => {
-            app.log.info(`[SHUTDOWN] Intercepted ${signal}. Powering down tracking engines...`);
-            stopMonitorDispatchScheduler();
-            stopHeartbeatScheduler();
-            try { await kafkaProducer.disconnect(); } catch {}
-            try { await kafkaConsumer.disconnect(); } catch {}
-            await app.close();
-            process.exit(0);
-        });
+        process.on(signal, () => void shutdown(`Intercepted ${signal}`));
+    });
+
+    // Previously unhandled: these terminated the process (or, for rejections,
+    // silently continued) without closing anything.
+    process.on("unhandledRejection", (reason) => {
+        app.log.error({ reason }, "[SHUTDOWN] Unhandled promise rejection");
+    });
+
+    process.on("uncaughtException", (error) => {
+        app.log.error(error, "[SHUTDOWN] Uncaught exception — shutting down");
+        void shutdown("Uncaught exception");
     });
 }
