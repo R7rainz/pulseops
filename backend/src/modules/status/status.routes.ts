@@ -37,24 +37,64 @@ export async function publicStatusRoutes(app: FastifyInstance) {
           /* fall through to a live read */
         }
 
-        const workspace = await prisma.workspace.findUnique({
+        // Only explicitly-published monitors are exposed. Previously this
+        // resolved the workspace by slug and returned *every* active monitor,
+        // so a monitor named after an internal host went public the moment it
+        // was created.
+        const statusPage = await prisma.statusPage.findUnique({
           where: { slug },
           select: {
-            name: true,
-            slug: true,
-            monitors: {
-              where: { isActive: true },
-              select: { id: true, name: true, status: true },
-              orderBy: { name: "asc" },
+            title: true,
+            description: true,
+            isPublic: true,
+            entries: {
+              select: {
+                displayName: true,
+                position: true,
+                monitor: {
+                  select: {
+                    id: true,
+                    name: true,
+                    status: true,
+                    isActive: true,
+                    maintenanceStartAt: true,
+                    maintenanceEndAt: true,
+                  },
+                },
+              },
+              orderBy: [{ position: "asc" }],
             },
           },
         });
 
-        if (!workspace) {
+        // An unpublished page is indistinguishable from a missing one — don't
+        // confirm that a slug exists to someone who can't view it.
+        if (!statusPage || !statusPage.isPublic) {
           return response.status(404).send({ message: "Status page not found" });
         }
 
-        const monitorIds = workspace.monitors.map((m) => m.id);
+        const now = new Date();
+        const publishedMonitors = statusPage.entries
+          .filter((entry) => entry.monitor.isActive)
+          .map((entry) => ({
+            id: entry.monitor.id,
+            // Fall back to the real name only when no public alias is set.
+            name: entry.displayName ?? entry.monitor.name,
+            status: entry.monitor.status,
+            underMaintenance:
+              entry.monitor.maintenanceStartAt != null &&
+              entry.monitor.maintenanceEndAt != null &&
+              now >= entry.monitor.maintenanceStartAt &&
+              now <= entry.monitor.maintenanceEndAt,
+          }));
+
+        const workspace = {
+          name: statusPage.title,
+          description: statusPage.description,
+          monitors: publishedMonitors,
+        };
+
+        const monitorIds = publishedMonitors.map((m) => m.id);
         const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
 
         // Bucket by day in Postgres. This previously fetched every check for
@@ -90,7 +130,6 @@ export async function publicStatusRoutes(app: FastifyInstance) {
           });
         }
 
-        const now = new Date();
         const history: number[][] = [];
         for (const id of monitorIds) {
           const monitorDays = dailyMap.get(id)!;
@@ -115,21 +154,31 @@ export async function publicStatusRoutes(app: FastifyInstance) {
         }));
 
         const total = monitors.length;
-        const down = monitors.filter((m) => m.status === "DOWN").length;
+        const down = monitors.filter((m) => m.status === "DOWN" && !m.underMaintenance).length;
         const paused = monitors.filter((m) => m.status === "PAUSED").length;
+        const maintenance = monitors.filter((m) => m.underMaintenance).length;
+
+        // A monitor down *during a declared maintenance window* isn't an
+        // outage, so it no longer counts toward the system state.
         const degraded =
           down > 0
             ? down === total
               ? "MAJOR_OUTAGE"
               : "PARTIAL_OUTAGE"
-            : "OPERATIONAL";
+            : maintenance > 0
+              ? "UNDER_MAINTENANCE"
+              : "OPERATIONAL";
 
         const body = {
           data: {
             workspaceName: workspace.name,
+            description: workspace.description,
             systemState: degraded,
-            metrics: { total, down, paused },
+            metrics: { total, down, paused, maintenance },
             monitors,
+            // Stamped server-side so the client shows when the data was
+            // actually gathered, not when the page happened to render.
+            generatedAt: new Date().toISOString(),
           },
         };
 

@@ -22,6 +22,7 @@ import { incidentRoutes } from "./modules/incidents/incident.routes";
 import { webhookRoutes } from "./modules/webhooks/webhook.routes";
 import { notificationRoutes } from "./modules/notifications/notification.routes";
 import { publicStatusRoutes } from "./modules/status/status.routes";
+import { statusPageRoutes } from "./modules/status/status-page.routes";
 import { inviteRoutes } from "./modules/workspaces/invite.routes";
 import { billingRoutes } from "./modules/billing/billing.routes";
 import { startWebhookRetryWorker, stopWebhookRetryWorker } from "./workers/webhook.worker";
@@ -246,6 +247,10 @@ export async function buildApp() {
     });
 
     await app.register(notificationRoutes, {
+        prefix: "/api/v1",
+    });
+
+    await app.register(statusPageRoutes, {
         prefix: "/api/v1",
     });
 

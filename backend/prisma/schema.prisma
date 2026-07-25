@@ -123,6 +123,42 @@ model Workspace {
   workspaceInvites     WorkspaceInvite[]
   processedPayments    ProcessedPayment[]
   notificationChannels NotificationChannel[]
+  statusPage           StatusPage?
+}
+
+// Public status page configuration.
+//
+// Previously /status/:slug auto-exposed EVERY active monitor in a workspace,
+// with no opt-in — so a monitor named after an internal hostname became public
+// the moment it was created. Monitors are now published explicitly, and a
+// workspace with no StatusPage row has no public page at all.
+model StatusPage {
+  id          Int      @id @default(autoincrement())
+  workspaceId Int      @unique
+  slug        String   @unique
+  title       String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  entries   StatusPageMonitor[]
+}
+
+model StatusPageMonitor {
+  id           Int    @id @default(autoincrement())
+  statusPageId Int
+  monitorId    Int
+  // Public-facing name, so an internal monitor name doesn't have to be exposed.
+  displayName  String?
+  position     Int    @default(0)
+
+  statusPage StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+  monitor    Monitor    @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@unique([statusPageId, monitorId])
+  @@index([statusPageId])
 }
 
 // Where alerts go. Until now the only transport was a generic HTTP webhook
@@ -272,6 +308,7 @@ model Monitor {
   checks       MonitorCheck[]
   dailyRollups MonitorCheckDaily[]
   incidents    Incident[]
+  statusPageEntries StatusPageMonitor[]
 
   @@index([workspaceId])
   // The scheduler's hot query: active, due, not already in flight.
