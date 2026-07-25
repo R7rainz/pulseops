@@ -16,7 +16,10 @@ export async function createMonitor(formData: FormData) {
   const name = formData.get("name") as string;
   const url = formData.get("url") as string;
   const workspaceId = formData.get("workspaceId") as string;
-  const type = (formData.get("type") as string) === "HEARTBEAT" ? "HEARTBEAT" : "HTTP";
+  const requestedType = (formData.get("type") as string) || "HTTP";
+  const type = ["HTTP", "HEARTBEAT", "TCP", "DNS", "KEYWORD"].includes(requestedType)
+    ? requestedType
+    : "HTTP";
   const isHeartbeat = type === "HEARTBEAT";
   const method = (formData.get("method") as string) || undefined;
   const intervalSeconds = formData.get("intervalSeconds")
@@ -30,6 +33,19 @@ export async function createMonitor(formData: FormData) {
     : undefined;
   const gracePeriodSeconds = formData.get("gracePeriodSeconds")
     ? Number(formData.get("gracePeriodSeconds"))
+    : undefined;
+
+  // Per-type config. Only sent for the type it belongs to so the API's
+  // type-specific validation isn't tripped by stray fields.
+  const expectedStatusMatch =
+    (formData.get("expectedStatusMatch") as string)?.trim() || undefined;
+  const tcpPort = formData.get("tcpPort") ? Number(formData.get("tcpPort")) : undefined;
+  const dnsRecordType = (formData.get("dnsRecordType") as string) || undefined;
+  const dnsExpectedValue =
+    (formData.get("dnsExpectedValue") as string)?.trim() || undefined;
+  const keyword = (formData.get("keyword") as string)?.trim() || undefined;
+  const keywordShouldExist = formData.get("keywordShouldExist")
+    ? formData.get("keywordShouldExist") === "true"
     : undefined;
 
   // HTTP monitors need a URL to ping; heartbeat monitors do not.
@@ -55,6 +71,13 @@ export async function createMonitor(formData: FormData) {
         intervalSeconds: intervalSeconds || 60,
         timeoutMs: timeoutMs || 5000,
         expectedStatus: expectedStatus || 200,
+        ...(expectedStatusMatch && { expectedStatusMatch }),
+        ...(type === "TCP" && { tcpPort }),
+        ...(type === "DNS" && {
+          dnsRecordType,
+          ...(dnsExpectedValue && { dnsExpectedValue }),
+        }),
+        ...(type === "KEYWORD" && { keyword, keywordShouldExist }),
       };
 
   try {
@@ -71,7 +94,8 @@ export async function createMonitor(formData: FormData) {
     );
 
     if (!res.ok) {
-      setToast(cookieStore, "Failed to create monitor", "error");
+      const err = await res.json().catch(() => ({}));
+      setToast(cookieStore, err.message || "Failed to create monitor", "error");
       return;
     }
 
