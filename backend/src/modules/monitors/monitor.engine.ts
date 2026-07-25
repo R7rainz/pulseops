@@ -304,9 +304,41 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
     .set(`monitor:${monitor.id}:live`, JSON.stringify(liveState), "EX", 300)
     .catch((err: any) => console.error("[ENGINE] Redis live write failed:", err));
 
+  // Should an alert actually go out for this monitor right now?
+  //
+  // Two independent suppressions, both deliberately applied *after* the
+  // incident is recorded — an incident always exists in the timeline even when
+  // nobody is paged:
+  //   - mutedUntil: the user explicitly snoozed this monitor
+  //   - alertCooldownSeconds: a flapping monitor shouldn't page on every flip
+  //
+  // Recovery notifications are never suppressed by the cooldown: "it's back"
+  // is always worth delivering, and withholding it would leave someone
+  // believing the outage is ongoing.
+  const isMuted = monitor.mutedUntil != null && monitor.mutedUntil > now;
+  const withinCooldown =
+    monitor.lastAlertAt != null &&
+    now.getTime() - monitor.lastAlertAt.getTime() < monitor.alertCooldownSeconds * 1000;
+
+  const shouldAlertOpen = newlyTriggeredIncident && !isMuted && !withinCooldown;
+  const shouldAlertResolve = activeIncidentsToResolve.length > 0 && !isMuted;
+
+  if (newlyTriggeredIncident && (isMuted || withinCooldown)) {
+    console.log(
+      `[ENGINE] Incident opened for monitor ${monitor.id} but alerting suppressed ` +
+        `(${isMuted ? "muted" : "within cooldown"})`,
+    );
+  }
+
+  if (shouldAlertOpen || shouldAlertResolve) {
+    prisma.monitor
+      .update({ where: { id: monitor.id }, data: { lastAlertAt: now } })
+      .catch(() => {});
+  }
+
   // Fan out alerts. Legacy WebhookEndpoint delivery is kept alongside the newer
   // notification channels so existing endpoints keep firing after the upgrade.
-  if (newlyTriggeredIncident) {
+  if (shouldAlertOpen) {
     const createdIncident = txResults[incidentCreateIndex];
     const message = errorMessage
       ? `Monitor [${monitor.name}] is ${targetStatus}: ${errorMessage}`
@@ -336,7 +368,7 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
     }).catch(err => console.error("[ENGINE] Notification open failed:", err));
   }
 
-  if (activeIncidentsToResolve.length > 0) {
+  if (shouldAlertResolve) {
     activeIncidentsToResolve.forEach(incident => {
       const at = new Date().toISOString();
       const message = `RECOVERY: Monitor [${monitor.name}] stabilized. All clear.`;

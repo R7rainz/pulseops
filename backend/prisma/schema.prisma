@@ -30,6 +30,7 @@ model User {
   sessions         Session[]
   oauthAccounts    OAuthAccount[]
   mfaRecoveryCodes MfaRecoveryCode[]
+  acknowledgedIncidents Incident[] @relation("IncidentAcknowledger")
 }
 
 // Rotating refresh-token sessions. The opaque refresh token is never stored;
@@ -241,6 +242,16 @@ model Monitor {
   // Set when a check is dispatched, cleared when its result lands. Stops a
   // monitor slower than the tick interval from being dispatched repeatedly.
   dispatchedAt        DateTime?
+  // Alert suppression. `graceThreshold` (consecutive failures) was the only
+  // debounce, so a flapping monitor could page repeatedly.
+  //   alertCooldownSeconds — minimum gap between alerts for this monitor
+  //   reminderIntervalSeconds — re-notify cadence while an incident stays open
+  //                             (0 disables reminders)
+  //   mutedUntil — user-set snooze; checks keep running, alerts don't fire
+  alertCooldownSeconds    Int       @default(300)
+  reminderIntervalSeconds Int       @default(0)
+  mutedUntil              DateTime?
+  lastAlertAt             DateTime?
 
   workspace    Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   checks       MonitorCheck[]
@@ -313,8 +324,16 @@ model Incident {
   title      String
   startedAt  DateTime       @default(now())
   resolvedAt DateTime?
+  // ACKNOWLEDGED existed as a status with no record of who acknowledged it or
+  // when, so "someone is on this" couldn't actually be attributed.
+  acknowledgedAt DateTime?
+  acknowledgedBy Int?
+  // When the last "still down" reminder went out, so reminders fire on a
+  // cadence instead of every sweep.
+  lastReminderAt DateTime?
 
-  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  monitor        Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  acknowledgedByUser User? @relation("IncidentAcknowledger", fields: [acknowledgedBy], references: [id], onDelete: SetNull)
 
   @@index([monitorId])
   @@index([status])

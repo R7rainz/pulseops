@@ -49,6 +49,28 @@ const monitorFields = z
 
     maintenanceStartAt: z.string().nullable().optional(),
     maintenanceEndAt: z.string().nullable().optional(),
+
+    // Alert suppression. Cooldown debounces a flapping monitor; reminders
+    // re-notify while an incident stays open (0 = off); mutedUntil snoozes
+    // alerting without pausing the checks themselves.
+    alertCooldownSeconds: z
+      .number()
+      .int()
+      .min(0, { message: "Alert cooldown cannot be negative" })
+      .max(86400, { message: "Alert cooldown cannot exceed 24 hours" })
+      .optional(),
+
+    reminderIntervalSeconds: z
+      .number()
+      .int()
+      .min(0, { message: "Reminder interval cannot be negative" })
+      .max(86400, { message: "Reminder interval cannot exceed 24 hours" })
+      .refine((v) => v === 0 || v >= 300, {
+        message: "Reminder interval must be 0 (off) or at least 5 minutes",
+      })
+      .optional(),
+
+    mutedUntil: z.string().nullable().optional(),
   });
 
 export const createMonitorSchema = monitorFields.superRefine((data, ctx) => {
