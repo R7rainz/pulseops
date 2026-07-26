@@ -34,3 +34,15 @@ func (d *Dispatcher) Run() {
 		}(i)
 	}
 }
+
+// Drain stops accepting new targets and blocks until every in-flight check has
+// finished and its result has been handed to ResultChan, which it then closes
+// so the metrics publisher can finish and exit.
+//
+// Without this, shutdown cancelled the context immediately and dropped both
+// in-flight checks and anything still buffered in the async Kafka writer.
+func (d *Dispatcher) Drain() {
+	close(d.TargetChan)
+	d.wg.Wait()
+	close(d.ResultChan)
+}

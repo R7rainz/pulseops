@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"pulseops/ping-engine/engine"
 
@@ -15,6 +16,10 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
+
+// How long to wait for in-flight checks to finish and their results to reach
+// Kafka before giving up and exiting anyway.
+const shutdownTimeout = 30 * time.Second
 
 func main() {
 	logger, _ := zap.NewDevelopment()
@@ -45,12 +50,21 @@ func main() {
 		Topic:        metricsTopic,
 		Balancer:     &kafka.LeastBytes{},
 		RequiredAcks: kafka.RequireOne,
-		Async:        true,
+		// Synchronous writes so a result is durable before we consider it sent.
+		// With Async:true, Close() could return while messages were still
+		// buffered, silently dropping the tail on every deploy.
+		Async: false,
 	}
 
-	defer writer.Close()
+	// Signals the metrics publisher has finished flushing every result.
+	publisherDone := make(chan struct{})
 
 	go func() {
+		defer close(publisherDone)
+
+		// Ranges until Drain() closes ResultChan. Deliberately uses a
+		// background context, not ctx: on shutdown we still want the already
+		// collected results written out rather than cancelled.
 		for result := range dispatcher.ResultChan {
 			payload, err := json.Marshal(result)
 			if err != nil {
@@ -58,10 +72,12 @@ func main() {
 				continue
 			}
 
-			err = writer.WriteMessages(ctx, kafka.Message{
+			writeCtx, writeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+			err = writer.WriteMessages(writeCtx, kafka.Message{
 				Key:   []byte(strconv.Itoa(result.WorkspaceID)),
 				Value: payload,
 			})
+			writeCancel()
 			if err != nil {
 				sugar.Errorf("Failed to push telemetry to Kafka firehouse: %v", err)
 			} else {
@@ -77,9 +93,13 @@ func main() {
 		MinBytes: 10,
 		MaxBytes: 10e6,
 	})
-	defer reader.Close()
+
+	// Signals the target consumer loop has exited and will not send on
+	// TargetChan again — required before Drain() may close it.
+	consumerDone := make(chan struct{})
 
 	go func() {
+		defer close(consumerDone)
 		sugar.Infof("Kafka consumer streaming targets from topic : %s", targetsTopic)
 
 		for {
@@ -97,7 +117,12 @@ func main() {
 				sugar.Errorf("Corrupted payload dropped from stream : %v", err)
 				continue
 			}
-			dispatcher.TargetChan <- target
+
+			select {
+			case dispatcher.TargetChan <- target:
+			case <-ctx.Done():
+				return
+			}
 		}
 	}()
 
@@ -106,5 +131,36 @@ func main() {
 	<-signChan
 
 	sugar.Info("Shutdown signal intercepted. Draining remaining workers and flushing buffers...")
-	cancel()
+
+	// Ordered shutdown, bounded by a deadline so a wedged check can't hang the
+	// process forever:
+	//   1. cancel ctx    -> the target consumer stops reading and exits
+	//   2. Drain()       -> closes TargetChan, waits for in-flight checks,
+	//                       then closes ResultChan
+	//   3. publisherDone -> every collected result has been written to Kafka
+	//   4. close writer/reader
+	shutdownComplete := make(chan struct{})
+	go func() {
+		defer close(shutdownComplete)
+		cancel()
+		<-consumerDone
+		dispatcher.Drain()
+		<-publisherDone
+	}()
+
+	select {
+	case <-shutdownComplete:
+		sugar.Info("Drain complete — all in-flight checks reported.")
+	case <-time.After(shutdownTimeout):
+		sugar.Warn("Drain timed out; exiting with checks still in flight.")
+	}
+
+	if err := writer.Close(); err != nil {
+		sugar.Errorf("Error closing Kafka writer: %v", err)
+	}
+	if err := reader.Close(); err != nil {
+		sugar.Errorf("Error closing Kafka reader: %v", err)
+	}
+
+	sugar.Info("Ping engine shut down cleanly.")
 }

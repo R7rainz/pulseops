@@ -1,4 +1,5 @@
 import { prisma } from "../../lib/db";
+import { withLeaderLock } from "../../lib/leader-lock";
 import { applyHeartbeatMiss, isHeartbeatOverdue } from "./monitor.engine";
 
 let sweepInterval: NodeJS.Timeout | null = null;
@@ -36,11 +37,15 @@ export function startHeartbeatScheduler(intervalMs = 30000) {
 
   console.log(`[HEARTBEAT] Sweeping for missed heartbeats every ${intervalMs / 1000}s`);
 
-  sweepHeartbeats().catch((error) => console.error("[HEARTBEAT] Sweep tick failed:", error));
+  // Only one replica sweeps per tick — otherwise two instances race on
+  // applyHeartbeatMiss for the same monitor and can double-open incidents.
+  const tick = () =>
+    withLeaderLock("heartbeat-sweep", intervalMs - 1000, sweepHeartbeats).catch((error) =>
+      console.error("[HEARTBEAT] Sweep tick failed:", error),
+    );
 
-  sweepInterval = setInterval(() => {
-    sweepHeartbeats().catch((error) => console.error("[HEARTBEAT] Sweep tick failed:", error));
-  }, intervalMs);
+  tick();
+  sweepInterval = setInterval(tick, intervalMs);
 }
 
 export function stopHeartbeatScheduler() {

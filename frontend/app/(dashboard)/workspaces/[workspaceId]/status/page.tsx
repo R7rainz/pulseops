@@ -4,11 +4,14 @@ import { ExternalLink } from "lucide-react";
 import { API_URL } from "@/lib/constants";
 import { apiFetch } from "@/lib/apiFetch";
 import { StatusOverview, type StatusData } from "@/components/status/StatusOverview";
+import StatusPageForm, { type StatusPageConfig, type SelectableMonitor } from "./status-page-form";
 
 interface Workspace {
   id: number;
   name: string;
   slug: string;
+  // Gates the config form — only owners/admins may publish.
+  role?: string;
 }
 
 export default async function WorkspaceStatusPage({
@@ -23,6 +26,8 @@ export default async function WorkspaceStatusPage({
 
   let workspace: Workspace | null = null;
   let statusData: StatusData | null = null;
+  let config: StatusPageConfig | null = null;
+  let monitors: SelectableMonitor[] = [];
   let authFailed = false;
 
   try {
@@ -38,8 +43,40 @@ export default async function WorkspaceStatusPage({
       workspace = wsJson.data;
     }
 
-    if (workspace?.slug) {
-      const statusRes = await fetch(`${API_URL}/api/v1/status/${workspace.slug}`, { cache: "no-store" });
+    const [configRes, monitorsRes] = await Promise.all([
+      apiFetch(`${API_URL}/api/v1/workspaces/${workspaceId}/status-page`, {
+        token, cookieStore, cache: "no-store",
+      }),
+      apiFetch(`${API_URL}/api/v1/workspaces/${workspaceId}/monitors`, {
+        token, cookieStore, cache: "no-store",
+      }),
+    ]);
+
+    if (configRes.ok) {
+      const json = await configRes.json();
+      if (json.data) {
+        config = {
+          slug: json.data.slug,
+          title: json.data.title,
+          description: json.data.description,
+          isPublic: json.data.isPublic,
+          entries: (json.data.entries ?? []).map((e: { monitorId: number; displayName: string | null }) => ({
+            monitorId: e.monitorId,
+            displayName: e.displayName,
+          })),
+        };
+      }
+    }
+
+    if (monitorsRes.ok) {
+      const json = await monitorsRes.json();
+      monitors = (json.data ?? []).map((m: { id: number; name: string }) => ({ id: m.id, name: m.name }));
+    }
+
+    // Preview mirrors exactly what the public page serves, so it only renders
+    // once the page is actually published.
+    if (config?.slug && config.isPublic) {
+      const statusRes = await fetch(`${API_URL}/api/v1/status/${config.slug}`, { cache: "no-store" });
       if (statusRes.ok) {
         const statusJson = await statusRes.json();
         statusData = statusJson.data;
@@ -51,7 +88,8 @@ export default async function WorkspaceStatusPage({
 
   if (authFailed) redirect("/login");
 
-  const publicHref = workspace?.slug ? `/status/${workspace.slug}` : null;
+  const publicHref = config?.isPublic ? `/status/${config.slug}` : null;
+  const canEdit = workspace?.role === "OWNER" || workspace?.role === "ADMIN";
 
   return (
     <main className="min-h-dvh p-6 md:p-10">
@@ -77,12 +115,29 @@ export default async function WorkspaceStatusPage({
           )}
         </div>
 
+        <section className="glass rounded-lg p-6">
+          <h2 className="mb-4 font-display text-sm font-semibold text-foreground">Configuration</h2>
+          <StatusPageForm
+            workspaceId={workspaceId}
+            workspaceName={workspace?.name ?? `Workspace #${workspaceId}`}
+            workspaceSlug={workspace?.slug ?? ""}
+            config={config}
+            monitors={monitors}
+            canEdit={canEdit}
+          />
+        </section>
+
         {statusData ? (
-          <StatusOverview data={statusData} />
+          <section className="glass rounded-lg p-6">
+            <h2 className="mb-4 font-display text-sm font-semibold text-foreground">Public preview</h2>
+            <StatusOverview data={statusData} />
+          </section>
         ) : (
           <div className="rounded-lg border border-dashed border-border p-8 text-center">
-            <p className="font-display text-base font-medium text-foreground">Status unavailable</p>
-            <p className="mt-1 text-sm text-muted-foreground">We couldn’t load this status page. Please try again.</p>
+            <p className="font-display text-base font-medium text-foreground">Not published</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Pick the monitors to publish above, tick “Publish this page”, then save to make it live.
+            </p>
           </div>
         )}
       </div>

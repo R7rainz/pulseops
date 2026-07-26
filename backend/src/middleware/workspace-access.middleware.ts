@@ -1,5 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
+import type { WorkspaceRole } from "../generated/prisma/client";
 import { prisma } from "../lib/db";
+import { sha256Hex } from "../lib/hash";
 import { verifyAccessToken } from "../lib/jwt";
 
 // Normalized authorization context set by requireWorkspaceAccess. Both human
@@ -66,8 +68,9 @@ export async function requireWorkspaceAccess(
   // Machine auth (API key) takes precedence when the header is present.
   const apiKeyHeader = request.headers["x-api-key"];
   if (typeof apiKeyHeader === "string" && apiKeyHeader.length > 0) {
+    // Keys are stored hashed — look up by digest, never by the raw value.
     const key = await prisma.apiKey.findFirst({
-      where: { key: apiKeyHeader, isActive: true },
+      where: { keyHash: sha256Hex(apiKeyHeader), isActive: true },
     });
 
     if (!key) {
@@ -139,6 +142,34 @@ export async function assertWorkspaceAccess(
   if (!membership) {
     throw new Error("You do not have access to this workspace");
   }
+}
+
+// Service-layer authorization for a *mutation* on a specific resource.
+//
+// requireRole on the route validates the caller's role in the workspace named
+// in the path — but mutating services re-resolve the target workspace from the
+// resource itself (a monitor/webhook loaded by id). Checking bare membership
+// there lets an ADMIN of workspace A act on workspace B's resources with only
+// VIEWER rights in B. This asserts the role in the *resource's* workspace.
+export async function assertWorkspaceRole(
+  userId: number,
+  workspaceId: number,
+  allowedRoles: WorkspaceRole[] = ["OWNER", "ADMIN"],
+) {
+  const membership = await prisma.workspaceMember.findUnique({
+    where: { userId_workspaceId: { userId, workspaceId } },
+    select: { role: true },
+  });
+
+  if (!membership) {
+    throw new Error("You do not have access to this workspace");
+  }
+
+  if (!allowedRoles.includes(membership.role)) {
+    throw new Error("You do not have permission to perform this action");
+  }
+
+  return membership.role;
 }
 
 // Reserved for v1→v2: gate write endpoints so READ_ONLY keys can't mutate.

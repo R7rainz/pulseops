@@ -8,6 +8,15 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET!
 })
 
+// Constant-time compare for hex digests. `crypto.timingSafeEqual` throws on
+// length mismatch, which would itself leak length, so guard that first.
+function timingSafeEqualHex(a: string, b: string): boolean {
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(Buffer.from(a, "utf8"), Buffer.from(b, "utf8"));
+}
+
 export async function razorpayWebhookController(
   request: FastifyRequest,
   response: FastifyReply,
@@ -33,7 +42,7 @@ export async function razorpayWebhookController(
       .update(rawBody)
       .digest("hex");
 
-    if (signature !== expectedSignature) {
+    if (!timingSafeEqualHex(signature, expectedSignature)) {
       return response.status(401).send({ message: "Invalid webhook signature" });
     }
 
@@ -45,30 +54,63 @@ export async function razorpayWebhookController(
       };
     };
 
-    if (event.event === "subscription.charged") {
-      const subscriptionId = event.payload.subscription?.entity?.id;
-      if (!subscriptionId) {
-        return response.status(400).send({ message: "Missing subscription ID in payload" });
-      }
+    // Which plan state each subscription lifecycle event implies. `charged` is
+    // Razorpay's *success* event — it means a renewal was paid, so it must
+    // grant PRO. Downgrades come from the halt/cancel/expire events instead.
+    const UPGRADE_EVENTS = new Set(["subscription.charged", "subscription.activated"]);
+    const DOWNGRADE_EVENTS = new Set([
+      "subscription.halted",
+      "subscription.cancelled",
+      "subscription.completed",
+      "subscription.expired",
+    ]);
 
-      const workspace = await prisma.workspace.findFirst({
-        where: { razorpaySubId: subscriptionId },
-      });
+    const isUpgrade = UPGRADE_EVENTS.has(event.event);
+    const isDowngrade = DOWNGRADE_EVENTS.has(event.event);
 
-      if (!workspace) {
-        return response.status(404).send({ message: "Workspace not found for subscription" });
-      }
-
-      await prisma.workspace.update({
-        where: { id: workspace.id },
-        data: {
-          planTier: "FREE",
-          subscriptionStatus: "inactive",
-        },
-      });
-
-      console.log(`[BILLING] Workspace ${workspace.id} downgraded to FREE (payment failed)`);
+    if (!isUpgrade && !isDowngrade) {
+      // Acknowledge unhandled events so Razorpay stops retrying them.
+      return response.status(200).send({ message: "Event ignored" });
     }
+
+    const subscriptionId = event.payload.subscription?.entity?.id;
+    if (!subscriptionId) {
+      return response.status(400).send({ message: "Missing subscription ID in payload" });
+    }
+
+    const workspace = await prisma.workspace.findFirst({
+      where: { razorpaySubId: subscriptionId },
+    });
+
+    if (!workspace) {
+      return response.status(404).send({ message: "Workspace not found for subscription" });
+    }
+
+    // Idempotency: Razorpay redelivers on any non-2xx, and a charge event can
+    // legitimately repeat across billing cycles — so the reference includes the
+    // payment id when present.
+    const paymentId = event.payload.payment?.entity?.id;
+    const reference = `evt:${event.event}:${subscriptionId}:${paymentId ?? "none"}`;
+
+    try {
+      await prisma.processedPayment.create({
+        data: { workspaceId: workspace.id, reference, kind: event.event },
+      });
+    } catch {
+      // Unique violation — already applied. Ack so retries stop.
+      return response.status(200).send({ message: "Already processed" });
+    }
+
+    await prisma.workspace.update({
+      where: { id: workspace.id },
+      data: isUpgrade
+        ? { planTier: "PRO", subscriptionStatus: "active" }
+        : { planTier: "FREE", subscriptionStatus: "inactive" },
+    });
+
+    console.log(
+      `[BILLING] Workspace ${workspace.id} ${isUpgrade ? "upgraded to PRO" : "downgraded to FREE"} (${event.event})`,
+    );
 
     return response.status(200).send({ message: "Webhook processed" });
   } catch (error) {
@@ -138,9 +180,37 @@ export async function verifyPaymentController(
 
     const generatedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!).update(razorpay_payment_id + "|" + razorpay_subscription_id).digest("hex")
 
-    if(generatedSignature!== razorpay_signature){
+    if(!timingSafeEqualHex(generatedSignature, razorpay_signature)){
       return response.status(400).send({message: "Cryptographic signature mismatch. Transaction flagged"})
     }
+
+    // A valid signature only proves Razorpay issued *this payment* — it says
+    // nothing about which workspace it belongs to. Without this check the same
+    // signature could be replayed against every workspace the caller owns.
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { razorpaySubId: true },
+    })
+
+    if (!workspace || workspace.razorpaySubId !== razorpay_subscription_id) {
+      return response.status(400).send({
+        message: "Subscription does not belong to this workspace",
+      })
+    }
+
+    // Replay guard: the same payment id can only ever upgrade once.
+    try {
+      await prisma.processedPayment.create({
+        data: {
+          workspaceId,
+          reference: `pay:${razorpay_payment_id}`,
+          kind: "verify",
+        },
+      })
+    } catch {
+      return response.status(409).send({ message: "Payment already processed" })
+    }
+
     await prisma.workspace.update({
       where: {id: workspaceId},
       data: {

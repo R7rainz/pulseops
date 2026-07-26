@@ -30,6 +30,7 @@ model User {
   sessions         Session[]
   oauthAccounts    OAuthAccount[]
   mfaRecoveryCodes MfaRecoveryCode[]
+  acknowledgedIncidents Incident[] @relation("IncidentAcknowledger")
 }
 
 // Rotating refresh-token sessions. The opaque refresh token is never stored;
@@ -115,11 +116,108 @@ model Workspace {
   razorpaySubId      String?
   subscriptionStatus String?
 
-  members          WorkspaceMember[]
-  monitors         Monitor[]
-  webhookEndpoints WebhookEndpoint[]
-  apiKeys          ApiKey[]
-  workspaceInvites WorkspaceInvite[]
+  members              WorkspaceMember[]
+  monitors             Monitor[]
+  webhookEndpoints     WebhookEndpoint[]
+  apiKeys              ApiKey[]
+  workspaceInvites     WorkspaceInvite[]
+  processedPayments    ProcessedPayment[]
+  notificationChannels NotificationChannel[]
+  statusPage           StatusPage?
+}
+
+// Public status page configuration.
+//
+// Previously /status/:slug auto-exposed EVERY active monitor in a workspace,
+// with no opt-in — so a monitor named after an internal hostname became public
+// the moment it was created. Monitors are now published explicitly, and a
+// workspace with no StatusPage row has no public page at all.
+model StatusPage {
+  id          Int      @id @default(autoincrement())
+  workspaceId Int      @unique
+  slug        String   @unique
+  title       String
+  description String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  entries   StatusPageMonitor[]
+}
+
+model StatusPageMonitor {
+  id           Int    @id @default(autoincrement())
+  statusPageId Int
+  monitorId    Int
+  // Public-facing name, so an internal monitor name doesn't have to be exposed.
+  displayName  String?
+  position     Int    @default(0)
+
+  statusPage StatusPage @relation(fields: [statusPageId], references: [id], onDelete: Cascade)
+  monitor    Monitor    @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@unique([statusPageId, monitorId])
+  @@index([statusPageId])
+}
+
+// Where alerts go. Until now the only transport was a generic HTTP webhook
+// carrying a PulseOps-shaped payload — so users could not get an email, and
+// could not point it at a Slack/Discord incoming webhook and have it render.
+//
+// `config` holds the per-type settings (see channels/ for the shape each
+// adapter expects): EMAIL {to}, SLACK/DISCORD {webhookUrl}, PAGERDUTY
+// {routingKey}, WEBHOOK {url, secret}.
+model NotificationChannel {
+  id          Int                     @id @default(autoincrement())
+  workspaceId Int
+  type        NotificationChannelType
+  name        String
+  config      Json
+  events      String[]
+  isActive    Boolean                 @default(true)
+  // Consecutive delivery failures. Used to trip a circuit breaker so a
+  // permanently dead endpoint isn't retried on every single incident forever.
+  failureCount    Int       @default(0)
+  disabledUntil   DateTime?
+  lastDeliveredAt DateTime?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  workspace Workspace                    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  deliveries NotificationDeliveryLog[]
+
+  @@index([workspaceId])
+}
+
+model NotificationDeliveryLog {
+  id             BigInt   @id @default(autoincrement())
+  channelId      Int
+  event          String
+  isSuccess      Boolean
+  responseStatus Int?
+  detail         String?
+  createdAt      DateTime @default(now())
+
+  channel NotificationChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@index([channelId, createdAt])
+}
+
+// Replay guard for Razorpay. Both the client-side verify callback and the
+// server-side webhook record the provider's event/payment id here before
+// acting on it; the unique constraint makes a re-POSTed (or redelivered)
+// payload a no-op instead of a second upgrade.
+model ProcessedPayment {
+  id          Int      @id @default(autoincrement())
+  workspaceId Int
+  reference   String   @unique
+  kind        String
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
 }
 
 model WorkspaceMember {
@@ -145,6 +243,9 @@ enum MonitorStatus {
 enum MonitorType {
   HTTP
   HEARTBEAT
+  TCP
+  DNS
+  KEYWORD
 }
 
 model Monitor {
@@ -157,6 +258,18 @@ model Monitor {
   intervalSeconds     Int           @default(60)
   timeoutMs           Int           @default(5000)
   expectedStatus      Int           @default(200)
+  // "200", "2xx", "200-299", "200,204" — a single Int made "any 2xx"
+  // inexpressible. Null falls back to expectedStatus for older monitors.
+  expectedStatusMatch String?
+  // TCP: port to connect to. DNS: record type + optional expected value.
+  // KEYWORD: substring the body must (or must not) contain.
+  tcpPort             Int?
+  dnsRecordType       String?
+  dnsExpectedValue    String?
+  keyword             String?
+  keywordShouldExist  Boolean       @default(true)
+  // Per-monitor SSL warning threshold; falls back to SSL_EXPIRY_WARNING_DAYS.
+  sslWarningDays      Int?
   gracePeriodSeconds  Int           @default(60)
   status              MonitorStatus @default(UP)
   consecutiveFailures Int           @default(0)
@@ -173,16 +286,42 @@ model Monitor {
   updatedAt           DateTime      @updatedAt
   maintenanceStartAt  DateTime?
   maintenanceEndAt    DateTime?
+  // When this monitor is next due. Lets the scheduler ask Postgres for exactly
+  // the due rows instead of loading every active monitor and filtering in
+  // application memory on each 15s tick.
+  nextCheckAt         DateTime?
+  // Set when a check is dispatched, cleared when its result lands. Stops a
+  // monitor slower than the tick interval from being dispatched repeatedly.
+  dispatchedAt        DateTime?
+  // Alert suppression. `graceThreshold` (consecutive failures) was the only
+  // debounce, so a flapping monitor could page repeatedly.
+  //   alertCooldownSeconds — minimum gap between alerts for this monitor
+  //   reminderIntervalSeconds — re-notify cadence while an incident stays open
+  //                             (0 disables reminders)
+  //   mutedUntil — user-set snooze; checks keep running, alerts don't fire
+  alertCooldownSeconds    Int       @default(300)
+  reminderIntervalSeconds Int       @default(0)
+  mutedUntil              DateTime?
+  lastAlertAt             DateTime?
 
-  workspace Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  checks    MonitorCheck[]
-  incidents Incident[]
+  workspace    Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  checks       MonitorCheck[]
+  dailyRollups MonitorCheckDaily[]
+  incidents    Incident[]
+  statusPageEntries StatusPageMonitor[]
 
   @@index([workspaceId])
+  // The scheduler's hot query: active, due, not already in flight.
+  @@index([isActive, nextCheckAt])
 }
 
+// The highest-volume table in the system: one row per check, per monitor. At
+// the 30s minimum interval a single monitor writes ~2.9M rows/year, so the id
+// is BigInt (an Int4 sequence tops out at 2.147B and would overflow) and the
+// retention job in telemetry/retention.ts prunes raw rows once they've been
+// rolled up into MonitorCheckDaily.
 model MonitorCheck {
-  id             Int           @id @default(autoincrement())
+  id             BigInt        @id @default(autoincrement())
   monitorId      Int
   status         MonitorStatus
   statusCode     Int?
@@ -192,8 +331,36 @@ model MonitorCheck {
 
   monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
 
-  @@index([monitorId])
+  // Every hot query is "this monitor, newest first" or "these monitors, since
+  // T" — a composite index serves both. The bare [monitorId] index it replaces
+  // forced a sort over the whole monitor's history.
+  @@index([monitorId, checkedAt])
   @@index([checkedAt])
+}
+
+// Daily per-monitor rollup of MonitorCheck. Long-range views (30d analytics,
+// the 90d public status page) read this instead of scanning raw checks, which
+// is what lets retention drop the raw rows.
+model MonitorCheckDaily {
+  id            BigInt   @id @default(autoincrement())
+  monitorId     Int
+  day           DateTime @db.Date
+  totalChecks   Int
+  upChecks      Int
+  downChecks    Int
+  degradedChecks Int
+  avgResponseMs Int?
+  minResponseMs Int?
+  maxResponseMs Int?
+  p50ResponseMs Int?
+  p95ResponseMs Int?
+  p99ResponseMs Int?
+  createdAt     DateTime @default(now())
+
+  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+
+  @@unique([monitorId, day])
+  @@index([day])
 }
 
 enum IncidentStatus {
@@ -209,11 +376,21 @@ model Incident {
   title      String
   startedAt  DateTime       @default(now())
   resolvedAt DateTime?
+  // ACKNOWLEDGED existed as a status with no record of who acknowledged it or
+  // when, so "someone is on this" couldn't actually be attributed.
+  acknowledgedAt DateTime?
+  acknowledgedBy Int?
+  // When the last "still down" reminder went out, so reminders fire on a
+  // cadence instead of every sweep.
+  lastReminderAt DateTime?
 
-  monitor Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  monitor        Monitor @relation(fields: [monitorId], references: [id], onDelete: Cascade)
+  acknowledgedByUser User? @relation("IncidentAcknowledger", fields: [acknowledgedBy], references: [id], onDelete: SetNull)
 
   @@index([monitorId])
   @@index([status])
+  // Incident lists are always ordered by startedAt desc.
+  @@index([startedAt])
 }
 
 enum ApiKeyScope {
@@ -221,11 +398,23 @@ enum ApiKeyScope {
   READ_WRITE
 }
 
+enum NotificationChannelType {
+  EMAIL
+  SLACK
+  DISCORD
+  PAGERDUTY
+  WEBHOOK
+}
+
+// API keys are stored hashed, never raw — the plaintext is shown exactly once
+// at creation. `keyPrefix` is the non-secret leading fragment, kept so the UI
+// can identify a key ("po_a1b2c3…") without being able to reconstruct it.
 model ApiKey {
   id          Int         @id @default(autoincrement())
   workspaceId Int
   name        String
-  key         String      @unique
+  keyHash     String      @unique
+  keyPrefix   String
   scope       ApiKeyScope @default(READ_ONLY)
   lastUsedAt  DateTime?
   isActive    Boolean     @default(true)
@@ -255,7 +444,7 @@ model WebhookEndpoint {
 }
 
 model WebhookDeliveryLog {
-  id             Int      @id @default(autoincrement())
+  id             BigInt   @id @default(autoincrement())
   webhookId      Int
   url            String
   requestPayload Json
@@ -265,6 +454,10 @@ model WebhookDeliveryLog {
   createdAt      DateTime @default(now())
 
   webhook WebhookEndpoint @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  // Also unbounded, and previously had no index at all — the delivery-log view
+  // was a sequential scan.
+  @@index([webhookId, createdAt])
 }
 
 // An invite is one of two kinds, distinguished by `email`:

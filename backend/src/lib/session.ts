@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { prisma } from "./db";
+import { sha256Hex } from "./hash";
 import { signAccessToken } from "./jwt";
 
 // Revocable refresh-token sessions.
@@ -27,9 +28,7 @@ export type SessionTokens = {
   refreshExpiresAt: Date;
 };
 
-function hashToken(raw: string): string {
-  return crypto.createHash("sha256").update(raw).digest("hex");
-}
+const hashToken = sha256Hex;
 
 function generateRefreshToken(): string {
   return crypto.randomBytes(32).toString("hex");

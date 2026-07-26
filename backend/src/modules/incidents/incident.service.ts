@@ -2,8 +2,10 @@ import { prisma } from "../../lib/db";
 import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 import {
   assertWorkspaceAccess,
+  assertWorkspaceRole,
   type AccessContext,
 } from "../../middleware/workspace-access.middleware";
+import { dispatchNotification } from "../notifications/notification.dispatch";
 
 export async function getWorkspaceIncidentsService(
   access: AccessContext,
@@ -83,17 +85,14 @@ export async function acknowledgeIncidentService(
   });
   if (!incident) throw new Error("Incident not found");
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: incident.monitor.workspaceId,
-      },
-    },
-  });
-  if (!membership) throw new Error("You do not have access to this incident");
+  // Role must be checked against the incident's own workspace, not the one in
+  // the request path.
+  await assertWorkspaceRole(userId, incident.monitor.workspaceId);
+
   if (incident.status === "RESOLVED")
     throw new Error("Cannot acknowledge resolved incident");
+
+  const acknowledgedAt = new Date();
 
   const updatedIncident = await prisma.incident.update({
     where: {
@@ -101,6 +100,9 @@ export async function acknowledgeIncidentService(
     },
     data: {
       status: "ACKNOWLEDGED",
+      // Records who took ownership — the status existed with no actor.
+      acknowledgedAt,
+      acknowledgedBy: userId,
     },
     include: {
       monitor: {
@@ -114,6 +116,20 @@ export async function acknowledgeIncidentService(
       },
     },
   });
+
+  dispatchNotification(updatedIncident.monitor.workspaceId, {
+    event: "incident.acknowledged",
+    incidentId: updatedIncident.id,
+    monitorId: updatedIncident.monitor.id,
+    workspaceId: updatedIncident.monitor.workspaceId,
+    monitorName: updatedIncident.monitor.name,
+    monitorUrl: updatedIncident.monitor.url,
+    status: updatedIncident.monitor.status,
+    title: updatedIncident.title,
+    message: `Incident acknowledged for [${updatedIncident.monitor.name}] — someone is investigating.`,
+    timestamp: acknowledgedAt.toISOString(),
+  }).catch((err) => console.error("[INCIDENT] Acknowledge notification failed:", err));
+
   return updatedIncident;
 }
 
@@ -142,18 +158,8 @@ export async function resolveIncidentService(
     throw new Error("Incident not found");
   }
 
-  const membership = await prisma.workspaceMember.findUnique({
-    where: {
-      userId_workspaceId: {
-        userId,
-        workspaceId: incident.monitor.workspaceId,
-      },
-    },
-  });
-
-  if (!membership) {
-    throw new Error("You do not have access to this incident");
-  }
+  // Role checked against the incident's own workspace, not the request path.
+  await assertWorkspaceRole(userId, incident.monitor.workspaceId);
 
   if (incident.status === "RESOLVED") {
     throw new Error("Incident is already resolved");
@@ -180,14 +186,31 @@ export async function resolveIncidentService(
     },
   });
 
+  const resolvedAt = updatedIncident.resolvedAt ?? new Date();
+  const message = `Incident manually resolved for monitor: ${updatedIncident.monitor.name}`;
+
   await sendWebhookNotifications(incident.monitor.workspaceId, {
     event: "incident.resolved",
     incidentId: updatedIncident.id,
     monitorId: updatedIncident.monitor.id,
     workspaceId: updatedIncident.monitor.workspaceId,
-    message: `Incident manually resolved for monitor: ${updatedIncident.monitor.name}`,
-    timestamp: new Date().toISOString(),
+    message,
+    timestamp: resolvedAt.toISOString(),
   });
+
+  dispatchNotification(updatedIncident.monitor.workspaceId, {
+    event: "incident.resolved",
+    incidentId: updatedIncident.id,
+    monitorId: updatedIncident.monitor.id,
+    workspaceId: updatedIncident.monitor.workspaceId,
+    monitorName: updatedIncident.monitor.name,
+    monitorUrl: updatedIncident.monitor.url,
+    status: updatedIncident.monitor.status,
+    title: updatedIncident.title,
+    message,
+    timestamp: resolvedAt.toISOString(),
+    durationMs: resolvedAt.getTime() - updatedIncident.startedAt.getTime(),
+  }).catch((err) => console.error("[INCIDENT] Resolve notification failed:", err));
 
   return updatedIncident;
 }

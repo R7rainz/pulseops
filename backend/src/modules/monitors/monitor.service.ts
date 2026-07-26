@@ -1,9 +1,12 @@
 import type { CreateMonitorInput, UpdateMonitorInput } from "./monitor.schema";
+import { Prisma } from "../../generated/prisma/client";
 import { prisma } from "../../lib/db";
 import { redis } from "../../lib/redis";
+import { assertPublicUrl } from "../../lib/ssrf";
 import { checkMonitor } from "./monitor.engine";
 import {
     assertWorkspaceAccess,
+    assertWorkspaceRole,
     type AccessContext,
 } from "../../middleware/workspace-access.middleware";
 
@@ -12,17 +15,13 @@ export async function createMonitorService(
     workspaceId: number,
     input: CreateMonitorInput,
 ) {
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId,
-            },
-        },
-    });
+    await assertWorkspaceRole(userId, workspaceId);
 
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
+    // Reject unreachable/internal targets at save time so the user gets a clear
+    // error instead of a monitor that silently fails every check. The probe
+    // re-validates before each request — this is UX, not the security boundary.
+    if (input.type !== "HEARTBEAT" && input.url) {
+        await assertPublicUrl(input.url);
     }
 
     const workspace = await prisma.workspace.findUnique({
@@ -58,6 +57,23 @@ export async function createMonitorService(
             timeoutMs: input.timeoutMs,
             expectedStatus: input.expectedStatus,
             gracePeriodSeconds: input.gracePeriodSeconds,
+            // Per-type configuration. Omitted keys stay null, which each probe
+            // treats as "not configured".
+            expectedStatusMatch: input.expectedStatusMatch ?? null,
+            tcpPort: input.tcpPort ?? null,
+            dnsRecordType: input.dnsRecordType ?? null,
+            dnsExpectedValue: input.dnsExpectedValue ?? null,
+            keyword: input.keyword ?? null,
+            ...(input.keywordShouldExist !== undefined && {
+                keywordShouldExist: input.keywordShouldExist,
+            }),
+            sslWarningDays: input.sslWarningDays ?? null,
+            ...(input.alertCooldownSeconds !== undefined && {
+                alertCooldownSeconds: input.alertCooldownSeconds,
+            }),
+            ...(input.reminderIntervalSeconds !== undefined && {
+                reminderIntervalSeconds: input.reminderIntervalSeconds,
+            }),
         },
     });
 
@@ -99,18 +115,10 @@ export async function runMonitorCheckNowService(
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
     // Per-monitor cooldown: at most one manual check per window, shared across
     // every user/tab/instance (keyed by monitor, not requester), so spamming
@@ -198,43 +206,6 @@ export async function getMonitorChecksService(
     return { checks, total };
 }
 
-function percentile(sortedAsc: number[], p: number): number {
-    if (sortedAsc.length === 0) return 0;
-    const index = Math.min(sortedAsc.length - 1, Math.ceil((p / 100) * sortedAsc.length) - 1);
-    return sortedAsc[Math.max(0, index)];
-}
-
-function computeStats(checks: { status: string; responseTimeMs: number | null }[]) {
-    const totalChecks = checks.length;
-    const upChecks = checks.filter((c) => c.status === "UP").length;
-    const downChecks = checks.filter((c) => c.status === "DOWN").length;
-    const degradedChecks = checks.filter((c) => c.status === "DEGRADED").length;
-    const uptimePercentage = totalChecks === 0 ? 0 : (upChecks / totalChecks) * 100;
-
-    // Only healthy (UP) checks count toward latency — a DOWN/DEGRADED check's timing
-    // reflects a timeout/failure, not real response performance.
-    const upLatencies = checks
-        .filter((c) => c.status === "UP" && c.responseTimeMs !== null)
-        .map((c) => c.responseTimeMs!)
-        .sort((a, b) => a - b);
-
-    const averageResponseTimeMs = upLatencies.length === 0
-        ? 0
-        : upLatencies.reduce((s, v) => s + v, 0) / upLatencies.length;
-
-    return {
-        totalChecks,
-        upChecks,
-        downChecks,
-        degradedChecks,
-        uptimePercentage: Math.round(uptimePercentage * 100) / 100,
-        averageResponseTimeMs: Math.round(averageResponseTimeMs * 100) / 100,
-        p50ResponseTimeMs: Math.round(percentile(upLatencies, 50) * 100) / 100,
-        p95ResponseTimeMs: Math.round(percentile(upLatencies, 95) * 100) / 100,
-        p99ResponseTimeMs: Math.round(percentile(upLatencies, 99) * 100) / 100,
-    };
-}
-
 export async function getMonitorStatsService(
     access: AccessContext,
     monitorId: number,
@@ -249,22 +220,76 @@ export async function getMonitorStatsService(
 
     await assertWorkspaceAccess(access, monitor.workspaceId);
 
-    const allChecks = await prisma.monitorCheck.findMany({
+    // Aggregate in Postgres rather than loading rows into the heap. The previous
+    // implementation did an unbounded findMany and computed percentiles in Node,
+    // so a single request on a long-lived monitor pulled its entire history into
+    // memory — a slow query and an OOM vector on the same line.
+    //
+    // All three windows come from one pass using FILTER, and the composite index
+    // on (monitorId, checkedAt) serves the range predicates.
+    const [row] = await prisma.$queryRaw<StatsRow[]>`
+        SELECT
+            ${statsAggregates(Prisma.sql`TRUE`)},
+            ${statsAggregates(Prisma.sql`"checkedAt" > NOW() - INTERVAL '24 hours'`, "h24_")},
+            ${statsAggregates(Prisma.sql`"checkedAt" > NOW() - INTERVAL '30 days'`, "d30_")}
+        FROM "MonitorCheck"
+        WHERE "monitorId" = ${monitorId}
+    `;
+
+    const latest = await prisma.monitorCheck.findFirst({
         where: { monitorId },
         orderBy: { checkedAt: "desc" },
+        select: { status: true },
     });
 
-    const now = new Date();
-    const range24h = allChecks.filter(c => c.checkedAt.getTime() > now.getTime() - 86400000);
-    const range30d = allChecks.filter(c => c.checkedAt.getTime() > now.getTime() - 2592000000);
+    return {
+        ...shapeStats(row, ""),
+        latestStatus: latest?.status ?? monitor.status,
+        range24h: shapeStats(row, "h24_"),
+        range30d: shapeStats(row, "d30_"),
+    };
+}
 
-    const latestStatus = allChecks[0]?.status ?? monitor.status;
+type StatsRow = Record<string, number | null>;
+
+// Emits the aggregate expressions for one time window, prefixed so several
+// windows can share a single scan.
+function statsAggregates(predicate: Prisma.Sql, prefix = "") {
+    const col = (name: string) => Prisma.raw(`"${prefix}${name}"`);
+    return Prisma.sql`
+        COUNT(*) FILTER (WHERE ${predicate})                                          AS ${col("total")},
+        COUNT(*) FILTER (WHERE ${predicate} AND status = 'UP')                        AS ${col("up")},
+        COUNT(*) FILTER (WHERE ${predicate} AND status = 'DOWN')                      AS ${col("down")},
+        COUNT(*) FILTER (WHERE ${predicate} AND status = 'DEGRADED')                  AS ${col("degraded")},
+        AVG("responseTimeMs") FILTER (WHERE ${predicate} AND status = 'UP')           AS ${col("avg")},
+        PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY "responseTimeMs")
+            FILTER (WHERE ${predicate} AND status = 'UP' AND "responseTimeMs" IS NOT NULL) AS ${col("p50")},
+        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY "responseTimeMs")
+            FILTER (WHERE ${predicate} AND status = 'UP' AND "responseTimeMs" IS NOT NULL) AS ${col("p95")},
+        PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY "responseTimeMs")
+            FILTER (WHERE ${predicate} AND status = 'UP' AND "responseTimeMs" IS NOT NULL) AS ${col("p99")}
+    `;
+}
+
+const round2 = (v: unknown) => Math.round(Number(v ?? 0) * 100) / 100;
+
+// Maps one prefixed group of aggregates back to the shape computeStats returned,
+// so the API contract is unchanged.
+function shapeStats(row: StatsRow | undefined, prefix: string) {
+    const get = (name: string) => Number(row?.[`${prefix}${name}`] ?? 0);
+    const totalChecks = get("total");
+    const upChecks = get("up");
 
     return {
-        ...computeStats(allChecks),
-        latestStatus,
-        range24h: computeStats(range24h),
-        range30d: computeStats(range30d),
+        totalChecks,
+        upChecks,
+        downChecks: get("down"),
+        degradedChecks: get("degraded"),
+        uptimePercentage: totalChecks === 0 ? 0 : round2((upChecks / totalChecks) * 100),
+        averageResponseTimeMs: round2(row?.[`${prefix}avg`]),
+        p50ResponseTimeMs: round2(row?.[`${prefix}p50`]),
+        p95ResponseTimeMs: round2(row?.[`${prefix}p95`]),
+        p99ResponseTimeMs: round2(row?.[`${prefix}p99`]),
     };
 }
 
@@ -279,18 +304,10 @@ export async function pauseMonitorService(userId: number, monitorId: number) {
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
     const updatedMonitor = await prisma.monitor.update({
         where: {
@@ -316,18 +333,10 @@ export async function resumeMonitorService(userId: number, monitorId: number) {
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
     const updatedMonitor = await prisma.monitor.update({
         where: {
@@ -357,17 +366,13 @@ export async function updateMonitorService(
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
+    if (input.url) {
+        await assertPublicUrl(input.url);
     }
 
     const updatedMonitor = await prisma.monitor.update({
@@ -391,18 +396,10 @@ export async function deleteMonitorService(userId: number, monitorId: number) {
         throw new Error("Monitor not found");
     }
 
-    const membership = await prisma.workspaceMember.findUnique({
-        where: {
-            userId_workspaceId: {
-                userId,
-                workspaceId: monitor.workspaceId,
-            },
-        },
-    });
-
-    if (!membership) {
-        throw new Error("You do not have access to this workspace");
-    }
+    // Role must be re-checked against the *monitor's* workspace, not the one in
+    // the request path — otherwise an ADMIN of another workspace could mutate
+    // this monitor with only VIEWER rights here.
+    await assertWorkspaceRole(userId, monitor.workspaceId);
 
     const deletedMonitor = await prisma.monitor.delete({
         where: {

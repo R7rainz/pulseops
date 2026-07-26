@@ -1,16 +1,34 @@
 import type { Monitor } from "../../generated/prisma/client";
 import { prisma } from "../../lib/db";
 import { redis } from "../../lib/redis";
+import { BlockedTargetError, assertPublicUrl } from "../../lib/ssrf";
+import { dispatchNotification } from "../notifications/notification.dispatch";
+import { probeDns, probeTcp, statusMatches } from "./probes";
 import { sendWebhookNotifications } from "../webhooks/webhook.delivery";
 import { inspectSslCertificate } from "./tls.inspector";
+
+// Cap on manually-followed redirects. Each hop is re-validated against the SSRF
+// guard, so this only bounds work, not safety.
+const MAX_REDIRECTS = 5;
+
+// How close to expiry a certificate has to be before the monitor degrades.
+// Configurable so operators can get more than a week of warning; a per-monitor
+// override belongs on the Monitor row and is not built yet.
+const SSL_EXPIRY_WARNING_DAYS = Number(process.env.SSL_EXPIRY_WARNING_DAYS ?? 7);
 
 export type PingResult = {
   isUp: boolean;
   statusCode: number;
   latencyMs: number;
+  // Why the check failed, when it failed. Null on success. Previously this was
+  // never populated on the HTTP path, so every outage looked identical.
+  errorMessage: string | null;
   tlsIssuer: string | null;
   tlsValidTo: Date | null;
   tlsDaysRemaining: number | null;
+  // Whether the certificate actually validated (chain, expiry, hostname).
+  tlsValid: boolean | null;
+  tlsError: string | null;
 };
 
 // Performs the actual network work for a single monitor. Used by the
@@ -22,26 +40,113 @@ export async function performPing(monitor: Monitor): Promise<PingResult> {
   const startTime = performance.now();
   let isUp = false;
   let statusCode = 0;
+  let errorMessage: string | null = null;
+
+  // TCP and DNS aren't HTTP requests at all, so they short-circuit before the
+  // fetch path. Their Node implementations mirror the Go engine's probes so
+  // check-now and the scheduled check agree.
+  if (monitor.type === "TCP" || monitor.type === "DNS") {
+    const outcome = monitor.type === "TCP" ? await probeTcp(monitor) : await probeDns(monitor);
+    return {
+      isUp: outcome.isUp,
+      statusCode: 0,
+      latencyMs: outcome.latencyMs,
+      errorMessage: outcome.errorMessage,
+      tlsIssuer: null,
+      tlsValidTo: null,
+      tlsDaysRemaining: null,
+      tlsValid: null,
+      tlsError: null,
+    };
+  }
 
   try {
+    // Re-validate on every probe, not just at save time — DNS can be re-pointed
+    // at private space after the monitor was created (rebinding).
+    await assertPublicUrl(monitor.url);
+
     const controller = new AbortController();
     const timeoutId = setTimeout(
       () => controller.abort(),
       monitor.timeoutMs,
     );
 
-    const response = await fetch(monitor.url, {
-      signal: controller.signal,
-      method: monitor.method,
-      cache: "no-store",
-    });
+    let response: Response;
+    try {
+      response = await fetch(monitor.url, {
+        signal: controller.signal,
+        method: monitor.method,
+        cache: "no-store",
+        // Don't let a public URL bounce us into the private range. Redirects
+        // are followed manually below so each hop is re-validated.
+        redirect: "manual",
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
-    clearTimeout(timeoutId);
+    // Follow redirects ourselves, re-checking every Location against the guard.
+    let hops = 0;
+    while (
+      response.status >= 300 &&
+      response.status < 400 &&
+      response.headers.get("location") &&
+      hops < MAX_REDIRECTS
+    ) {
+      const next = new URL(response.headers.get("location")!, monitor.url).toString();
+      await assertPublicUrl(next);
+
+      const hopController = new AbortController();
+      const hopTimeout = setTimeout(() => hopController.abort(), monitor.timeoutMs);
+      try {
+        response = await fetch(next, {
+          signal: hopController.signal,
+          method: monitor.method,
+          cache: "no-store",
+          redirect: "manual",
+        });
+      } finally {
+        clearTimeout(hopTimeout);
+      }
+      hops += 1;
+    }
+
     statusCode = response.status;
-    isUp = statusCode === monitor.expectedStatus;
+    isUp = statusMatches(statusCode, monitor);
+    if (!isUp) {
+      errorMessage = `Expected HTTP ${monitor.expectedStatusMatch || monitor.expectedStatus}, got ${statusCode}`;
+    }
+
+    // KEYWORD monitors additionally assert on the body — the difference
+    // between "the server answered" and "the page is actually right".
+    if (isUp && monitor.type === "KEYWORD") {
+      if (!monitor.keyword) {
+        isUp = false;
+        errorMessage = "Keyword check requires a keyword";
+      } else {
+        const body = await response.text();
+        const found = body.includes(monitor.keyword);
+        if (found !== monitor.keywordShouldExist) {
+          isUp = false;
+          errorMessage = monitor.keywordShouldExist
+            ? `Keyword "${monitor.keyword}" not found in response body`
+            : `Keyword "${monitor.keyword}" was present but should be absent`;
+        }
+      }
+    }
   } catch (error) {
     isUp = false;
-    statusCode = 500;
+    // statusCode 0 means "never got an HTTP response" — distinct from a real
+    // server-side 500, which the old code was indistinguishable from.
+    statusCode = 0;
+    errorMessage =
+      error instanceof BlockedTargetError
+        ? `Blocked: ${error.message}`
+        : error instanceof Error && error.name === "AbortError"
+          ? `Timed out after ${monitor.timeoutMs}ms`
+          : error instanceof Error
+            ? error.message
+            : "Unknown error";
   }
 
   const latencyMs = Math.round(performance.now() - startTime);
@@ -52,9 +157,12 @@ export async function performPing(monitor: Monitor): Promise<PingResult> {
     isUp,
     statusCode,
     latencyMs,
+    errorMessage,
     tlsIssuer: sslData?.issuer ?? null,
     tlsValidTo: sslData?.validTo ?? null,
     tlsDaysRemaining: sslData?.daysRemaining ?? null,
+    tlsValid: sslData?.valid ?? null,
+    tlsError: sslData?.error ?? null,
   };
 }
 
@@ -63,8 +171,26 @@ export async function performPing(monitor: Monitor): Promise<PingResult> {
 // transaction, Redis live-state, and webhook notifications. Shared by both
 // the on-demand check path and the Kafka metrics consumer.
 export async function applyCheckResult(monitor: Monitor, pingResult: PingResult) {
-  const { isUp: currentAttemptUp, statusCode, latencyMs, tlsIssuer, tlsValidTo, tlsDaysRemaining } = pingResult;
-  const isSslFailing = tlsDaysRemaining !== null && tlsDaysRemaining <= 7;
+  const {
+    isUp: currentAttemptUp,
+    statusCode,
+    latencyMs,
+    errorMessage,
+    tlsIssuer,
+    tlsValidTo,
+    tlsDaysRemaining,
+    tlsValid,
+    tlsError,
+  } = pingResult;
+
+  // A cert nearing expiry degrades the monitor; a cert that fails verification
+  // outright (expired, self-signed, wrong hostname) is an SSL failure too — it
+  // was previously ignored entirely.
+  const sslThresholdDays = monitor.sslWarningDays ?? SSL_EXPIRY_WARNING_DAYS;
+  const sslExpiringSoon =
+    tlsDaysRemaining !== null && tlsDaysRemaining <= sslThresholdDays;
+  const sslInvalid = tlsValid === false;
+  const isSslFailing = sslExpiringSoon || sslInvalid;
 
   const now = new Date();
   const isUnderMaintenance =
@@ -105,7 +231,11 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
       if (crossedThreshold && !isUnderMaintenance) {
         newlyTriggeredIncident = true;
         if (isSslFailing && currentAttemptUp) {
-          incidentTitle = `SSL/TLS Degradation: Certificate expires in ${tlsDaysRemaining} days`;
+          incidentTitle = sslInvalid
+            ? `SSL/TLS Failure: ${tlsError ?? "certificate did not validate"}`
+            : `SSL/TLS Degradation: Certificate expires in ${tlsDaysRemaining} days`;
+        } else if (errorMessage) {
+          incidentTitle = `Node Offline: ${errorMessage}`;
         }
       }
     }
@@ -124,6 +254,7 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
         status: targetStatus === "DEGRADED" ? "DEGRADED" : (currentAttemptUp ? "UP" : "DOWN"),
         statusCode: statusCode,
         responseTimeMs: latencyMs,
+        errorMessage: errorMessage ?? tlsError,
       },
     }),
     prisma.monitor.update({
@@ -131,7 +262,12 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
       data: {
         status: targetStatus,
         consecutiveFailures: updatedFailures,
-        lastCheckedAt: new Date(),
+        lastCheckedAt: now,
+        // The result landed, so this monitor is no longer in flight and its
+        // next check is one interval out. Clearing dispatchedAt is what lets
+        // the scheduler pick it up again.
+        dispatchedAt: null,
+        nextCheckAt: new Date(now.getTime() + monitor.intervalSeconds * 1000),
         // Persist the latest latency/status so the UI can show last-known
         // stats even after the 5-minute Redis live cache expires.
         lastResponseTime: latencyMs,
@@ -143,7 +279,11 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
     }),
   ];
 
+  // Remembered so the insert can be dropped if a concurrent result wins the
+  // race to open the incident (see the P2002 handling below).
+  let incidentCreateIndex = -1;
   if (newlyTriggeredIncident) {
+    incidentCreateIndex = transactionQueries.length;
     transactionQueries.push(
       prisma.incident.create({
         data: {
@@ -170,7 +310,26 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
     );
   }
 
-  const txResults = await prisma.$transaction(transactionQueries);
+  let txResults: any[];
+  try {
+    txResults = await prisma.$transaction(transactionQueries);
+  } catch (error) {
+    // A unique partial index allows only one active incident per monitor. If a
+    // concurrent result opened one first, that's the correct outcome — not an
+    // error to retry. Re-run without the incident insert so the check result
+    // and monitor state still land.
+    if (
+      newlyTriggeredIncident &&
+      (error as { code?: string }).code === "P2002"
+    ) {
+      newlyTriggeredIncident = false;
+      txResults = await prisma.$transaction(
+        transactionQueries.filter((_, i) => i !== incidentCreateIndex),
+      );
+    } else {
+      throw error;
+    }
+  }
 
   // Write live state to Redis for the live-monitors endpoint
   const liveState = {
@@ -183,30 +342,99 @@ export async function applyCheckResult(monitor: Monitor, pingResult: PingResult)
     .set(`monitor:${monitor.id}:live`, JSON.stringify(liveState), "EX", 300)
     .catch((err: any) => console.error("[ENGINE] Redis live write failed:", err));
 
-  // Blast Webhooks
-  if (newlyTriggeredIncident) {
-    const createdIncident = txResults[2];
+  // Should an alert actually go out for this monitor right now?
+  //
+  // Two independent suppressions, both deliberately applied *after* the
+  // incident is recorded — an incident always exists in the timeline even when
+  // nobody is paged:
+  //   - mutedUntil: the user explicitly snoozed this monitor
+  //   - alertCooldownSeconds: a flapping monitor shouldn't page on every flip
+  //
+  // Recovery notifications are never suppressed by the cooldown: "it's back"
+  // is always worth delivering, and withholding it would leave someone
+  // believing the outage is ongoing.
+  const isMuted = monitor.mutedUntil != null && monitor.mutedUntil > now;
+  const withinCooldown =
+    monitor.lastAlertAt != null &&
+    now.getTime() - monitor.lastAlertAt.getTime() < monitor.alertCooldownSeconds * 1000;
+
+  const shouldAlertOpen = newlyTriggeredIncident && !isMuted && !withinCooldown;
+  const shouldAlertResolve = activeIncidentsToResolve.length > 0 && !isMuted;
+
+  if (newlyTriggeredIncident && (isMuted || withinCooldown)) {
+    console.log(
+      `[ENGINE] Incident opened for monitor ${monitor.id} but alerting suppressed ` +
+        `(${isMuted ? "muted" : "within cooldown"})`,
+    );
+  }
+
+  if (shouldAlertOpen || shouldAlertResolve) {
+    prisma.monitor
+      .update({ where: { id: monitor.id }, data: { lastAlertAt: now } })
+      .catch(() => {});
+  }
+
+  // Fan out alerts. Legacy WebhookEndpoint delivery is kept alongside the newer
+  // notification channels so existing endpoints keep firing after the upgrade.
+  if (shouldAlertOpen) {
+    const createdIncident = txResults[incidentCreateIndex];
+    const message = errorMessage
+      ? `Monitor [${monitor.name}] is ${targetStatus}: ${errorMessage}`
+      : `CRITICAL ALERT: Monitor [${monitor.name}] flagged as ${targetStatus}. Target URL: ${monitor.url}`;
+    const at = new Date().toISOString();
 
     sendWebhookNotifications(monitor.workspaceId, {
       event: "incident.opened",
       incidentId: createdIncident.id,
       monitorId: monitor.id,
       workspaceId: monitor.workspaceId,
-      message: `CRITICAL ALERT: Monitor [${monitor.name}] flagged as ${targetStatus}. Target URL: ${monitor.url}`,
-      timestamp: new Date().toISOString(),
+      message,
+      timestamp: at,
     }).catch(err => console.error("[ENGINE] Webhook open failed:", err));
+
+    dispatchNotification(monitor.workspaceId, {
+      event: "incident.opened",
+      incidentId: createdIncident.id,
+      monitorId: monitor.id,
+      workspaceId: monitor.workspaceId,
+      monitorName: monitor.name,
+      monitorUrl: monitor.url,
+      status: targetStatus,
+      title: incidentTitle,
+      message,
+      timestamp: at,
+    }).catch(err => console.error("[ENGINE] Notification open failed:", err));
   }
 
-  if (activeIncidentsToResolve.length > 0) {
+  if (shouldAlertResolve) {
     activeIncidentsToResolve.forEach(incident => {
+      const at = new Date().toISOString();
+      const message = `RECOVERY: Monitor [${monitor.name}] stabilized. All clear.`;
+
       sendWebhookNotifications(monitor.workspaceId, {
         event: "incident.resolved",
         incidentId: incident.id,
         monitorId: monitor.id,
         workspaceId: monitor.workspaceId,
-        message: `RECOVERY: Monitor [${monitor.name}] stabilized. All clear.`,
-        timestamp: new Date().toISOString(),
+        message,
+        timestamp: at,
       }).catch(err => console.error("[ENGINE] Webhook resolve failed:", err));
+
+      dispatchNotification(monitor.workspaceId, {
+        event: "incident.resolved",
+        incidentId: incident.id,
+        monitorId: monitor.id,
+        workspaceId: monitor.workspaceId,
+        monitorName: monitor.name,
+        monitorUrl: monitor.url,
+        status: targetStatus,
+        title: incident.title ?? "Incident resolved",
+        message,
+        timestamp: at,
+        durationMs: incident.startedAt
+          ? Date.now() - new Date(incident.startedAt).getTime()
+          : null,
+      }).catch(err => console.error("[ENGINE] Notification resolve failed:", err));
     });
   }
 
@@ -261,9 +489,14 @@ export async function recordHeartbeat(monitor: Monitor) {
       isUp: true,
       statusCode: 200,
       latencyMs: 0,
+      errorMessage: null,
       tlsIssuer: monitor.tlsIssuer,
       tlsValidTo: monitor.tlsValidTo,
       tlsDaysRemaining: monitor.tlsDaysRemaining,
+      // Heartbeats carry no TLS handshake of their own — leave the verdict
+      // unknown rather than asserting the stored cert is still valid.
+      tlsValid: null,
+      tlsError: null,
     },
   );
 }

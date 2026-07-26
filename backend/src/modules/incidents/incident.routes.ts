@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { requireAuth } from "../../middleware/auth.middleware";
 import { requireRole } from "../../middleware/rbac.middleware";
-import { requireWorkspaceAccess } from "../../middleware/workspace-access.middleware";
+import { requireScope, requireWorkspaceAccess } from "../../middleware/workspace-access.middleware";
 import {
   acknowledgeIncidentController,
   getIncidentByIdController,
@@ -17,7 +17,7 @@ const apiSecurity: { [scheme: string]: string[] }[] = [
 export async function incidentRoutes(app: FastifyInstance) {
   // Reads accept a JWT OR a workspace API key; writes stay JWT-only in v1.
   const apiRead = [requireWorkspaceAccess];
-  const write = [requireAuth, requireRole(["OWNER", "ADMIN"])];
+  const write = [requireAuth, requireRole(["OWNER", "ADMIN"]), requireScope("READ_WRITE")];
 
   app.get(
     "/workspaces/:workspaceId/incidents",

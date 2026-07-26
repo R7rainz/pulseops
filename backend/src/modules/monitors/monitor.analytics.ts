@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { prisma } from "../../lib/db";
+import { assertWorkspaceAccess } from "../../middleware/workspace-access.middleware";
 
 export async function getMonitorAnalyticsController(
   request: FastifyRequest<{ Params: { workspaceId: string; monitorId: string } }>,
@@ -10,10 +11,19 @@ export async function getMonitorAnalyticsController(
 
     const monitor = await prisma.monitor.findUnique({
       where: { id: monitorId },
-      select: { createdAt: true },
+      select: { createdAt: true, workspaceId: true },
     });
 
     if (!monitor) {
+      return response.status(404).send({ message: "Monitor not found" });
+    }
+
+    // The route middleware authorizes the :workspaceId in the path, not this
+    // monitor. Re-check against the monitor's actual workspace so a tampered
+    // monitorId can't read another tenant's analytics.
+    try {
+      await assertWorkspaceAccess(request.access!, monitor.workspaceId);
+    } catch {
       return response.status(404).send({ message: "Monitor not found" });
     }
 

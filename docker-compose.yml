@@ -121,10 +121,12 @@ services:
       - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics.v2
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - NODE_ENV=production
-      # Auth signing key. A shared dev default so the stack runs out of the box —
-      # OVERRIDE for any deployment that's reachable by others (set JWT_SECRET in
-      # a root .env or your shell). See .env.example.
-      - JWT_SECRET=${JWT_SECRET:-a3f1c09e7b2d48561fae90c3d7b6528e14aa9f0c5d3e2b7a8c6f4e1d0b9a8c7d}
+      # Auth signing key. Intentionally has NO default: a committed default is a
+      # public key that anyone can forge tokens with. Left unset, the API mints a
+      # random one per process so the stack still comes up with zero config —
+      # logins just won't survive a restart. Set this in a root .env for any
+      # real deployment:  openssl rand -hex 32
+      - JWT_SECRET=${JWT_SECRET:-}
       - APP_URL=${APP_URL:-http://localhost:3000}
       - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
       - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:4000}

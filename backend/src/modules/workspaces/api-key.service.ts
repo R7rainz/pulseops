@@ -1,11 +1,18 @@
 import crypto from "node:crypto";
 import { CreateApiKeyInput } from "./api-key.schema";
 import { prisma } from "../../lib/db";
+import { sha256Hex } from "../../lib/hash";
 
 function generateApiKey(): string {
   const prefix = "po_";
   const random = crypto.randomBytes(32).toString("hex");
   return `${prefix}${random}`;
+}
+
+// Non-secret leading fragment kept for display, e.g. "po_a1b2c3d4". Long enough
+// to tell keys apart in a list, far too short to brute-force the remainder.
+function keyPrefixOf(key: string): string {
+  return key.slice(0, 11);
 }
 
 export async function createApiKeyService(
@@ -25,12 +32,15 @@ export async function createApiKeyService(
     data: {
       workspaceId,
       name: input.name,
-      key,
+      keyHash: sha256Hex(key),
+      keyPrefix: keyPrefixOf(key),
       scope: input.scope,
     },
   });
 
-  return apiKey;
+  // The raw key is returned exactly once, here. It is not recoverable
+  // afterwards — only its hash is stored.
+  return { ...apiKey, key };
 }
 
 export async function getApiKeysService(
@@ -48,6 +58,7 @@ export async function getApiKeysService(
     select: {
       id: true,
       name: true,
+      keyPrefix: true,
       scope: true,
       lastUsedAt: true,
       isActive: true,

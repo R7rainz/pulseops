@@ -36,8 +36,10 @@ export default async function PublicStatusPage({
     );
   }
 
-  const { workspaceName } = statusData;
-  const updated = new Date();
+  const { workspaceName, description, generatedAt } = statusData;
+  // Server-stamped: the page is revalidated every 30s, so rendering
+  // `new Date()` here claimed the data was fresher than it actually was.
+  const updated = generatedAt ? new Date(generatedAt) : null;
 
   return (
     <main className="relative min-h-dvh overflow-hidden text-foreground">
@@ -50,14 +52,18 @@ export default async function PublicStatusPage({
       <div className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
         <header className="flex items-center justify-between">
           <Brand href="/" size="sm" />
-          <span className="font-mono text-[11px] text-muted-foreground">
-            Updated {updated.toLocaleString()}
-          </span>
+          {updated && (
+            <span className="font-mono text-[11px] text-muted-foreground">
+              Updated {updated.toLocaleString()}
+            </span>
+          )}
         </header>
 
         <div className="mt-12 text-center">
           <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">{workspaceName}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">System status &amp; uptime</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {description || "System status & uptime"}
+          </p>
         </div>
 
         <div className="mt-8">

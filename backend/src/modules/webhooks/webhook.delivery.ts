@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import axios from "axios";
 import { prisma } from "../../lib/db";
+import { assertPublicUrl } from "../../lib/ssrf";
 import { webhookLogsQueue } from "./webhook.queue";
 
 export interface WebhookPayload {
@@ -33,15 +34,21 @@ export const sendWebhookNotifications = async (
 
   if (matchedWebhooks.length === 0) return;
 
-  const requests = matchedWebhooks.map((webhook) => {
+  const requests = matchedWebhooks.map(async (webhook) => {
     const body = JSON.stringify(payload);
     const signature = crypto
       .createHmac("sha256", webhook.secret || "")
       .update(body)
       .digest("hex");
 
+    // Endpoint URLs are user-supplied and re-checked on every delivery, since
+    // DNS can be re-pointed at internal space after the endpoint was saved.
+    await assertPublicUrl(webhook.url);
+
     return axios.post(webhook.url, payload, {
       timeout: 5000,
+      // Don't let a redirect walk the request into the private range.
+      maxRedirects: 0,
       headers: {
         "Content-Type": "application/json",
         "User-Agent": "PulseOps-Webhook/1.0",

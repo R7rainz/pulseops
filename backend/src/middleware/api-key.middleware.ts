@@ -1,5 +1,6 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import { prisma } from "../lib/db";
+import { sha256Hex } from "../lib/hash";
 
 declare module "fastify" {
   interface FastifyRequest {
@@ -22,9 +23,10 @@ export async function requireApiKey(
     });
   }
 
+  // Keys are stored hashed — look up by digest, never by the raw value.
   const apiKeyRecord = await prisma.apiKey.findFirst({
     where: {
-      key: apiKeyHeader,
+      keyHash: sha256Hex(apiKeyHeader),
       isActive: true,
     },
   });
