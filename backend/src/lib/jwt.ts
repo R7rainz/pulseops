@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
+import { sha256Hex } from "./hash";
 
 export type AccessTokenPayload = {
   userId: number;
@@ -17,13 +18,13 @@ export type MfaTokenPayload = {
 // This value shipped as a working default in docker-compose.yml, so it is
 // public: anyone who has read the repo can forge session tokens signed with it.
 // Refuse to start rather than run with it.
-const LEAKED_DEFAULT_SECRET =
-  "a3f1c09e7b2d48561fae90c3d7b6528e14aa9f0c5d3e2b7a8c6f4e1d0b9a8c7d";
+const LEAKED_DEFAULT_SECRET_SHA256 =
+  "4f091a5e1ebf6afafdeb4f066642dff7b5cf79fffdb41e5f4bf357619bc55e63";
 
 function resolveSecret(): string {
   const raw = process.env.JWT_SECRET?.trim();
 
-  if (raw === LEAKED_DEFAULT_SECRET) {
+  if (raw && sha256Hex(raw) === LEAKED_DEFAULT_SECRET_SHA256) {
     throw new Error(
       "JWT_SECRET is set to the old public default from docker-compose.yml. " +
         "That value is committed to the repository and anyone can forge tokens " +
