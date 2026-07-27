@@ -71,11 +71,15 @@ Cloud Always-Free VM + a free DuckDNS domain) — see **[DEPLOY.md](./DEPLOY.md)
 
 ## Repository layout
 
+New to the codebase? **[ARCHITECTURE.md](./ARCHITECTURE.md)** is a guided reading
+path — what each part does, the order to read it in, and why the pieces are split
+the way they are.
+
 | Path | What |
 | --- | --- |
-| [`backend/`](./backend) | Fastify API, Prisma/Postgres, BullMQ, node-cron ping engine |
+| [`backend/`](./backend) | Fastify API, Prisma/Postgres, BullMQ, Kafka dispatch scheduler |
 | [`frontend/`](./frontend) | Next.js web dashboard |
-| [`workers/ping-engine/`](./workers/ping-engine) | Kafka-driven HTTP check workers |
+| [`workers/ping-engine/`](./workers/ping-engine) | Kafka-driven probe workers (HTTP, TCP, DNS, keyword) |
 | [`cli/`](./cli) | `pulseops` — the terminal CLI + TUI dashboard (published to npm) |
 | [`mcp/`](./mcp) | Model Context Protocol server over the read API |
 | [`docs/`](./docs) | API-reference app (Scalar over the OpenAPI spec) |
