@@ -19,6 +19,7 @@ import ChartsShowcase from "@/components/landing/ChartsShowcase";
 import LogoMarquee from "@/components/landing/LogoMarquee";
 import {
   ArrowRight,
+  ArrowUp,
   Activity,
   Bell,
   Globe,
@@ -75,7 +76,7 @@ export default async function RootPage() {
   if (destination) redirect(destination);
 
   return (
-    <div className="relative min-h-dvh overflow-hidden text-foreground selection:bg-primary/20">
+    <div id="top" className="relative min-h-dvh overflow-hidden text-foreground selection:bg-primary/20">
       {/* SHINY METALLIC BACKGROUND — black base + silver glow behind the hero */}
       <div className="fixed inset-0 -z-10 pointer-events-none">
         <div className="absolute inset-0 bg-background" />
@@ -374,6 +375,15 @@ export default async function RootPage() {
           </Reveal>
         </div>
       </section>
+
+      <a
+        href="#top"
+        aria-label="Back to top"
+        title="Back to top"
+        className="icon-btn fixed bottom-6 right-6 z-50 rounded-full bg-surface/90 shadow-lg backdrop-blur"
+      >
+        <ArrowUp className="h-5 w-5" />
+      </a>
 
       {/* FOOTER */}
       <footer className="border-t border-border/70 py-8">
