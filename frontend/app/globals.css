@@ -788,6 +788,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   .animate-float,
   .animate-drift,
   .animate-sway,
@@ -825,5 +828,9 @@
   }
   html {
     @apply font-sans;
+    scroll-behavior: smooth;
+  }
+  section[id] {
+    scroll-margin-top: 5rem;
   }
 }
