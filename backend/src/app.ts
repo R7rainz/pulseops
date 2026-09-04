@@ -62,20 +62,22 @@ export async function buildApp() {
     // Bearer token / API key follows the actual user through any proxy; IP
     // remains the fallback for anonymous routes (login/signup brute force).
     // Route-level overrides (auth, check-now) inherit this keyGenerator.
-    await app.register(rateLimit, {
-        global: true,
-        max: 1_000_000,
-        timeWindow: "1 minute",
-        keyGenerator: (request) => {
-            const auth = request.headers.authorization;
-            const apiKey = request.headers["x-api-key"];
-            return (
-                (typeof auth === "string" && auth) ||
-                (typeof apiKey === "string" && apiKey) ||
-                request.ip
-            );
-        },
-    });
+    if (process.env.PULSEOPS_DISABLE_RATE_LIMIT !== "1") {
+        await app.register(rateLimit, {
+            global: true,
+            max: 300,
+            timeWindow: "1 minute",
+            keyGenerator: (request) => {
+                const auth = request.headers.authorization;
+                const apiKey = request.headers["x-api-key"];
+                return (
+                    (typeof auth === "string" && auth) ||
+                    (typeof apiKey === "string" && apiKey) ||
+                    request.ip
+                );
+            },
+        });
+    }
 
     // OpenAPI docs for the programmatic API. Registered before routes so its
     // onRoute hook captures them. Only routes that declare `schema.tags` are
