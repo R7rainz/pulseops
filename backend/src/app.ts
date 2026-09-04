@@ -64,7 +64,7 @@ export async function buildApp() {
     // Route-level overrides (auth, check-now) inherit this keyGenerator.
     await app.register(rateLimit, {
         global: true,
-        max: 300,
+        max: 1_000_000,
         timeWindow: "1 minute",
         keyGenerator: (request) => {
             const auth = request.headers.authorization;
