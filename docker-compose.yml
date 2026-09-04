@@ -122,6 +122,7 @@ services:
       - KAFKAJS_NO_PARTITIONER_WARNING=1
       - NODE_ENV=production
       - PULSEOPS_DISABLE_RATE_LIMIT=${PULSEOPS_DISABLE_RATE_LIMIT:-0}
+      - ALLOW_PRIVATE_TARGETS=${ALLOW_PRIVATE_TARGETS:-0}
       # Auth signing key. Intentionally has NO default: a committed default is a
       # public key that anyone can forge tokens with. Left unset, the API mints a
       # random one per process so the stack still comes up with zero config —
