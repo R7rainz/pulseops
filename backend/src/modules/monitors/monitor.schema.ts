@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+const httpUrl = z.string().refine(
+  (value) => {
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  },
+  { message: "Invalid URL format" },
+);
+
 const monitorFields = z
   .object({
     name: z
@@ -13,8 +25,12 @@ const monitorFields = z
     // ping). Enforced by the superRefine below.
     url: z
       .preprocess(
-        (v) => (typeof v === "string" && v && !/^https?:\/\//i.test(v) ? `https://${v}` : v),
-        z.string().url({ message: "Invalid URL format" }),
+        (v) => {
+          if (typeof v !== "string") return v;
+          const trimmed = v.trim();
+          return trimmed && !/^https?:\/\//i.test(trimmed) ? `https://${trimmed}` : trimmed;
+        },
+        httpUrl,
       )
       .optional(),
 
