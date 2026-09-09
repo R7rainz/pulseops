@@ -1,199 +1,217 @@
 services:
-  kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: pulseops-kafka
-    restart: unless-stopped
-    # KRaft mode — no ZooKeeper. Kafka is its own controller, which removes the
-    # ZK-readiness race that used to make the broker exit and flap on cold start
-    # (and abort api/ping-engine, which gate on `kafka: service_healthy`).
-    ports:
-      # Bound to loopback: the broker is only used by other compose services on
-      # the internal network. Host publishing is for local tooling, not the
-      # public interface. Drop the "127.0.0.1:" prefix if you need LAN access.
-      - "127.0.0.1:9092:9092"
-    environment:
-      # Single-node combined broker+controller.
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      # Bind all three listeners; advertise the two clients use (internal + host).
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      # Fixed cluster id so the auto-format on boot is deterministic across
-      # restarts. Must be a base64-encoded UUID (22 chars) or storage format fails.
-      CLUSTER_ID: pO2Rs1TqStyBhpercqp0iA
-    healthcheck:
-      # Lightweight TCP check that the broker listener is accepting connections.
-      # (A `kafka-broker-api-versions` check spins up a JVM every interval and
-      # can time out under Kafka's own startup load, causing false "unhealthy"
-      # and aborted dependents.) KRaft boots faster than ZK-mode, but keep a
-      # generous start_period for the JVM broker boot.
-      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/29092' 2>/dev/null || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
-      start_period: 45s
+    kafka:
+        image: confluentinc/cp-kafka:7.5.0
+        container_name: pulseops-kafka
+        restart: unless-stopped
+        # KRaft mode — no ZooKeeper. Kafka is its own controller, which removes the
+        # ZK-readiness race that used to make the broker exit and flap on cold start
+        # (and abort api/ping-engine, which gate on `kafka: service_healthy`).
+        ports:
+            # Bound to loopback: the broker is only used by other compose services on
+            # the internal network. Host publishing is for local tooling, not the
+            # public interface. Drop the "127.0.0.1:" prefix if you need LAN access.
+            - "127.0.0.1:9092:9092"
+        environment:
+            # Single-node combined broker+controller.
+            KAFKA_NODE_ID: 1
+            KAFKA_PROCESS_ROLES: broker,controller
+            KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+            KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+            KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+            # Bind all three listeners; advertise the two clients use (internal + host).
+            KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:29093
+            KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+            KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+            # Fixed cluster id so the auto-format on boot is deterministic across
+            # restarts. Must be a base64-encoded UUID (22 chars) or storage format fails.
+            CLUSTER_ID: pO2Rs1TqStyBhpercqp0iA
+        healthcheck:
+            # Lightweight TCP check that the broker listener is accepting connections.
+            # (A `kafka-broker-api-versions` check spins up a JVM every interval and
+            # can time out under Kafka's own startup load, causing false "unhealthy"
+            # and aborted dependents.) KRaft boots faster than ZK-mode, but keep a
+            # generous start_period for the JVM broker boot.
+            test:
+                [
+                    "CMD-SHELL",
+                    "bash -c 'echo > /dev/tcp/localhost/29092' 2>/dev/null || exit 1",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 20
+            start_period: 45s
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: pulseops-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-pulseops}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pulseops}
-      POSTGRES_DB: ${POSTGRES_DB:-pulseops}
-    ports:
-      # Loopback-only (see kafka note) — the DB is reached over the internal
-      # network by the api/migrate services, not from the public interface.
-      - "127.0.0.1:5432:5432"
-    volumes:
-      - pulseops_postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pulseops} -d ${POSTGRES_DB:-pulseops}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    postgres:
+        image: postgres:16-alpine
+        container_name: pulseops-postgres
+        restart: unless-stopped
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-pulseops}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pulseops}
+            POSTGRES_DB: ${POSTGRES_DB:-pulseops}
+        ports:
+            # Loopback-only (see kafka note) — the DB is reached over the internal
+            # network by the api/migrate services, not from the public interface.
+            - "127.0.0.1:5432:5432"
+        volumes:
+            - pulseops_postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${POSTGRES_USER:-pulseops} -d ${POSTGRES_DB:-pulseops}",
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: pulseops-redis
-    restart: unless-stopped
-    ports:
-      # Loopback-only (see kafka note).
-      - "127.0.0.1:6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    redis:
+        image: redis:7-alpine
+        container_name: pulseops-redis
+        restart: unless-stopped
+        ports:
+            # Loopback-only (see kafka note).
+            - "127.0.0.1:6379:6379"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
-  # One-shot: applies Prisma migrations to a fresh (or upgraded) database, then
-  # exits. The API gates on it completing, so `docker compose up` sets up the
-  # schema automatically — no manual migrate step. Reuses the backend image's
-  # `builder` stage, which is the one that carries the Prisma CLI + migrations.
-  migrate:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-      target: builder
-    container_name: pulseops-migrate
-    restart: "no"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-pulseops}:${POSTGRES_PASSWORD:-pulseops}@postgres:5432/${POSTGRES_DB:-pulseops}
-    command: ["npx", "prisma", "migrate", "deploy"]
+    # One-shot: applies Prisma migrations to a fresh (or upgraded) database, then
+    # exits. The API gates on it completing, so `docker compose up` sets up the
+    # schema automatically — no manual migrate step. Reuses the backend image's
+    # `builder` stage, which is the one that carries the Prisma CLI + migrations.
+    migrate:
+        build:
+            context: .
+            dockerfile: backend/Dockerfile
+            target: builder
+        container_name: pulseops-migrate
+        restart: "no"
+        depends_on:
+            postgres:
+                condition: service_healthy
+        environment:
+            - DATABASE_URL=postgresql://${POSTGRES_USER:-pulseops}:${POSTGRES_PASSWORD:-pulseops}@postgres:5432/${POSTGRES_DB:-pulseops}
+        command: ["npx", "prisma", "migrate", "deploy"]
 
-  api:
-    build:
-      context: .
-      dockerfile: backend/Dockerfile
-    container_name: pulseops-api
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
-    ports:
-      - "4000:4000"
-    # Optional: drop real secrets (OAuth, SMTP, billing) here to enable those
-    # features. Absent on a fresh clone — the defaults below are enough to run.
-    env_file:
-      - path: ./backend/.env
-        required: false
-    environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-pulseops}:${POSTGRES_PASSWORD:-pulseops}@postgres:5432/${POSTGRES_DB:-pulseops}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_URL=redis://redis:6379
-      - KAFKA_BROKERS=kafka:29092
-      - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets.v2
-      - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics.v2
-      - KAFKAJS_NO_PARTITIONER_WARNING=1
-      - NODE_ENV=production
-      - PULSEOPS_DISABLE_RATE_LIMIT=${PULSEOPS_DISABLE_RATE_LIMIT:-0}
-      - ALLOW_PRIVATE_TARGETS=${ALLOW_PRIVATE_TARGETS:-0}
-      # Auth signing key. Intentionally has NO default: a committed default is a
-      # public key that anyone can forge tokens with. Left unset, the API mints a
-      # random one per process so the stack still comes up with zero config —
-      # logins just won't survive a restart. Set this in a root .env for any
-      # real deployment:  openssl rand -hex 32
-      - JWT_SECRET=${JWT_SECRET:-}
-      - APP_URL=${APP_URL:-http://localhost:3000}
-      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
-      - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:4000}
-      - OAUTH_CALLBACK_BASE=${OAUTH_CALLBACK_BASE:-http://localhost:4000}
+    api:
+        build:
+            context: .
+            dockerfile: backend/Dockerfile
+        container_name: pulseops-api
+        restart: unless-stopped
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            kafka:
+                condition: service_healthy
+            migrate:
+                condition: service_completed_successfully
+        ports:
+            - "4000:4000"
+        # Optional: drop real secrets (OAuth, SMTP, billing) here to enable those
+        # features. Absent on a fresh clone — the defaults below are enough to run.
+        env_file:
+            - path: ./backend/.env
+              required: false
+        environment:
+            - DATABASE_URL=postgresql://${POSTGRES_USER:-pulseops}:${POSTGRES_PASSWORD:-pulseops}@postgres:5432/${POSTGRES_DB:-pulseops}
+            - REDIS_HOST=redis
+            - REDIS_PORT=6379
+            - REDIS_URL=redis://redis:6379
+            - KAFKA_BROKERS=kafka:29092
+            - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets.v2
+            - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics.v2
+            - KAFKAJS_NO_PARTITIONER_WARNING=1
+            - NODE_ENV=production
+            - PULSEOPS_DISABLE_RATE_LIMIT=${PULSEOPS_DISABLE_RATE_LIMIT:-0}
+            - ALLOW_PRIVATE_TARGETS=${ALLOW_PRIVATE_TARGETS:-0}
+            # Auth signing key. Intentionally has NO default: a committed default is a
+            # public key that anyone can forge tokens with. Left unset, the API mints a
+            # random one per process so the stack still comes up with zero config —
+            # logins just won't survive a restart. Set this in a root .env for any
+            # real deployment:  openssl rand -hex 32
+            - JWT_SECRET=${JWT_SECRET:-}
+            - APP_URL=${APP_URL:-http://localhost:3000}
+            - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3000}
+            - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:4000}
+            - OAUTH_CALLBACK_BASE=${OAUTH_CALLBACK_BASE:-http://localhost:4000}
+        networks:
+            - default
+            - gateforge-monitor
 
-  ping-engine:
-    build:
-      context: .
-      dockerfile: workers/ping-engine/Dockerfile
-    container_name: pulseops-ping-engine
-    restart: unless-stopped
-    depends_on:
-      kafka:
-        condition: service_healthy
-    environment:
-      - KAFKA_BROKERS=kafka:29092
-      - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets.v2
-      - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics.v2
-      - KAFKA_CONSUMER_GROUP=pulseops-ping-workers
-      - CONCURRENT_WORKERS=50
+    ping-engine:
+        build:
+            context: .
+            dockerfile: workers/ping-engine/Dockerfile
+        container_name: pulseops-ping-engine
+        restart: unless-stopped
+        depends_on:
+            kafka:
+                condition: service_healthy
+        environment:
+            - KAFKA_BROKERS=kafka:29092
+            - KAFKA_TARGETS_TOPIC=pulseops.monitors.targets.v2
+            - KAFKA_METRICS_TOPIC=pulseops.monitors.metrics.v2
+            - KAFKA_CONSUMER_GROUP=pulseops-ping-workers
+            - CONCURRENT_WORKERS=50
+        networks:
+            - default
+            - gateforge-monitor
 
-  web:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-      # NEXT_PUBLIC_* are baked into the client bundle at build time, so the
-      # browser-facing API/docs URLs are build args (not runtime env). They use
-      # the PUBLIC URLs — the browser can't reach the internal `api:4000`. After
-      # changing PUBLIC_API_URL/DOCS_URL, run `docker compose build web`.
-      args:
-        NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:4000}
-        NEXT_PUBLIC_DOCS_URL: ${DOCS_URL:-http://localhost:3001}
-    container_name: pulseops-web
-    restart: unless-stopped
-    depends_on:
-      - api
-    ports:
-      - "3000:3000"
-    env_file:
-      - path: ./frontend/.env
-        required: false
-    environment:
-      - NODE_ENV=production
-      - APP_URL=${APP_URL:-http://localhost:3000}
-      # Server-side (SSR / server actions) reach the API on the internal network.
-      - API_URL=http://api:4000
+    web:
+        build:
+            context: .
+            dockerfile: frontend/Dockerfile
+            # NEXT_PUBLIC_* are baked into the client bundle at build time, so the
+            # browser-facing API/docs URLs are build args (not runtime env). They use
+            # the PUBLIC URLs — the browser can't reach the internal `api:4000`. After
+            # changing PUBLIC_API_URL/DOCS_URL, run `docker compose build web`.
+            args:
+                NEXT_PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:4000}
+                NEXT_PUBLIC_DOCS_URL: ${DOCS_URL:-http://localhost:3001}
+        container_name: pulseops-web
+        restart: unless-stopped
+        depends_on:
+            - api
+        ports:
+            - "3000:3000"
+        env_file:
+            - path: ./frontend/.env
+              required: false
+        environment:
+            - NODE_ENV=production
+            - APP_URL=${APP_URL:-http://localhost:3000}
+            # Server-side (SSR / server actions) reach the API on the internal network.
+            - API_URL=http://api:4000
 
-  docs:
-    build:
-      context: .
-      dockerfile: docs/Dockerfile
-      # The "Back to app" link (NEXT_PUBLIC_APP_URL) is baked at build time from
-      # APP_URL. After changing APP_URL, run `docker compose build docs`.
-      args:
-        NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
-    container_name: pulseops-docs
-    restart: unless-stopped
-    depends_on:
-      - api
-    ports:
-      - "3001:3000"
-    environment:
-      - NODE_ENV=production
-      # Server-side spec proxy (/openapi.json) reaches the API on the internal network.
-      - API_URL=http://api:4000
+    docs:
+        build:
+            context: .
+            dockerfile: docs/Dockerfile
+            # The "Back to app" link (NEXT_PUBLIC_APP_URL) is baked at build time from
+            # APP_URL. After changing APP_URL, run `docker compose build docs`.
+            args:
+                NEXT_PUBLIC_APP_URL: ${APP_URL:-http://localhost:3000}
+        container_name: pulseops-docs
+        restart: unless-stopped
+        depends_on:
+            - api
+        ports:
+            - "3001:3000"
+        environment:
+            - NODE_ENV=production
+            # Server-side spec proxy (/openapi.json) reaches the API on the internal network.
+            - API_URL=http://api:4000
 
 volumes:
-  pulseops_postgres_data:
+    pulseops_postgres_data:
+
+networks:
+    gateforge-monitor:
+        external: true
