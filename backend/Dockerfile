@@ -1,10 +1,12 @@
+# syntax=docker/dockerfile:1
 FROM node:22-alpine AS builder
 
-RUN npm install -g pnpm@10
+RUN npm install -g pnpm@12.3.4
 WORKDIR /app
 
-COPY backend/package.json backend/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY backend/package.json backend/pnpm-lock.yaml backend/pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pulseops-pnpm-store,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile --fetch-timeout=300000
 
 COPY backend/prisma ./prisma
 COPY backend/prisma.config.ts ./
@@ -14,18 +16,20 @@ COPY backend/src ./src
 RUN npx prisma generate
 RUN pnpm run build
 
+FROM builder AS production-deps
+
+RUN pnpm prune --prod
+
 FROM node:22-alpine AS runner
 
-RUN npm install -g pnpm@10
 WORKDIR /app
 
 ENV NODE_ENV=production
 EXPOSE 4000
 
 # Only production dependencies land in the runtime image — dev tooling
-# (typescript, tsx, prisma CLI, etc.) stays out.
-COPY backend/package.json backend/pnpm-lock.yaml ./
-RUN pnpm install --prod --frozen-lockfile
+# (typescript, tsx, prisma CLI, etc.) stays in the builder stage.
+COPY --from=production-deps /app/node_modules ./node_modules
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
