@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { API_URL } from "@/lib/constants";
+import { API_URL, SECURE_COOKIES } from "@/lib/constants";
 
 export type AuthState = {
   error?: string;
@@ -24,16 +24,15 @@ const MFA_MAX_AGE = 60 * 5; // 5 minutes to complete the second factor
  */
 export async function setSessionCookies(tokens: SessionTokens) {
   const cookieStore = await cookies();
-  const secure = process.env.NODE_ENV === "production";
   cookieStore.set("pulseops_token", tokens.accessToken, {
     httpOnly: true,
-    secure,
+    secure: SECURE_COOKIES,
     path: "/",
     maxAge: ACCESS_MAX_AGE,
   });
   cookieStore.set("pulseops_refresh", tokens.refreshToken, {
     httpOnly: true,
-    secure,
+    secure: SECURE_COOKIES,
     path: "/",
     maxAge: REFRESH_MAX_AGE,
   });
@@ -43,7 +42,7 @@ async function setMfaChallengeCookie(mfaToken: string) {
   const cookieStore = await cookies();
   cookieStore.set("pulseops_mfa", mfaToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: SECURE_COOKIES,
     path: "/",
     maxAge: MFA_MAX_AGE,
   });

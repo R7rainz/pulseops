@@ -1,0 +1,8 @@
+allowBuilds:
+  '@prisma/engines': true
+  esbuild: true
+  msgpackr-extract: true
+  prisma: true
+
+overrides:
+  ioredis: 5.10.1

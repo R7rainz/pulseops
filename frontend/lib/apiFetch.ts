@@ -1,4 +1,4 @@
-import { API_URL } from "@/lib/constants";
+import { API_URL, SECURE_COOKIES } from "@/lib/constants";
 
 type CookieStore = Awaited<ReturnType<typeof import("next/headers").cookies>>;
 
@@ -28,7 +28,7 @@ async function refreshSession(cookieStore: CookieStore): Promise<string | null> 
     try {
       cookieStore.set("pulseops_token", tokens.accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: SECURE_COOKIES,
         path: "/",
         maxAge: 60 * 60 * 24 * 7,
       });

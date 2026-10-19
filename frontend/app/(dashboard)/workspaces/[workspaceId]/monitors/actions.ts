@@ -9,7 +9,8 @@ function setToast(cookieStore: Awaited<ReturnType<typeof cookies>>, message: str
 }
 
 function normalizeUrl(url: string): string {
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+  const trimmed = url.trim();
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
 export async function createMonitor(formData: FormData) {
