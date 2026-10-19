@@ -17,9 +17,16 @@ import (
 	"go.uber.org/zap"
 )
 
-// How long to wait for in-flight checks to finish and their results to reach
-// Kafka before giving up and exiting anyway.
-const shutdownTimeout = 30 * time.Second
+const (
+	// How long to wait for in-flight checks to finish and their results to reach
+	// Kafka before giving up and exiting anyway.
+	shutdownTimeout = 30 * time.Second
+
+	// Batch synchronous writes so the Kafka writer can use its throughput without
+	// giving up the delivery guarantee of Async:false.
+	metricsBatchSize    = 100
+	metricsBatchTimeout = 10 * time.Millisecond
+)
 
 func main() {
 	logger, _ := zap.NewDevelopment()
@@ -50,6 +57,8 @@ func main() {
 		Topic:        metricsTopic,
 		Balancer:     &kafka.LeastBytes{},
 		RequiredAcks: kafka.RequireOne,
+		BatchSize:    metricsBatchSize,
+		BatchTimeout: metricsBatchTimeout,
 		// Synchronous writes so a result is durable before we consider it sent.
 		// With Async:true, Close() could return while messages were still
 		// buffered, silently dropping the tail on every deploy.
@@ -65,23 +74,61 @@ func main() {
 		// Ranges until Drain() closes ResultChan. Deliberately uses a
 		// background context, not ctx: on shutdown we still want the already
 		// collected results written out rather than cancelled.
-		for result := range dispatcher.ResultChan {
-			payload, err := json.Marshal(result)
-			if err != nil {
-				sugar.Errorf("Failed to marshal metrics payload: %v", err)
-				continue
+		for {
+			result, ok := <-dispatcher.ResultChan
+			if !ok {
+				return
 			}
 
-			writeCtx, writeCancel := context.WithTimeout(context.Background(), 10*time.Second)
-			err = writer.WriteMessages(writeCtx, kafka.Message{
-				Key:   []byte(strconv.Itoa(result.WorkspaceID)),
-				Value: payload,
-			})
-			writeCancel()
-			if err != nil {
-				sugar.Errorf("Failed to push telemetry to Kafka firehouse: %v", err)
-			} else {
-				sugar.Debugf("[KAFKA PRODUCER] Streamed metrics for Target %d", result.TargetID)
+			messages := make([]kafka.Message, 0, metricsBatchSize)
+			appendResult := func(result engine.Result) {
+				payload, err := json.Marshal(result)
+				if err != nil {
+					sugar.Errorf("Failed to marshal metrics payload: %v", err)
+					return
+				}
+				messages = append(messages, kafka.Message{
+					Key:   []byte(strconv.Itoa(result.WorkspaceID)),
+					Value: payload,
+				})
+			}
+			appendResult(result)
+
+			timer := time.NewTimer(metricsBatchTimeout)
+			channelClosed := false
+		collect:
+			for len(messages) < metricsBatchSize {
+				select {
+				case result, ok := <-dispatcher.ResultChan:
+					if !ok {
+						channelClosed = true
+						break collect
+					}
+					appendResult(result)
+				case <-timer.C:
+					break collect
+				}
+			}
+			if !timer.Stop() {
+				select {
+				case <-timer.C:
+				default:
+				}
+			}
+
+			if len(messages) > 0 {
+				writeCtx, writeCancel := context.WithTimeout(context.Background(), 10*time.Second)
+				err := writer.WriteMessages(writeCtx, messages...)
+				writeCancel()
+				if err != nil {
+					sugar.Errorf("Failed to push telemetry batch (%d messages) to Kafka firehouse: %v", len(messages), err)
+				} else {
+					sugar.Debugf("[KAFKA PRODUCER] Streamed %d metrics to Kafka", len(messages))
+				}
+			}
+
+			if channelClosed {
+				return
 			}
 		}
 	}()
